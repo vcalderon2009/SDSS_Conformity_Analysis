@@ -142,10 +142,10 @@ def get_parser():
     parser.add_argument('-itern',
                         dest='itern_tot',
                         help='Total number of iterations to perform on the `shuffled` scenario',
-                        type=float,
+                        type=int,
                         choices=range(10,10000),
                         metavar='[10-10000]',
-                        default=1e3)
+                        default=1000)
     ## Minimum Number of Galaxies in 1 group
     parser.add_argument('-nmin',
                         dest='ngals_min',
@@ -199,6 +199,13 @@ def get_parser():
                         help='Delete pickle file containing pair counts',
                         type=_str2bool,
                         default=False)
+    ## Type of correlation funciton to perform
+    parser.add_argument('-corrtype',
+                        dest='corr_type',
+                        help='Type of correlation function to perform',
+                        type=str,
+                        choices=['galgal'],
+                        default='galgal')
     ## Parsing Objects
     args = parser.parse_args()
 
@@ -240,7 +247,7 @@ def add_to_dict(param_dict):
                         param_dict['pimax' ]        , param_dict['itern_tot'],
                         param_dict['corr_pair_type'], param_dict['prop_log'] ,
                         param_dict['shuffle_marks'] , perf_str ]
-    param_str  = 'rpmin_{0}_rpmax_{1}_nrpbins_{2}_Mgbin_{3}_pimax_{4}'
+    param_str  = 'rpmin_{0}_rpmax_{1}_nrpbins_{2}_Mgbin_{3}_pimax_{4}_'
     param_str += 'itern_{5}_corrpair_type_{6}_proplog_{7}_shuffle_{8}'
     if param_dict['perf_opt']:
         param_str += '_perf_opt_str_{9}/'
@@ -272,6 +279,62 @@ def add_to_dict(param_dict):
 
     return param_dict
 
+def directory_skeleton(param_dict, proj_dict):
+    """
+    Creates the directory skeleton for the current project
+
+    Parameters
+    ----------
+    param_dict: python dictionary
+
+    proj_dict: python dictionary
+        dictionary with info of the project that uses the
+        `Data Science` Cookiecutter template.
+
+    Returns
+    ---------
+    proj_dict: python dictionary
+        Dictionary with current and new paths to project directories
+    """
+    ### Output Directory
+    outdir = '{0}/interim/SDSS/{1}/{2}/Mr{3}/conformity_output'.format(
+        proj_dict['data_dir'], param_dict['sdss_kind'],
+        param_dict['mock_type'], param_dict['sample'])
+    ### Directory of `Pickle files` with input parameters
+    pickdir = '{0}/pickle_files/{1}/{2}'.format(
+        outdir, param_dict['corr_type'], param_dict['param_str'])
+    ### Directories for MCF
+    corrdir = 'wq_{0}_idx_calc/'.format(param_dict['corr_type'])
+    # Indices from wp(rp)
+    out_idx = '{0}/{1}/{2}/indices'.format(
+        outdir, param_dict['corr_type'], param_dict['param_str_pic'])
+    # Results from wp(rp)
+    out_res = '{0}/{1}/{2}/results'.format(
+        outdir, param_dict['corr_type'], param_dict['param_str_pic'])
+    # Results from DDrppi
+    out_ddrp = '{0}/{1}/{2}/DDrppi_res'.format(
+        outdir, param_dict['corr_type'], param_dict['param_str_pic'])
+    # Output for catalogues - Pickle
+    out_catl_p = '{0}/{1}/{2}/catl_pickle_pairs'.format(
+        outdir, param_dict['corr_type'], param_dict['param_str_pic'])
+    # Creating Folders
+    cu.Path_Folder(outdir)
+    cu.Path_Folder(pickdir)
+    cu.Path_Folder(out_idx)
+    cu.Path_Folder(out_res)
+    cu.Path_Folder(out_ddrp)
+    cu.Path_Folder(out_catl_p)
+    ## Adding to `proj_dict`
+    proj_dict['outdir'    ] = outdir
+    proj_dict['pickdir'   ] = pickdir
+    proj_dict['out_idx'   ] = out_idx
+    proj_dict['out_res'   ] = out_res
+    proj_dict['out_ddrp'  ] = out_ddrp
+    proj_dict['out_catl_p'] = out_catl_p
+
+    return proj_dict
+
+
 def main(args):
     """
     Computes the 1-halo galactic conformity results on SDSS DR7
@@ -290,6 +353,9 @@ def main(args):
     param_dict = vars(args)
     ## ---- Adding to `param_dict` ---- 
     param_dict = add_to_dict(param_dict)
+    ## Creating Folder Structure
+    # proj_dict  = cu.cookiecutter_paths(__file__)
+    proj_dict  = directory_skeleton(param_dict, cu.cookiecutter_paths('./'))
 
 
 # Main function
