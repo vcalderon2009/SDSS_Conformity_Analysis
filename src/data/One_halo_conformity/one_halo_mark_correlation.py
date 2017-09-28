@@ -103,7 +103,7 @@ def get_parser():
                         default='data')
     ## SDSS Type
     parser.add_argument('-abopt',
-                        dest='mock_type',
+                        dest='catl_type',
                         help='Type of Abund. Matching used in catalogue',
                         type=str,
                         choices=['mr'],
@@ -173,7 +173,7 @@ def get_parser():
                         default='log')
     ## Mock Start
     parser.add_argument('-start',
-                        dest='mocks_start',
+                        dest='catl_start',
                         help='Starting index of mock catalogues to use',
                         type=int,
                         choices=range(100),
@@ -181,7 +181,7 @@ def get_parser():
                         default=0)
     ## Mock Finish
     parser.add_argument('-finish',
-                        dest='mocks_finish',
+                        dest='catl_finish',
                         help='Finishing index of mock catalogues to use',
                         type=int,
                         choices=range(100),
@@ -225,6 +225,8 @@ def add_to_dict(param_dict):
     param_dict: python dictionary
         dictionary with old and new values added
     """
+    ### Sample - Int
+    sample_s = str(param_dict['sample'])
     ### Perfect Catalogue
     if param_dict['perf_opt']:
         perf_str = 'haloperf'
@@ -266,6 +268,7 @@ def add_to_dict(param_dict):
     param_str_pic = param_str_pic.format(*param_str_pic_arr)
     ###
     ### To dictionary
+    param_dict['sample_s'     ] = sample_s
     param_dict['perf_str'     ] = perf_str
     param_dict['fig_idx'      ] = fig_idx
     param_dict['logrpmin'     ] = logrpmin
@@ -299,7 +302,7 @@ def directory_skeleton(param_dict, proj_dict):
     ### Output Directory
     outdir = '{0}/interim/SDSS/{1}/{2}/Mr{3}/conformity_output'.format(
         proj_dict['data_dir'], param_dict['sdss_kind'],
-        param_dict['mock_type'], param_dict['sample'])
+        param_dict['catl_type'], param_dict['sample'])
     ### Directory of `Pickle files` with input parameters
     pickdir = '{0}/pickle_files/{1}/{2}'.format(
         outdir, param_dict['corr_type'], param_dict['param_str'])
@@ -334,8 +337,18 @@ def directory_skeleton(param_dict, proj_dict):
 
     return proj_dict
 
+def halo_corr(catl_pd, catl_name, param_dict, proj_dict):
+    """
+    1-halo mark correlation function for galaxy groups in each group mass bin.
 
-def main(args):
+    Parameters
+    ----------
+    catl_pd: 
+
+    """
+
+def main(args, Prog_msg = '1 >>>  '):#,
+    # Prog_msg = cu.Program_Msg(__file__)):
     """
     Computes the 1-halo galactic conformity results on SDSS DR7
 
@@ -355,7 +368,26 @@ def main(args):
     param_dict = add_to_dict(param_dict)
     ## Creating Folder Structure
     # proj_dict  = cu.cookiecutter_paths(__file__)
+    # proj_dict  = directory_skeleton(param_dict, cu.cookiecutter_paths(__file__))
     proj_dict  = directory_skeleton(param_dict, cu.cookiecutter_paths('./'))
+    ## Running analysis
+    # Reading catalogues
+    catl_arr_all = cu.extract_catls(catl_kind=param_dict['sdss_kind'],
+                                    catl_type=param_dict['catl_type'],
+                                    sample_s =param_dict['sample_s'],
+                                    perf_opt =param_dict['perf_opt'],
+                                    catl_info='members',
+                                    print_filedir=False)
+    catl_arr = catl_arr_all[param_dict['catl_start']:param_dict['catl_finish']]
+    # Looping over catalogues
+    for ii, catl_ii in enumerate(catl_arr):
+        print('{0} Analyzing {1}\n'.format(Prog_msg, catl_ii))
+        catl_name = os.path.splitext(os.path.split(catl_ii)[1])[0]
+        catl_pd   = cu.read_hdf5_file_to_pandas_DF(catl_ii)
+        # MCF Calculations
+        halo_corr(catl_pd, catl_name, param_dict, proj_dict)
+
+
 
 
 # Main function
