@@ -41,10 +41,10 @@ $: 	make show-help
 	make environment
 ```
 
-* __Activate__ the new environment __vandyscripts__.
+* __Activate__ the new environment __conformity__.
 
 ```
-	source activate vandyscripts
+	source activate conformity
 ```
 
 * To __update__ the `environment.yml` file (when the required packages have changed):
