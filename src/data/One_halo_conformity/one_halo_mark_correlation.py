@@ -34,6 +34,7 @@ from progressbar import (Bar, ETA, FileTransferSpeed, Percentage, ProgressBar,
 import argparse
 from argparse import ArgumentParser
 from datetime import datetime
+import subprocess
 
 ## Functions
 def _str2bool(v):
@@ -96,7 +97,7 @@ def get_parser():
                         default=19)
     ## SDSS Kind
     parser.add_argument('-kind',
-                        dest='sdss_kind',
+                        dest='catl_kind',
                         help='Type of data being analyzed.',
                         type=str,
                         choices=['data','mocks'],
@@ -289,6 +290,7 @@ def directory_skeleton(param_dict, proj_dict):
     Parameters
     ----------
     param_dict: python dictionary
+        dictionary with `project` variables
 
     proj_dict: python dictionary
         dictionary with info of the project that uses the
@@ -301,7 +303,7 @@ def directory_skeleton(param_dict, proj_dict):
     """
     ### Output Directory
     outdir = '{0}/interim/SDSS/{1}/{2}/Mr{3}/conformity_output'.format(
-        proj_dict['data_dir'], param_dict['sdss_kind'],
+        proj_dict['data_dir'], param_dict['catl_kind'],
         param_dict['catl_type'], param_dict['sample'])
     ### Directory of `Pickle files` with input parameters
     pickdir = '{0}/pickle_files/{1}/{2}'.format(
@@ -337,15 +339,262 @@ def directory_skeleton(param_dict, proj_dict):
 
     return proj_dict
 
-def halo_corr(catl_pd, catl_name, param_dict, proj_dict):
+def halo_corr(catl_pd, catl_name, param_dict, proj_dict, nmin=2,
+    Prog_msg = '1 >>>  '):
     """
     1-halo mark correlation function for galaxy groups in each group mass bin.
 
     Parameters
     ----------
-    catl_pd: 
+    catl_pd: pandas DataFrame
+        DataFrame with information on catalogue
+
+    catl_name: string
+        name of the `catl_pd`
+
+    param_dict: python dictionary
+        dictionary with `project` variables
+
+    proj_dict: python dictionary
+        Dictionary with current and new paths to project directories
 
     """
+    ### Catalogue Variables
+    # `Group mass`, `groupid`, and `galtype` keys
+    gm_key, id_key, galtype_key = cu.catl_keys(catl_kind=param_dict['catl_kind'],
+                                                return_type='list',
+                                                perf_opt=param_dict['perf_opt'])
+    catl_keys_dict = cu.catl_keys(  catl_kind=param_dict['catl_kind'],
+                                    return_type='dict',
+                                    perf_opt=param_dict['perf_opt'])
+    gm_key      = catl_keys_dict['gm_key']
+    id_key      = catl_keys_dict['id_key']
+    galtype_key = catl_keys_dict['galtype_key']
+    # ssfr and mstar keys
+    ssfr_key, mstar_key = cu.catl_keys_prop(catl_kind=param_dict['catl_kind'], 
+                                                catl_info='members')
+    # Galaxy Properties
+    if param_dict['catl_kind']=='data':
+        pd_keys     = ['logssfr', 'g_r', 'sersic']
+    elif param_dict['catl_kind']==mocks:
+        pd_keys = ['logssfr']
+    # Cleaning catalogue with groups of N > `ngals_min`
+    catl_pd_clean = cu.sdss_catl_clean_nmin(catl_pd, param_dict['catl_kind'],
+        nmin=param_dict['ngals_min'])
+    ### Mass limits
+    GM_min  = catl_pd_clean[gm_key].min()
+    GM_max  = catl_pd_clean[gm_key].max()
+    GM_arr  = cu.Bins_array_create([GM_min,GM_max], param_dict['Mg_bin'])
+    GM_bins = [[GM_arr[ii],GM_arr[ii+1]] for ii in range(GM_arr.shape[0]-1)]
+    GM_bins = num.asarray(GM_bins)
+    ## Pickle file
+    p_arr = [   proj_dict['pickdir']   , param_dict['fig_idx']       ,
+                catl_name              , 
+                param_dict['corr_type'], param_dict['sample']        ,
+                param_dict['itern_tot'], param_dict['rpmin']         ,
+                param_dict['rpmax']    , param_dict['nrpbins']       ,
+                param_dict['pimax']    , param_dict['corr_pair_type'],
+                param_dict['prop_log'] , param_dict['shuffle_marks'] ,
+                param_dict['perf_str'] ]
+    p_fname = '{0}{1}_{2}_{3}_corr_Mr{4}_{5}_{6}_{7}_{8}_{9}_{10}_{11}_{12}_{13}.p'
+    p_fname = p_fname.format(*p_arr)
+    ## Dictionary for storing results for each GM bin
+    GM_prop_dict = {}
+    # Looping over each GM bin
+    for ii, GM_ii in enumerate(GM_bins):
+        # GM string
+        GMbin_min, GMbin_max = GM_ii
+        GM_str = '{0:.2f}_{1:.2f}'.format(GMbin_min, GMbin_max)
+        if param_dict['perf_opt']:
+            print('{0} Halo Mass range: {1}'.format(Prog_msg, GM_str))
+        else:
+            print('{0} Group Mass range: {1}'.format(Prog_msg, GM_str))
+        ## Galaxies in Group-mass bin
+        df_bin = catl_pd_clean.loc[ (catl_pd_clean[gm_key] >= GMbin_min) &\
+                                    (catl_pd_clean[gm_key] <  GMbin_max)]
+        df_bin.reset_index(inplace=True, drop=True)
+        ## Looping over galaxy properties
+        for jj, prop in enumerate(pd_keys):
+            print('{0} >> Galaxy Prop: {1}'.format(Prog_msg, prop))
+            prop_sh_one_halo()
+
+def wp_idx_calc(group_df, GM_str, catl_name, group_ii, param_dict, proj_dict,
+    ext='txt', return_rpbin=False):
+    """
+    Computes the 2-point wp(rp) for the set of galaxies in `group_df`
+
+    Parameters
+    -----------
+    group_df: pandas DataFrame
+        DataFrame with info on galaxies from given group mass bin
+
+    GM_str: string
+        string for the current group/halo mass bin
+
+    catl_name: string
+        basename of the current catalogue being analyzed
+
+    group_ii: int
+        group number being analyzed
+
+    param_dict: python dictionary
+        dictionary with project variables
+
+    proj_dict: python dictionary
+        dictionary with paths to the project directory
+
+    ext: string, optional (default = 'ext')
+        extension of output files
+
+    return_rpbin: boolean, optional (default = False)
+        Option for returning an array of the rpbin of each galaxy
+
+    Returns
+    -----------
+    rp_idx: array-like, shape (len(param_dict['nrpbins']),[])
+        multi-dimensional array for the i-th and j-th elements for each pair
+
+    rp_npairs: array_like, shape (len(param_dict['nrpbins']),[])
+        array of the number of pairs in each rp-bin
+    """
+    ### wprp variables
+    # Cosmology
+    lasdamas_cosmo = int(1)
+    ### Files for wp(rp)
+    files_prefix_arr = [    param_dict['sample'] ,
+                            GM_str               , group_ii            ,
+                            param_dict['rpmin']  , param_dict['rpmax'] ,
+                            param_dict['nrpbins'], param_dict['pimax'],
+                            catl_name            , ext]
+    files_prefix = 'Mr{0}_{1}_gal_radeccz_{2}_{3}_{4}_{5}_{6}_{7}.{8}'.format(
+        *files_prefix_arr)
+    # File with < ra dec cz> values for galaxies in group
+    radeccz_file = '{0}/{1}'.format(proj_dict['out_ddrp'], files_prefix)
+    # File with ith and jth indices of galaxy pairs
+    galidx_file  = '{0}/{1}'.format(proj_dict['out_idx'], files_prefix)
+    # File with the results from wp(rp)
+    res_file     = '{0}/{1}'.format(proj_dict['out_res'], files_prefix)
+    ## Checking if files exists
+    if (not os.path.isfile(radeccz_file)) or (not os.path.isfile(galidx_file)):
+        ## File with <ra dec cz>
+        group_df[['ra','dec','cz']].to_csv(radeccz_file,sep=' ', index=False,
+            header=None)
+        cu.File_Exists(radeccz_file)
+        ## wp(rp) Executable
+        ddrp_exe = cu.get_code_c()+'corrfuncs/VC/DDrp_indices'
+        cu.File_Exists(ddrp_exe)
+        ## Command for executable and executing it
+        ddrp_cmd = '{0} {1} {2} {3} {4} > {5}'.format(ddrp_exe,
+            param_dict['rpmin'], param_dict['rpmax'], param_dict['nrpbins'],
+            radeccz_file       , galidx_file )
+        # Executing `ddrp_cmd` command
+        print('\n{0}\n'.format(ddrp_cmd))
+        subprocess.call(ddrp_cmd, shell=True)
+        cu.File_Exists(galidx_file)
+    ## Reading in output file
+    DDrp_pd = pd.read_csv(galidx_file, delimiter='\s+', names=['rpbin','p','j'])
+    # Checking lenghts
+    if (DDrp_pd.shape[0]==0):
+        os.remove(galidx_file)
+    ## Unique `rp`-bins
+    rpbins_unq = num.unique(DDrp_pd['rpbin'])
+    ## Array of p-th and j-th indices
+    rp_idx = [DDrp_pd.loc[DDrp_pd['rpbin']==xx,['p','j']].values for xx in \
+                range(param_dict['nrpbins'])]
+    rp_idx = num.array(rp_idx)
+    ## Array of total number of pairs in `rp`-bins
+    rp_npairs = num.array([len(xx) for xx in rp_idx])
+
+    return rp_idx, rp_npairs
+
+    
+def prop_sh_one_halo(df_bin, prop, GM_str, catl_name, catl_keys_dict,
+    Prog_msg = '1 >>>  '):
+    """
+    Shuffles the galaxy properties for the 1-halo term (same-halo pairs)
+
+    Parameters
+    ----------
+    df_bin: pandas DataFrame
+        Dataframe for the selected group/halo mass bin
+
+    prop: string
+        galaxy property being evaluated
+
+    GM_str: string
+        string for the corresponding group/halo mass bin limits
+
+    catl_name: string
+        prefix of the catalogue being analyzed
+
+    catl_keys_dict: python dictionary
+        dictionary containing keys for the galaxy properties in catalogue
+    
+    Returns
+    ----------
+
+    """
+    ## Catalogue Variables for galaxy properties
+    gm_key      = catl_keys_dict['gm_key']
+    id_key      = catl_keys_dict['id_key']
+    galtype_key = catl_keys_dict['galtype_key']
+    ## Group statistics
+    groupid_unq = df_bin[id_key].unique()
+    ngroups     = groupid_unq.shape[0]
+    ## Total number of galaxy pairs in `rp`
+    rpbin_npair_tot = num.zeros(param_dict['nrpbins'])
+    ## Pickle file - name - for wp(rp)
+    idx_arr = [ proj_dict['out_catl_p'], param_dict['sample'],
+                GM_str                 , param_dict['rpmin'],
+                param_dict['rpmax']    , param_dict['nrpbins'],
+                param_dict['corr_type'], param_dict['pimax'],
+                param_dict['Mg_bin']   , param_dict['perf_str'],
+                catl_name]
+    catl_idx_file = '{0}/Mr{1}_{2}_{3}_{4}_{5}_{6}_{7}_{8}_{9}_{10}.p'
+    catl_idx_file = catl_idx_file.format(*idx_arr)
+    ## Reading in file
+    # Removing file if needed
+    if (os.path.isfile(catl_idx_file)) and (param_dict['remove_files']):
+        os.remove(catl_idx_file)
+        print('{0} Removing `catl_idx_file`: {1}'.format(
+            Prog_msg, catl_idx_file))
+    if (os.path.isfile(catl_idx_file)):
+        try:
+            catl_idx_pickle = pickle.load(open(catl_idx_file,'rb'))
+            print('catl_idx_file: `{0}`'.format(catl_idx_file))
+            gm_rp_idx, rpbins_npairs_tot = catl_idx_pickle
+        except ValueError:
+            os.remove(catl_idx_file)
+            print('{0} Removing `catl_idx_file`:{1}'.format(
+                Prog_msg, catl_idx_file))
+            ## Running `wp(rp)` for pair counting
+            ## Looping over all galaxy groups
+            for ii, group_ii in enumerate(groupid_unq):
+                # DataFrame for `group_ii`
+                group_df  = df_bin.loc[df_bin[id_key]==group_ii]
+                group_idx = group_df.index.values
+                ## Pair Counting
+                gm_rp_idx, gm_rp_npairs = wp_idx_calc(
+                    group_df, GM_str, catl_name, param_dict, proj_dict)
+
+
+
+
+
+            gm_rp_idx, rpbins_npairs_tot = wp_idx_calc(
+                df_bin                 , param_dict['sample']     ,
+                param_dict['rpmin']    , param_dict['rpmax']      , 
+                param_dict['nrpbins']  , GM_str                   ,
+                param_dict['corr_type'], proj_dict                ,
+                catl_name              , pimax=param_dict['pimax'])
+            ## Checking total sum in bins
+            if num.sum(rpbins_npairs_tot) != 0:
+                pickle.dump([gm_rp_idx, rpbins_npairs_tot],
+                            open(catl_idx_file,'wb'))
+            else:
+                ## 
+
+
 
 def main(args, Prog_msg = '1 >>>  '):#,
     # Prog_msg = cu.Program_Msg(__file__)):
@@ -372,7 +621,7 @@ def main(args, Prog_msg = '1 >>>  '):#,
     proj_dict  = directory_skeleton(param_dict, cu.cookiecutter_paths('./'))
     ## Running analysis
     # Reading catalogues
-    catl_arr_all = cu.extract_catls(catl_kind=param_dict['sdss_kind'],
+    catl_arr_all = cu.extract_catls(catl_kind=param_dict['catl_kind'],
                                     catl_type=param_dict['catl_type'],
                                     sample_s =param_dict['sample_s'],
                                     perf_opt =param_dict['perf_opt'],
@@ -381,7 +630,7 @@ def main(args, Prog_msg = '1 >>>  '):#,
     catl_arr = catl_arr_all[param_dict['catl_start']:param_dict['catl_finish']]
     # Looping over catalogues
     for ii, catl_ii in enumerate(catl_arr):
-        print('{0} Analyzing {1}\n'.format(Prog_msg, catl_ii))
+        print('{0} Analyzing `{1}`\n'.format(Prog_msg, catl_ii))
         catl_name = os.path.splitext(os.path.split(catl_ii)[1])[0]
         catl_pd   = cu.read_hdf5_file_to_pandas_DF(catl_ii)
         # MCF Calculations
