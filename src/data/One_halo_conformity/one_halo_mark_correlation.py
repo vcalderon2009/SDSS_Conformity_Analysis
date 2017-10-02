@@ -542,7 +542,7 @@ def prop_sh_one_halo(df_bin, prop, GM_str, catl_name, catl_keys_dict,
     groupid_unq = df_bin[id_key].unique()
     ngroups     = groupid_unq.shape[0]
     ## Total number of galaxy pairs in `rp`
-    rpbin_npair_tot = num.zeros(param_dict['nrpbins'])
+    rpbins_npairs_tot = num.zeros(param_dict['nrpbins'])
     ## Pickle file - name - for wp(rp)
     idx_arr = [ proj_dict['out_catl_p'], param_dict['sample'],
                 GM_str                 , param_dict['rpmin'],
@@ -553,6 +553,8 @@ def prop_sh_one_halo(df_bin, prop, GM_str, catl_name, catl_keys_dict,
     catl_idx_file = '{0}/Mr{1}_{2}_{3}_{4}_{5}_{6}_{7}_{8}_{9}_{10}.p'
     catl_idx_file = catl_idx_file.format(*idx_arr)
     ## Reading in file
+    # Pair-counting for each galaxy group
+    zz = 0
     # Removing file if needed
     if (os.path.isfile(catl_idx_file)) and (param_dict['remove_files']):
         os.remove(catl_idx_file)
@@ -575,24 +577,98 @@ def prop_sh_one_halo(df_bin, prop, GM_str, catl_name, catl_keys_dict,
                 group_idx = group_df.index.values
                 ## Pair Counting
                 gm_rp_idx, gm_rp_npairs = wp_idx_calc(
-                    group_df, GM_str, catl_name, param_dict, proj_dict)
-
-
-
-
-
-            gm_rp_idx, rpbins_npairs_tot = wp_idx_calc(
-                df_bin                 , param_dict['sample']     ,
-                param_dict['rpmin']    , param_dict['rpmax']      , 
-                param_dict['nrpbins']  , GM_str                   ,
-                param_dict['corr_type'], proj_dict                ,
-                catl_name              , pimax=param_dict['pimax'])
-            ## Checking total sum in bins
+                    group_df, GM_str, catl_name, group_ii, param_dict, 
+                    proj_dict)
+                ## Converting to galaxy indices and checkin total number pairs
+                if num.sum(gm_rp_npairs) != 0:
+                    # Converting to galaxy indices
+                    rp_idx_arr = num.array([group_idx[xx] for xx in gm_rp_idx])
+                    # Total number of pairs
+                    rpbins_npairs_tot += gm_rp_npairs
+                    # Saving idx's and galaxy properties into arrays
+                    if zz==0:
+                        group_idx_arr = rp_idx_arr.copy()
+                    else:
+                        group_idx_arr = num.array([num.append(
+                            group_idx_arr[x],rp_idx_arr[x],0) \
+                            for x in range(len(gm_rp_idx))])
+                    ## Increasing `zz`
+                    zz += int(1)
+            ## Saving indices into a Pickle file if file does not exist
             if num.sum(rpbins_npairs_tot) != 0:
-                pickle.dump([gm_rp_idx, rpbins_npairs_tot],
-                            open(catl_idx_file,'wb'))
+                pickle.dump([group_idx_arr, rpbins_npairs_tot],
+                    open(catl_idx_file,'wb'))
             else:
-                ## 
+                corrfunc     = num.zeros(param_dict['nrpbins'])
+                corrfunc [:] = num.nan
+                corrfunc_seg = corrfunc.copy()
+                npairs_tot   = num.sum(rpbins_npairs_tot)
+                corrfunc_sh_tot = corrfunc.copy()
+                mark_nanmean    = corrfunc.copy()
+                mark_nanstd  = corrfunc.copy()
+                sigma_arr       = num.zeros(2*param_dict['nrpbins']).reshape(
+                    2, param_dict['nrpbins'])
+                sigma_arr[:]    = num.nan
+                sigma1_arr      = sigma_arr.copy()
+                sigma2_arr      = sigma_arr.copy()
+                sigma3_arr      = sigma_arr.copy()
+
+                return (corrfunc, sigma1_arr, sigma2_arr, sigma3_arr, ngroups,
+                        npairs_tot, rpbins_npairs_tot, corrfunc_sh_tot, 
+                        mark_nanmean, mark_nanstd, corrfunc_seg, sigma1_arr, 
+                        sigma2_arr, sigma3_arr)
+    else:
+        ## Running complete analysis
+        ## Running `wp(rp)` for pair counting
+        ## Looping over all galaxy groups
+        for ii, group_ii in enumerate(groupid_unq):
+            # DataFrame for `group_ii`
+            group_df  = df_bin.loc[df_bin[id_key]==group_ii]
+            group_idx = group_df.index.values
+            ## Pair Counting
+            gm_rp_idx, gm_rp_npairs = wp_idx_calc(
+                group_df, GM_str, catl_name, group_ii, param_dict, 
+                proj_dict)
+            ## Converting to galaxy indices and checkin total number pairs
+            if num.sum(gm_rp_npairs) != 0:
+                # Converting to galaxy indices
+                rp_idx_arr = num.array([group_idx[xx] for xx in gm_rp_idx])
+                # Total number of pairs
+                rpbins_npairs_tot += gm_rp_npairs
+                # Saving idx's and galaxy properties into arrays
+                if zz==0:
+                    group_idx_arr = rp_idx_arr.copy()
+                else:
+                    group_idx_arr = num.array([num.append(
+                        group_idx_arr[x],rp_idx_arr[x],0) \
+                        for x in range(len(gm_rp_idx))])
+                ## Increasing `zz`
+                zz += int(1)
+        ## Saving indices into a Pickle file if file does not exist
+        if num.sum(rpbins_npairs_tot) != 0:
+            pickle.dump([group_idx_arr, rpbins_npairs_tot],
+                open(catl_idx_file,'wb'))
+        else:
+            corrfunc     = num.zeros(param_dict['nrpbins'])
+            corrfunc [:] = num.nan
+            corrfunc_seg = corrfunc.copy()
+            npairs_tot   = num.sum(rpbins_npairs_tot)
+            corrfunc_sh_tot = corrfunc.copy()
+            mark_nanmean    = corrfunc.copy()
+            mark_nanstd  = corrfunc.copy()
+            sigma_arr       = num.zeros(2*param_dict['nrpbins']).reshape(
+                2, param_dict['nrpbins'])
+            sigma_arr[:]    = num.nan
+            sigma1_arr      = sigma_arr.copy()
+            sigma2_arr      = sigma_arr.copy()
+            sigma3_arr      = sigma_arr.copy()
+
+            return (corrfunc, sigma1_arr, sigma2_arr, sigma3_arr, ngroups,
+                    npairs_tot, rpbins_npairs_tot, corrfunc_sh_tot, 
+                    mark_nanmean, mark_nanstd, corrfunc_seg, sigma1_arr, 
+                    sigma2_arr, sigma3_arr)
+    
+
 
 
 
