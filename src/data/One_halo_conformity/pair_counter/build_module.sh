@@ -1,10 +1,12 @@
 #!/bin/bash
-
-python setup.py build_ext --inplace
+name_mod='pair_counter_rp'
+## Removing previous *.so files
 rm ./*.so
-rm ../*.so
-cp ./pair_counter/pair_counter_rp*.so ./
-mv ./pair_counter_rp*.so ./pair_counter_rp.so
-cp ./pair_counter_rp.so ../
-rm -r ./pair_counter
+## Running Cython compilation
+python setup.py build_ext --inplace
+## Copying python module
+cp ./${name_mod}/${pair_counter_rp}*.so ./
+mv ./${name_mod}*.so ./${name_mod}.so
+## Deleting extra folders
+rm -r ./${name_mod}
 rm -r ./build
