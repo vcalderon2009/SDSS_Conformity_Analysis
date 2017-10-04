@@ -13,11 +13,12 @@ Computes the number of pairs in perpendicular projected distance `rp` bins
 for a set of galaxies with <ra dec cz> positions
 """
 # Importing Modules
+cimport cython
 import numpy as np
 cimport numpy as cnp
 # from libc.math import sqrt, log10
 from math import sqrt, log10
-cimport cython
+
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
