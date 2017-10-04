@@ -16,8 +16,8 @@ for a set of galaxies with <ra dec cz> positions
 cimport cython
 import numpy as np
 cimport numpy as cnp
-# from libc.math import sqrt, log10
-from math import sqrt, log10
+from libc.math cimport sqrt, log10, fabs
+# from math import sqrt, log10
 
 
 @cython.boundscheck(False)
@@ -68,11 +68,12 @@ def pairwise_distance_rp(coord_1, coord_2, rpmin=0.01, rpmax=10,
     ith_arr = []
     jth_arr = []
     ## Number of Elements
-    cdef int Ni, Nj, i, j, rpbin
+    cdef int Ni, Nj, i, j
+    cdef cnp.float64_t rpbin
     Ni = len(coord_1)
     Nj = len(coord_2)
     ## -- Constants --
-    cdef cnp.float64_t PI180 = np.pi/180.
+    cdef cnp.float64_t PI180 = 3.141592653589793/180.
     ## -- Count Pairs variables --
     cdef cnp.float64_t sx, sy, sz, lx, ly, lz, l2, ll, spar, s2, sperp
     ## -- `rp` constants
@@ -85,13 +86,8 @@ def pairwise_distance_rp(coord_1, coord_2, rpmin=0.01, rpmax=10,
     cdef cnp.float64_t dlogrp   = (logrpmax-logrpmin)/nrpbins
     ## -- Cartesian Coordinates --
     # Sample 1
-    cdef cnp.float64_t[:] x1 = np.zeros(Ni, dtype=np.float64)
-    cdef cnp.float64_t[:] y1 = np.zeros(Ni, dtype=np.float64)
-    cdef cnp.float64_t[:] z1 = np.zeros(Ni, dtype=np.float64)
-    # Sample 2
-    cdef cnp.float64_t[:] x2 = np.zeros(Nj, dtype=np.float64)
-    cdef cnp.float64_t[:] y2 = np.zeros(Nj, dtype=np.float64)
-    cdef cnp.float64_t[:] z2 = np.zeros(Nj, dtype=np.float64)
+    cdef cnp.float64_t[:] x1, y1, z1
+    cdef cnp.float64_t[:] x2, y2, z2
     ## -- Spherical Coordinates --
     ra1, dec1, cz1 = coord_1.T
     ra2, dec2, cz2 = coord_2.T
@@ -117,7 +113,7 @@ def pairwise_distance_rp(coord_1, coord_2, rpmin=0.01, rpmax=10,
             lz = 0.5*(z1[i] + z2[j])
             l2 = (lx * lx) + (ly * ly) + (lz * lz)
             ll = sqrt(l2)
-            spar = abs(((sx * lx) + (sy * ly) + (sz * lz)) / ll)
+            spar = fabs(((sx * lx) + (sy * ly) + (sz * lz)) / ll)
             s2 = (sx * sx) + (sy * sy) + (sz * sz)
             sperp = sqrt(s2 - spar * spar)
             if (sperp >= rp_min_p) & (sperp <= rp_max_p):
