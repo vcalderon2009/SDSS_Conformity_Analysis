@@ -100,7 +100,7 @@ def pairwise_distance_rp(coord_1, coord_2, rpmin=0.01, rpmax=10,
     ## Looping over points in `coord_1`
     for i in range(Ni):
         ## Looping over points in `coord_2`
-        for j in range(Nj):
+        for j in range(i+1,Nj):
             # Calculate the square distances
             sx = x1[i] - x2[j]
             sy = y1[i] - y2[j]
