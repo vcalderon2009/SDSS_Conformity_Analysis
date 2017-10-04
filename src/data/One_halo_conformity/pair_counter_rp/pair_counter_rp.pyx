@@ -54,14 +54,11 @@ def pairwise_distance_rp(coord_1, coord_2, rpmin=0.01, rpmax=10,
 
     Returns
     ----------
-    rp_bin: array-like, shape (M,)
-        `rp` bin number, to which galaxy pair belongs
-
-    i_ind: array-like
-        indices of 0-indexed indices in sample 1
-
-    j_ind: array-like
-        indices of 0-indexed indices in sample 2
+    rp_ith_arr: array-like, shape (M,3)
+        three-dimensional array of M-elements containing:
+        - `rp` bin number, to which galaxy pair belongs
+        - i_ind: indices of 0-indexed indices in sample 1
+        - j_ind: indices of 0-indexed indices in sample 2
     """
     ## -- Output Lists -- 
     rp_arr  = []
