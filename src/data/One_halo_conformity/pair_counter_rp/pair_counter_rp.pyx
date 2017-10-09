@@ -113,7 +113,10 @@ def pairwise_distance_rp(coord_1, coord_2, rpmin=0.01, rpmax=10,
             spar = fabs(((sx * lx) + (sy * ly) + (sz * lz)) / ll)
             s2 = (sx * sx) + (sy * sy) + (sz * sz)
             sperp = sqrt(s2 - spar * spar)
-            if (sperp >= rp_min_p) & (sperp <= rp_max_p):
+            ### --- TEMPORARY
+            # print('{0}i: {1} | j: {2} | parx: {3} | pary: {4} | parz:{5} | perpx: {6} | perpy: {7} | perpz: {8} | Dpar: {9} | Dperp: {10} | rpbin: {11}'.format(
+            #     '',i,j,lx,ly,lz,sx,sy,sz,spar,sperp, (log10(sperp) - logrpmin)/dlogrp))
+            if (sperp > rp_min_p) & (sperp < rp_max_p):
                 # `rp` bin of pair
                 rpbin = (log10(sperp) - logrpmin)/dlogrp
                 # Appending to lists

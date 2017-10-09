@@ -35,8 +35,92 @@ import argparse
 from argparse import ArgumentParser
 from datetime import datetime
 import subprocess
+import astropy.cosmology as astrocosmo
+import astropy.constants as ac
+import astropy.units as u
+from astropy.coordinates import SkyCoord
+from astropy.coordinates import Distance
 
 ## Functions
+def cosmo_create(cosmo_choice='LasDamas', H0=100., Om0=0.25, Ob0=0.04,
+    Tcmb0=2.7255):
+    """
+    Creates instance of the cosmology used throughout the project.
+
+    Parameters
+    ----------
+    cosmo_choice: string, optional (default = 'Planck')
+        choice of cosmology
+        Options:
+            - Planck: Cosmology from Planck 2015
+            - LasDamas: Cosmology from LasDamas simulation
+
+    h: float, optional (default = 1.0)
+        value for small cosmological 'h'.
+
+    Returns
+    ----------                  
+    cosmo_model: astropy cosmology object
+        cosmology used throughout the project
+    """
+    ## Checking cosmology choices
+    cosmo_choice_arr = ['Planck', 'LasDamas']
+    assert(cosmo_choice in cosmo_choice_arr)
+    ## Choosing cosmology
+    if cosmo_choice == 'Planck':
+        cosmo_model = astrocosmo.Planck15.clone(H0=H0)
+    elif cosmo_choice == 'LasDamas':
+        cosmo_model = astrocosmo.FlatLambdaCDM(H0=H0, Om0=Om0, Ob0=Ob0, 
+            Tcmb0=Tcmb0)
+    ## Cosmo Paramters
+    cosmo_params         = {}
+    cosmo_params['H0'  ] = cosmo_model.H0.value
+    cosmo_params['Om0' ] = cosmo_model.Om0
+    cosmo_params['Ob0' ] = cosmo_model.Ob0
+    cosmo_params['Ode0'] = cosmo_model.Ode0
+    cosmo_params['Ok0' ] = cosmo_model.Ok0
+
+    return cosmo_model
+
+def spherical_to_cart(catl_pd, cosmo_model):
+    """
+    Converts the spherical coordiates < ra dec cz > of galaxies 
+    to cartesian coordinates
+
+    Parameters
+    ----------
+    catl_pd: pandas DataFrame
+        DataFrame with information on catalogue
+
+    cosmo_model: astropy cosmology object
+        cosmology used throughout the project
+
+    Returns
+    ----------
+    catl_pd: pandas DataFrame
+        DataFrame with information on catalogue and with `new`
+        cartesian coordinates of galaxies.
+        In units of `astropy.units.Mpc` with h=1
+    """
+    ## Determining comoving distance
+    c_units      = ac.c.to(u.km/u.s)
+    gal_redshift = (catl_pd['cz']*(u.km/u.s))/(c_units)
+    gal_dist     = cosmo_model.comoving_distance(gal_redshift).to(u.Mpc)
+    ## Adding to `catl_pd`
+    catl_pd.loc[:,'dist'] = gal_dist.value
+    ## Spherical Coordinates
+    gal_sph = SkyCoord( ra=catl_pd['ra'].values*u.degree, 
+                        dec=catl_pd['dec'].values*u.degree,
+                        distance=catl_pd['dist'].values*u.Mpc)
+    ## Cartesian Coordinates
+    gal_x, gal_y, gal_z = gal_sph.cartesian.xyz.value
+    ## Adding to `catl_pd`
+    catl_pd.loc[:,'x'] = gal_x
+    catl_pd.loc[:,'y'] = gal_y
+    catl_pd.loc[:,'z'] = gal_z
+
+    return catl_pd
+
 def _str2bool(v):
     if v.lower() in ('yes', 'true', 't', 'y', '1'):
         return True
@@ -207,6 +291,13 @@ def get_parser():
                         type=str,
                         choices=['galgal'],
                         default='galgal')
+    ## Cosmology Choice
+    parser.add_argument('-cosmo',
+                        dest='cosmo_choice',
+                        help='Choice of Cosmology',
+                        type=str,
+                        choices=['LasDamas', 'Planck'],
+                        default='LasDamas')
     ## Parsing Objects
     args = parser.parse_args()
 
@@ -457,6 +548,19 @@ def wp_idx_calc(group_df, GM_str, catl_name, group_ii, param_dict, proj_dict,
     rp_npairs: array_like, shape (len(param_dict['nrpbins']),[])
         array of the number of pairs in each rp-bin
     """
+    ## python implementation
+    ra_arr  = [41.280586, 41.364842, 41.360894]
+    dec_arr = [0.950152, 0.914361, 0.910134]
+    cz_arr  = [7346.99, 7303.35, 7485.87]
+    gp_pd   = pd.DataFrame({'ra':ra_arr,'dec':dec_arr,'cz':cz_arr})
+
+    rp_ith_arr = pairwise_distance_rp(  group_df[['ra','dec','cz']].values,
+                                        group_df[['ra','dec','cz']].values,
+                                        rpmin=param_dict['rpmin'],
+                                        rpmax=param_dict['rpmax'],
+                                        nrpbins=param_dict['nrpbins'],
+                                        pimax=param_dict['pimax'])
+
     ### wprp variables
     # Cosmology
     lasdamas_cosmo = int(1)
@@ -621,6 +725,9 @@ def prop_sh_one_halo(df_bin, prop, GM_str, catl_name, catl_keys_dict,
         ## Running complete analysis
         ## Running `wp(rp)` for pair counting
         ## Looping over all galaxy groups
+        # ProgressBar properties
+        widgets   = [Bar('>'), ' ', ETA(), ' ', ReverseBar('<')]
+        pbar_mock = ProgressBar( widgets=widgets, maxval= 10*ngroups).start()
         for ii, group_ii in enumerate(groupid_unq):
             # DataFrame for `group_ii`
             group_df  = df_bin.loc[df_bin[id_key]==group_ii]
@@ -643,7 +750,9 @@ def prop_sh_one_halo(df_bin, prop, GM_str, catl_name, catl_keys_dict,
                         group_idx_arr[x],rp_idx_arr[x],0) \
                         for x in range(len(gm_rp_idx))])
                 ## Increasing `zz`
+                pbar_mock.update(10*zz)
                 zz += int(1)
+        pbar_mock.finish()
         ## Saving indices into a Pickle file if file does not exist
         if num.sum(rpbins_npairs_tot) != 0:
             pickle.dump([group_idx_arr, rpbins_npairs_tot],
@@ -692,9 +801,12 @@ def main(args, Prog_msg = '1 >>>  '):#,
     ## ---- Adding to `param_dict` ---- 
     param_dict = add_to_dict(param_dict)
     ## Creating Folder Structure
-    # proj_dict  = cu.cookiecutter_paths(__file__)
     # proj_dict  = directory_skeleton(param_dict, cu.cookiecutter_paths(__file__))
     proj_dict  = directory_skeleton(param_dict, cu.cookiecutter_paths('./'))
+    ## Choosing cosmological model
+    cosmo_model = cosmo_create(cosmo_choice=param_dict['cosmo_choice'])
+    ## Computing cartesian coordinates
+    catl_pd = spherical_to_cart(catl_pd, cosmo_model)
     ## Running analysis
     # Reading catalogues
     catl_arr_all = cu.extract_catls(catl_kind=param_dict['catl_kind'],
