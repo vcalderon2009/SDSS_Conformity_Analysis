@@ -26,7 +26,7 @@ from libc.math cimport sqrt, log10, fabs
 
 ## Functions
 def pairwise_distance_rp(coord_1, coord_2, rpmin=0.01, rpmax=10, 
-    nrpbins=10, pimax=20):
+    nrpbins=10, pimax=20, print_str=False):
     """
     Cython engine for returning pairs of points separated in 
     projected radial bins with an observer at (0,0,0)
@@ -35,10 +35,10 @@ def pairwise_distance_rp(coord_1, coord_2, rpmin=0.01, rpmax=10,
     ----------
 
     coord_1: array_lke, shape (N,3)
-        arrays of <ra | dec | cz > of sample 1
+        arrays of < x | y | z > of sample 1
 
     coord_2: array_lke, shape (N,3)
-        arrays of <ra | dec | cz > of sample 2
+        arrays of < x | y | z > of sample 2
 
     rpmin: float, optional (default = 0.01)
         minimum `rp` (perpendicular distance) to search for and return pairs
@@ -51,6 +51,9 @@ def pairwise_distance_rp(coord_1, coord_2, rpmin=0.01, rpmax=10,
 
     pimax: float, optional (default = 20.)
         maximum parallel separation distance to search for and return pairs
+
+    print_str: boolean, optional (default = False)
+        option to print out values at each iteration
 
     Returns
     ----------
@@ -83,39 +86,30 @@ def pairwise_distance_rp(coord_1, coord_2, rpmin=0.01, rpmax=10,
     cdef cnp.float64_t dlogrp   = (logrpmax-logrpmin)/nrpbins
     ## -- Cartesian Coordinates --
     # Sample 1
-    cdef cnp.float64_t[:] x1, y1, z1
-    cdef cnp.float64_t[:] x2, y2, z2
-    ## -- Spherical Coordinates --
-    ra1, dec1, cz1 = coord_1.T
-    ra2, dec2, cz2 = coord_2.T
-    ## -- To Cartesian Coordinates --
-    # - Sample 1
-    x1 = (cz1/100.)*np.cos(dec1*PI180)*np.cos(ra1*PI180)
-    y1 = (cz1/100.)*np.cos(dec1*PI180)*np.sin(ra1*PI180)
-    z1 = (cz1/100.)*np.sin(dec1*PI180)
-    # - Sample 2
-    x2 = (cz2/100.)*np.cos(dec2*PI180)*np.cos(ra2*PI180)
-    y2 = (cz2/100.)*np.cos(dec2*PI180)*np.sin(ra2*PI180)
-    z2 = (cz2/100.)*np.sin(dec2*PI180)
+    cdef cnp.float64_t[:] x1 = coord_1.T[0]
+    cdef cnp.float64_t[:] y1 = coord_1.T[1]
+    cdef cnp.float64_t[:] z1 = coord_1.T[2]
+    # Sample 2
+    cdef cnp.float64_t[:] x2 = coord_2.T[0]
+    cdef cnp.float64_t[:] y2 = coord_2.T[1]
+    cdef cnp.float64_t[:] z2 = coord_2.T[2]
     ## Looping over points in `coord_1`
     for i in range(Ni):
         ## Looping over points in `coord_2`
         for j in range(i+1,Nj):
             # Calculate the square distances
-            sx = x1[i] - x2[j]
-            sy = y1[i] - y2[j]
-            sz = z1[i] - z2[j]
-            lx = 0.5*(x1[i] + x2[j])
-            ly = 0.5*(y1[i] + y2[j])
-            lz = 0.5*(z1[i] + z2[j])
-            l2 = (lx * lx) + (ly * ly) + (lz * lz)
-            ll = sqrt(l2)
-            spar = fabs(((sx * lx) + (sy * ly) + (sz * lz)) / ll)
-            s2 = (sx * sx) + (sy * sy) + (sz * sz)
+            sx    = x1[i] - x2[j]
+            sy    = y1[i] - y2[j]
+            sz    = z1[i] - z2[j]
+            lx    = 0.5*(x1[i] + x2[j])
+            ly    = 0.5*(y1[i] + y2[j])
+            lz    = 0.5*(z1[i] + z2[j])
+            l2    = (lx * lx) + (ly * ly) + (lz * lz)
+            ll    = sqrt(l2)
+            spar  = fabs(((sx * lx) + (sy * ly) + (sz * lz)) / ll)
+            s2    = (sx * sx) + (sy * sy) + (sz * sz)
             sperp = sqrt(s2 - spar * spar)
-            ### --- TEMPORARY
-            # print('{0}i: {1} | j: {2} | parx: {3} | pary: {4} | parz:{5} | perpx: {6} | perpy: {7} | perpz: {8} | Dpar: {9} | Dperp: {10} | rpbin: {11}'.format(
-            #     '',i,j,lx,ly,lz,sx,sy,sz,spar,sperp, (log10(sperp) - logrpmin)/dlogrp))
+            ## Criteria for `projected separation`
             if (sperp > rp_min_p) & (sperp < rp_max_p):
                 # `rp` bin of pair
                 rpbin = (log10(sperp) - logrpmin)/dlogrp
@@ -126,7 +120,7 @@ def pairwise_distance_rp(coord_1, coord_2, rpmin=0.01, rpmax=10,
     ## Converting to Numpy arrays
     rp_arr     = np.array(rp_arr).astype(int)
     ith_arr    = np.array(ith_arr).astype(int)
-    ith_arr    = np.array(jth_arr).astype(int)
+    jth_arr    = np.array(jth_arr).astype(int)
     # Combining arrays into a single array
     rp_ith_arr = np.column_stack((rp_arr, ith_arr, jth_arr))
 
