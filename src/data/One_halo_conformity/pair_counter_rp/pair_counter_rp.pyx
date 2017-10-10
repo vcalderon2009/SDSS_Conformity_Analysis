@@ -1,5 +1,5 @@
 # Victor Calderon
-# October 4th, 2017
+# October 9th, 2017
 # Vanderbilt University
 
 from __future__ import print_function, division, absolute_import
@@ -17,8 +17,6 @@ cimport cython
 import numpy as np
 cimport numpy as cnp
 from libc.math cimport sqrt, log10, fabs
-# from math import sqrt, log10
-
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
@@ -26,7 +24,7 @@ from libc.math cimport sqrt, log10, fabs
 
 ## Functions
 def pairwise_distance_rp(coord_1, coord_2, rpmin=0.01, rpmax=10, 
-    nrpbins=10, print_str=False):
+    nrpbins=10):
     """
     Cython engine for returning pairs of points separated in 
     projected radial bins with an observer at (0,0,0)
@@ -48,9 +46,6 @@ def pairwise_distance_rp(coord_1, coord_2, rpmin=0.01, rpmax=10,
 
     nrpbins: int, optional (default = 10)
         total number of `rp` bins
-    
-    print_str: boolean, optional (default = False)
-        option to print out values at each iteration
 
     Returns
     ----------
