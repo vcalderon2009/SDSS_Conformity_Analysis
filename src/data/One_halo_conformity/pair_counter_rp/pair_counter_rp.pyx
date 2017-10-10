@@ -26,7 +26,7 @@ from libc.math cimport sqrt, log10, fabs
 
 ## Functions
 def pairwise_distance_rp(coord_1, coord_2, rpmin=0.01, rpmax=10, 
-    nrpbins=10, pimax=20, print_str=False):
+    nrpbins=10, print_str=False):
     """
     Cython engine for returning pairs of points separated in 
     projected radial bins with an observer at (0,0,0)
@@ -48,10 +48,7 @@ def pairwise_distance_rp(coord_1, coord_2, rpmin=0.01, rpmax=10,
 
     nrpbins: int, optional (default = 10)
         total number of `rp` bins
-
-    pimax: float, optional (default = 20.)
-        maximum parallel separation distance to search for and return pairs
-
+    
     print_str: boolean, optional (default = False)
         option to print out values at each iteration
 
@@ -80,7 +77,6 @@ def pairwise_distance_rp(coord_1, coord_2, rpmin=0.01, rpmax=10,
     cdef int nrpbins_p          = nrpbins
     cdef cnp.float64_t rp_min_p = rpmin
     cdef cnp.float64_t rp_max_p = rpmax
-    cdef cnp.float64_t pi_max_p = pimax
     cdef cnp.float64_t logrpmin = log10(rpmin)
     cdef cnp.float64_t logrpmax = log10(rpmax)
     cdef cnp.float64_t dlogrp   = (logrpmax-logrpmin)/nrpbins
