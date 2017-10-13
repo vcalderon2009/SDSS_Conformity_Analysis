@@ -221,7 +221,7 @@ def get_parser():
                         dest='corr_pair_type',
                         help='Types of galaxy pairs to keep for the MFC and ',
                         type=str,
-                        choices=['cen_sat', 'all'],
+                        choices=['cen_sat'],
                         default='cen_sat')
     ## Shuffling Marks
     parser.add_argument('-shuffle',
@@ -579,7 +579,7 @@ def wp_idx_calc(group_df, param_dict):
 
     return rp_idx, rp_npairs
         
-def MCF_conf_seg(df_bin, group_idx_arr, rpbins_npairs_tot, 
+def MCF_conf_seg(prop, df_bin_org, group_idx_arr, rpbins_npairs_tot, 
     param_dict, catl_keys_dict):
     """
     Marked correlation function calculation for the case,
@@ -590,7 +590,10 @@ def MCF_conf_seg(df_bin, group_idx_arr, rpbins_npairs_tot,
 
     Parameters
     -----------
-    df_bin: pandas DataFrame
+    prop: string
+        galaxy property being analyzed
+    
+    df_bin_org: pandas DataFrame
     
     group_idx_arr: numpy.ndarraym, shape (param_dict['nrpbins'])
 
@@ -613,6 +616,8 @@ def MCF_conf_seg(df_bin, group_idx_arr, rpbins_npairs_tot,
             - 'sigma': Dictionary of 1,2,3- sigma ranges for the `shuffled` MCF
             - 'mcf_sh': MCFs for all iterations for the shuffled scenario
     """
+    ## Creating new DataFrame
+    df_bin = df_bin_org.copy()
     ## Constants
     Cens  = int(1)
     Sats  = int(0)
@@ -704,7 +709,7 @@ def MCF_conf_seg(df_bin, group_idx_arr, rpbins_npairs_tot,
     pbar_mock = ProgressBar( widgets=widgets, maxval= 10 * itern).start()
     for ii in range(param_dict['itern_tot']):
         ##
-        ## Copying default `prop` array to DataFrame df_bin_sh`
+        ## Copying default `prop` array to DataFrame `df_bin_sh`
         df_bin_sh.loc[:,prop_sh] = copy.deepcopy(prop_arr)
         ##
         ## Shuffling based on `shuffle_marks`
@@ -790,6 +795,269 @@ def MCF_conf_seg(df_bin, group_idx_arr, rpbins_npairs_tot,
 
     return mcf_dict
 
+def MCF_conf(prop, df_bin_org, group_idx_arr, rpbins_npairs_tot, param_dict, 
+    catl_keys_dict):
+    """
+    Marked correlation function calculation for the case,
+    where `Conformity only` is considered
+    In here, we 'remove' the segregation effect of satellites, and 
+    thus, it does not show the "true" signal of galactic conformity 
+    alone. This means that satellites are normalized by the mean 
+    `prop` in each `rp`-bin, rather than by the total mean of `prop` 
+    for satellites
+
+    Parameters
+    -----------
+    prop: string
+        galaxy property being analyzed
+
+    df_bin_org: pandas DataFrame
+    
+    group_idx_arr: numpy.ndarraym, shape (param_dict['nrpbins'])
+
+    rpbins_npairs_tot: numpy.ndarray, shape (param_dict['nrpbins'])
+
+    param_dict: python dictionary
+
+    catl_keys_dict: python dictionary
+
+    Returns
+    -----------
+    mcf_dict: python dictionary
+        dictionary containing the statistics of the MCF and the `shuffled` MCF
+        Keys:
+            - 'mcf': Marked correlation function for `non-shuffled` scenario
+            - 'npairs': Total number of pairs for the `selected` galaxy pairs
+            - 'npairs_rp': Number of selected galaxy-pairs in each `rp`-bin
+            - 'mcf_sh_mean': Mean of the Shuffled MCF.
+            - 'mcf_sh_std': St. Dev. of the Shuffled MCF.
+            - 'sigma': Dictionary of 1,2,3- sigma ranges for the `shuffled` MCF
+            - 'mcf_sh': MCFs for all iterations for the shuffled scenario
+    """
+    ## Creating new DataFrame
+    df_bin = df_bin_org.copy()
+    ## Constants
+    Cens  = int(1)
+    Sats  = int(0)
+    itern = param_dict['itern_tot']
+    ## Galaxy Property Labels
+    prop_orig = prop + '_orig'
+    ## Catalogue Variables for galaxy properties
+    gm_key      = catl_keys_dict['gm_key']
+    id_key      = catl_keys_dict['id_key']
+    galtype_key = catl_keys_dict['galtype_key']
+    ##
+    ## Type of correlation Galaxy Pair
+    ## Adding the values for 'Cens' and 'Sats' and determining which 
+    ## galaxy pair to keep for the analysis.
+    if param_dict['corr_pair_type']=='cen_sat':
+        ## Keeping 'Central-Satellite' pairs
+        corr_pair_int = Cens + Sats
+    elif param_dict['corr_pair_type']=='cen_cen':
+        corr_pair_int = Cens + Cens
+    ##
+    ## Correctint for `log` in `prop`
+    nonlog_arr = ['logssfr', 'logMstar_JHU']
+    if (prop in nonlog_arr) and (param_dict['prop_log']=='nonlog'):
+        df_bin.loc[:,prop] = 10**df_bin[prop].values
+    ##
+    ## Galaxy type, `prop`, and `original` arrays
+    galtype_arr   = df_bin[galtype_key].copy().values
+    galidx_arr    = df_bin.index.values.copy()
+    prop_orig_arr = copy.deepcopy(df_bin[prop].values)
+    ##
+    ## Assigning original `prop` to new column in `df_bn`
+    df_bin.loc[:,prop_orig] = prop_orig_arr.copy()
+    ##
+    ## Indices of `Centrals` and `Satellites
+    cen_idx = df_bin.loc[df_bin[galtype_key]==Cens].index.values
+    sat_idx = df_bin.loc[df_bin[galtype_key]==Sats].index.values
+    ##
+    ## --| Normalization of Centrals and Satellites |--- ##
+    ##
+    # Normalizing `Central` galaxies
+    cens_prop_mean = df_bin.loc[cen_idx, prop].mean()
+    df_bin.loc[cen_idx, prop] /= cens_prop_mean
+    ##
+    ## Normalizing `Satellites`
+    # Create a row for the `rp` of each Satellite
+    df_bin.loc[:,'rpbin'] = -10*num.ones(df_bin.shape[0])
+    # Assigning `rpbin` to centrals
+    df_bin.loc[cen_idx, 'rpbin'] = -1
+    ##
+    ## Selecting the indices that match the criteria `corr_pair_int`
+    # Sum of 'galaxy pairs'
+    galtype_sum = num.array([galtype_arr[xx.T[0]] + 
+                             galtype_arr[xx.T[1]]
+                             for xx in group_idx_arr])
+    #
+    # Only choosing the galaxy-pairs that meet `corr_pair_int`
+    galtype_sum_seg = num.array([num.where(xx==corr_pair_int)[0]
+                                for xx in galtype_sum])
+    #
+    # Creating new array of galaxy-pair indices
+    # This array contains the indices of galaxy-pairs that meet the 
+    # criteria 'corr_pair_int'
+    gal_pair_idx_seg = num.array([group_idx_arr[kk][galtype_sum_seg[kk]]
+                                for kk in range(len(galtype_sum_seg))])
+    # Array for saving indices of Satellites to change
+    id_sats_arr = [[] for x in range(param_dict['nrpbins'])]
+    # Assigning `rp` values to satellites
+    for rp_ii in range(param_dict['nrpbins']):
+        ## Getting id's of satellites in each rp_bin
+        id_rp_ii           = num.unique(gal_pair_idx_seg[rp_ii])
+        id_sats            = id_rp_ii[galtype_arr[id_rp_ii]==Sats]
+        id_sats_arr[rp_ii] = id_sats
+        # Assigning `rp` values
+        df_bin.loc[id_sats, 'rpbin'] = rp_ii
+    # Changing type of data for `rpbin` column
+    df_bin      = df_bin.astype({'rpbin':int})
+    id_sats_arr = num.array(id_sats_arr)
+    #
+    # Normalizing Satellites by each value of `prop` in each `rpbin`
+    for ii, id_ii in enumerate(id_sats_arr):
+        df_bin.loc[id_ii, prop] /= df_bin.loc[id_ii, prop].mean()
+    ##
+    ## ---| Computing MCF |--- ##
+    ##
+    # Copy of the 'newly normalized' galaxy property `prop` array
+    prop_arr = df_bin[prop].values
+    # Product of galaxy `prop` values
+    galprop_prod_sel = num.array([  prop_arr[xx.T[0]]*
+                                    prop_arr[xx.T[1]]
+                                    for xx in gal_pair_idx_seg])
+    #
+    # Total number of galaxy-pairs in each selected `rp`-bin
+    rp_npairs_tot_sel = num.array([len(xx) for xx in gal_pair_idx_seg],
+                                    dtype=float)
+    ##
+    ## Normalizing MCF
+    # Summing over all `prop` products and normalizing by `counts`
+    corrfunc = (num.array([num.sum(xx) for xx in galprop_prod_sel])/
+                            rp_npairs_tot_sel)
+    # Total number of counts in each `rp` bin
+    npairs_tot = num.sum(rp_npairs_tot_sel)
+    ##
+    ## ---| Shuffles |--- ##
+    ##
+    # Selecting 2 columns only
+    df_bin_sh = df_bin_org[[prop, galtype_key]].copy()
+    #
+    # Creating new column for `shuffled` case with the original `prop` array
+    prop_sh = prop + '_sh'
+    df_bin_sh.loc[:, prop_sh] = df_bin_org[prop].values.copy()
+    ##
+    ## Initializing array for the `shuffle` case
+    corrfunc_sh_tot = num.zeros((param_dict['nrpbins'], 1))
+    ##
+    ## Looping over iterations to estimate the spread of the shuffles
+    # ProgressBar properties
+    widgets   = [Bar('>'), ' ', ETA(), ' ', ReverseBar('<')]
+    pbar_mock = ProgressBar( widgets=widgets, maxval= 10 * itern).start()
+    for ii in range(param_dict['itern_tot']):
+        ##
+        ## Copying default `prop` array to DataFrame `df_bin_sh`
+        df_bin_sh.loc[:,prop_sh] = copy.deepcopy(prop_orig_arr)
+        ##
+        ## Shuffling based on `shuffle_marks`
+        if param_dict['shuffle_marks']=='censat_sh':
+            ## Shuffling `centrals` and `satellites` `prop` arrays
+            # Centrals
+            mark_sh_cen = df_bin_sh.loc[cen_idx, prop_sh].copy().values
+            num.random.shuffle(mark_sh_cen)
+            df_bin_sh.loc[cen_idx, prop_sh] = mark_sh_cen
+            # Satellites
+            mark_sh_sat = df_bin_sh.loc[sat_idx, prop_sh].copy().values
+            num.random.shuffle(mark_sh_sat)
+            df_bin_sh.loc[sat_idx, prop_sh] = mark_sh_sat
+        ## Shuffling only centrals' `prop` array
+        elif param_dict['shuffle_marks']=='cen_sh':
+            # Centrals
+            mark_sh_cen = df_bin_sh.loc[cen_idx, prop_sh].copy().values
+            num.random.shuffle(mark_sh_cen)
+            df_bin_sh.loc[cen_idx, prop_sh] = mark_sh_cen
+        ## Shuffling only satellites' `prop` array
+        elif param_dict['shuffle_marks']=='sat_sh':
+            # Satellites
+            mark_sh_sat = df_bin_sh.loc[sat_idx, prop_sh].copy().values
+            num.random.shuffle(mark_sh_sat)
+            df_bin_sh.loc[sat_idx, prop_sh] = mark_sh_sat
+        ##
+        ## --| Normalizing Central and Satellites in each `rp` bin |--- ##
+        ##
+        # Normalizing `Central` galaxies
+        cen_prop_mean = df_bin_sh.loc[cen_idx, prop_sh].mean()
+        df_bin_sh.loc[cen_idx, prop_sh] /= cens_prop_mean
+        #
+        # Normalizing `Satellite` galaxies by each value of `prop` in each 
+        # `rp`-bin
+        for zz, id_zz in enumerate(id_sats_arr):
+            df_bin_sh.loc[id_zz, prop_sh] /= df_bin_sh.loc[id_zz, prop_sh].mean()
+        ##
+        ## Copy of the `newly normalized` galaxy property `prop_sh` in 
+        ## each `rp` bin
+        prop_sh_arr = df_bin_sh[prop_sh].copy().values
+        ##
+        ## Product of `marks`
+        galprop_prod_sh = num.array([   prop_sh_arr[xx.T[0]]*
+                                        prop_sh_arr[xx.T[1]]
+                                        for xx in gal_pair_idx_seg])
+        ##
+        ## Normalizing MCF
+        # Summing over all `prop` products and normalizing by `counts`
+        corrfunc_sh = (num.array([num.sum(xx) for xx in galprop_prod_sh])/
+                                    rp_npairs_tot_sel)
+        ##
+        ## Appending to main MCF-Shuffles array
+        corrfunc_sh_tot = num.insert(corrfunc_sh_tot,
+                                    len(corrfunc_sh_tot.T),
+                                    corrfunc_sh,
+                                    1)
+        pbar_mock.update(10*ii)
+    pbar_mock.finish()
+    ###
+    ### ---| Statistics |--- ###
+    ###
+    # Removing first column of `zero's`
+    corrfunc_sh_tot = num.delete(corrfunc_sh_tot, 0, axis=1)
+    ##
+    ## Percentiles
+    perc_arr = [68., 95., 99.7]
+    # Creating dictionary for calculating percentiles
+    sigma_dict = {}
+    for ii in range(len(perc_arr)):
+        sigma_dict[ii] = []
+    # Populating dictionary
+    for ii, perc_ii in enumerate(perc_arr):
+        mark_lower = num.nanpercentile(corrfunc_sh_tot, 50.-(perc_ii/2),axis=1)
+        mark_upper = num.nanpercentile(corrfunc_sh_tot, 50.+(perc_ii/2),axis=1)
+        # Saving to dictionary
+        sigma_dict[ii] = num.column_stack((mark_lower, mark_upper)).T
+    ## Mean and St. Dev.
+    mark_mean = num.nanmean(corrfunc_sh_tot, axis=1)
+    mark_std  = num.nanstd( corrfunc_sh_tot, axis=1)
+    ##
+    ## --| Saving everything to a dictionary
+    ##
+    mcf_dict = {}
+    mcf_dict['mcf'         ] = corrfunc
+    mcf_dict['npairs'      ] = npairs_tot
+    mcf_dict['npairs_rp'   ] = rp_npairs_tot_sel
+    mcf_dict['mcf_sh_mean' ] = mark_mean
+    mcf_dict['mcf_sh_std'  ] = mark_std
+    mcf_dict['sigma'       ] = sigma_dict
+    mcf_dict['mcf_sh'      ] = corrfunc_sh_tot
+
+    return mcf_dict
+
+
+
+
+
+
+
+
+
 
 
     
@@ -822,20 +1090,15 @@ def prop_sh_one_halo(df_bin_org, prop, GM_str, catl_name, catl_keys_dict,
     ----------
 
     """
-    ## Creating new DataFrame
-    df_bin = df_bin_org.copy()
     ## Constants
     Cens = int(1)
     Sats = int(0)
-    ## Galaxy Property Labels
-    prop_orig = prop + '_orig'
-    prop_seg  = prop + '_seg'
     ## Catalogue Variables for galaxy properties
     gm_key      = catl_keys_dict['gm_key']
     id_key      = catl_keys_dict['id_key']
     galtype_key = catl_keys_dict['galtype_key']
     ## Group statistics
-    groupid_unq = df_bin[id_key].unique()
+    groupid_unq = df_bin_org[id_key].unique()
     ngroups     = groupid_unq.shape[0]
     ## Total number of galaxy pairs in `rp`
     rpbins_npairs_tot = num.zeros(param_dict['nrpbins'])
@@ -872,7 +1135,7 @@ def prop_sh_one_halo(df_bin_org, prop, GM_str, catl_name, catl_keys_dict,
             pbar_mock = ProgressBar( widgets=widgets, maxval= 10*ngroups).start()
             for ii, group_ii in enumerate(groupid_unq):
                 # DataFrame for `group_ii`
-                group_df  = df_bin.loc[df_bin[id_key]==group_ii]
+                group_df  = df_bin_org.loc[df_bin_org[id_key]==group_ii]
                 group_idx = group_df.index.values
                 ## Pair Counting
                 gm_rp_idx, gm_rp_npairs = wp_idx_calc(group_df, param_dict)
@@ -925,7 +1188,7 @@ def prop_sh_one_halo(df_bin_org, prop, GM_str, catl_name, catl_keys_dict,
         pbar_mock = ProgressBar( widgets=widgets, maxval= 10*ngroups).start()
         for ii, group_ii in enumerate(groupid_unq):
             # DataFrame for `group_ii`
-            group_df  = df_bin.loc[df_bin[id_key]==group_ii]
+            group_df  = df_bin_org.loc[df_bin_org[id_key]==group_ii]
             group_idx = group_df.index.values
             ## Pair Counting
             gm_rp_idx, gm_rp_npairs = wp_idx_calc(group_df, param_dict)
@@ -972,301 +1235,20 @@ def prop_sh_one_halo(df_bin_org, prop, GM_str, catl_name, catl_keys_dict,
     ###
     ### --- | Marked Correlation Function - Calculations | --- ###
     ###
-    ## Type of Correlation pair
-    if param_dict['corr_pair_type']=='cen_sat':
-        corr_pair_int = Cens + Sats
-    elif param_dict['corr_pair_type']=='sat_sat':
-        corr_pair_int = Sats + Sats
-    ## Correcting for `log` in `prop`
-    nonlog_arr = ['logssfr', 'logMstar_JHU']
-    if (prop in nonlog_arr) and (param_dict['prop_log']=='nonlog'):
-        df_bin.loc[:,prop] = 10**df_bin[prop].values
-    ## Galaxy type, `prop`, and `original` arrays
-    df_galtype_arr  = df_bin[galtype_key].values.copy()
-    df_gal_idx_arr  = df_bin.index.values.copy()
-    df_galprop_orig = copy.deepcopy(df_bin[prop].copy().values)
-    # Assigning to DataFrame
-    df_bin.loc[:,prop_orig] = df_galprop_orig.copy()
-    df_bin.loc[:,prop_seg ] = df_galprop_orig.copy()
-    ## Normalizing Cens and Sats - with Segregation
-    cens_prop_mean = df_bin.loc[df_bin[galtype_key]==Cens,prop].mean()
-    sats_prop_mean = df_bin.loc[df_bin[galtype_key]==Sats,prop].mean()
-    df_bin.loc[df_bin[galtype_key]==Cens, prop] /= cens_prop_mean
-    df_bin.loc[df_bin[galtype_key]==Sats, prop] /= sats_prop_mean
-    ## New normalized `gal_prop_arr`
-    gal_prop_arr = df_bin.loc[:,prop].copy().values
-    ## Determining indices of centrals and satellites
-    cen_idx = df_bin.loc[df_bin[galtype_key]==Cens].index
-    sat_idx = df_bin.loc[df_bin[galtype_key]==Sats].index
-    ###
-    ### --- Types of Galaxy Pairs to Keep - Shuffles--- ###
-    ###
-    ## Type of Galaxy Pair to analyze
-    if param_dict['corr_pair_type']=='all':
-        ## Selecting all types of galaxy pairs, i.e. `cen-sat`, `sat-sat`
-        ## Note: There are no `cen-cen` since it's only 1-halo term
-        #
-        # Getting the average of the galaxy property `prop` for all 
-        # galaxy pairs
-        corrfunc = num.array([num.sum(  gal_prop_arr[xx.T[0]]*\
-                                        gal_prop_arr[xx.T[1]])\
-                                        for xx in group_idx_arr])/\
-                                        rpbins_npairs_tot
-        npairs_tot = num.sum(rpbins_npairs_tot).astype(int)
-        ###
-        ### ---| Shuffling galaxy properties |--- ###
-        corr_sh_tot = num.zeros((param_dict['nrpbins'],1))
-        ## Only selecting 2 columns of original DataFrame
-        df_bin_sh   = df_bin[[prop, galtype_key]].copy()
-        # ProgressBar properties
-        widgets   = [Bar('>'), ' ', ETA(), '1-halo Shuffling ', ReverseBar('<')]
-        pbar_mock = ProgressBar( widgets=widgets, 
-                                maxval= 10*param_dict['itern_tot']).start()
-        ## Iterating `itern_tot` times
-        for kk in range(0,param_dict['itern_tot']):
-            ## Resetting `prop` column to default
-            df_bin_sh.loc[:,prop] = copy.deepcopy(gal_prop_arr)
-            ## Shuffling galaxy `marks`
-            if param_dict['shuffle_marks']=='censat_sh':
-                ## Shuffling centrals' and satellites' `prop` arrays
-                # Centrals
-                mark_sh_cen = df_bin_sh.loc[cen_idx, prop].values
-                num.random.shuffle(mark_sh_cen)
-                df_bin_sh.loc[cen_idx, prop] = mark_sh_cen
-                # Satellites
-                mark_sh_sat = df_bin_sh.loc[sat_idx, prop].values
-                num.random.shuffle(mark_sh_sat)
-                df_bin_sh.loc[sat_idx, prop] = mark_sh_sat
-            ## Shuffling only centrals' `prop` array
-            if param_dict['shuffle_marks']=='cen_sh':
-                # Centrals
-                mark_sh_cen = df_bin_sh.loc[cen_idx, prop].values
-                num.random.shuffle(mark_sh_cen)
-                df_bin_sh.loc[cen_idx, prop] = mark_sh_cen
-            ## Shuffling only satellites' `prop` array
-            if param_dict['shuffle_marks']=='sat_sh':
-                # Satellites
-                mark_sh_sat = df_bin_sh.loc[sat_idx, prop].values
-                num.random.shuffle(mark_sh_sat)
-                df_bin_sh.loc[sat_idx, prop] = mark_sh_sat
-            ####
-            #### Normalizing Cens and Sats by mean of the cens or sats
-            gal_prop_sh = df_bin_sh.loc[:,prop].values
-            ## Average of galaxy property
-            corr_sh = num.array([gal_prop_sh[xx.T[0]]*
-                                 gal_prop_sh[xx.T[1]] 
-                                 for xx in group_idx_arr])/\
-                                 rpbins_npairs_tot
-            ## Inserting mark values into array
-            corrfunc_sh_tot = num.insert(corrfunc_sh_tot,
-                                         len(corrfunc_sh_tot.T),
-                                         corr_sh,
-                                         1)
-            ## Updating progress bar
-            pbar_mock.update(10*kk)
-        pbar_mock.finish()
-        ## Creating `corrfunc` for segregation
-        corrfunc_seg = corrfunc.copy()
-    else:
-        ## Selecting the chosen type of galaxy pairs, i.e. `cen-sat`, `sat-sat`
-        ## Note: There are no `cen-cen` since it's only 1-halo term
-        ##
-        ## ---| Conformity + Segregation |---
-        # Addition of Galaxy Pairs Integers
-        galtype_sum_arr = num.array([df_galtype_arr[xx.T[0]]+
-                                     df_galtype_arr[xx.T[1]]
-                                     for xx in group_idx_arr])
-        # Product of Galxy Pairs `prop` arrays
-        corrfunc_prod = num.array([ gal_prop_arr[xx.T[0]]*
-                                    gal_prop_arr[xx.T[1]]
-                                    for xx in group_idx_arr])
-        # Selecting only galaxy pairs based on `corr_pair_type`
-        corrfunc_prod_sel = num.array([
-                            corrfunc_prod[kk][galtype_sum_arr[kk]==corr_pair_int]
-                            for kk in range(len(group_idx_arr))])
-        # Total number of galaxy pairs in `rp`-bins
-        rpbins_npairs_tot_sel = num.array(
-                                    [len(xx) for xx in corrfunc_prod_sel]
-                                    ).astype(float)
-        # Normalizing MCF for selected galaxy pairs
-        corrfunc   = num.array([num.sum(xx) for xx in corrfunc_prod_sel])
-        corrfunc  /= rpbins_npairs_tot_sel
-        npairs_tot = num.sum(rpbins_npairs_tot_sel)
-        ###
-        ### -- Shuffling of Galaxy `prop` -- ###
-        ###
-        ## Initializing arrays for the `shuffle` case
-        corrfunc_sh_tot     = num.zeros((param_dict['nrpbins'],1))
-        ## Only selecting 2 columns 
-        df_bin_sh     = df_bin[[prop, prop_seg, galtype_key]].copy()
-        ##
-        ## Looping over iterations to estimate the spread of the shuffles
-        for ii in range(param_dict['itern_tot']):
-            ###
-            ### ---| Conformity + Segregation |---
-            ###
-            # Copying default `prop` array to DataFrame
-            df_bin_sh.loc[:,prop] = copy.deepcopy(gal_prop_arr)
-            # Types of Shuffles
-            if param_dict['shuffle_marks']=='censat_sh':
-                ## Shuffling centrals' and satellites' `prop` arrays
-                # Centrals
-                mark_sh_cen = df_bin_sh.loc[cen_idx, prop].copy().values
-                num.random.shuffle(mark_sh_cen)
-                df_bin_sh.loc[cen_idx, prop] = mark_sh_cen
-                # Satellites
-                mark_sh_sat = df_bin_sh.loc[sat_idx, prop].copy().values
-                num.random.shuffle(mark_sh_sat)
-                df_bin_sh.loc[sat_idx, prop] = mark_sh_sat
-            ## Shuffling only centrals' `prop` array
-            if param_dict['shuffle_marks']=='cen_sh':
-                # Centrals
-                mark_sh_cen = df_bin_sh.loc[cen_idx, prop].copy().values
-                num.random.shuffle(mark_sh_cen)
-                df_bin_sh.loc[cen_idx, prop] = mark_sh_cen
-            ## Shuffling only satellites' `prop` array
-            if param_dict['shuffle_marks']=='sat_sh':
-                # Satellites
-                mark_sh_sat = df_bin_sh.loc[sat_idx, prop].copy().values
-                num.random.shuffle(mark_sh_sat)
-                df_bin_sh.loc[sat_idx, prop] = mark_sh_sat
-            ##
-            ## Saving new galaxy properties array for shuffles
-            gal_prop_sh = df_bin_sh[prop].copy().values
-            ##
-            ## Product of `marks`
-            corrfunc_prod_sh = num.array([  gal_prop_sh[xx.T[0]]*
-                                            gal_prop_sh[xx.T[1]]
-                                            for xx in group_idx_arr])
-            ## Choosing only selected `Galaxy Pairs`
-            corrfunc_prod_sel_sh = num.array([  corrfunc_prod_sh[xx.T[0]]*
-                                                corrfunc_prod_sh[xx.T[1]]
-                                                for xx in galtype_sum_arr])
-            ## Normalizing MCF
-            corrfunc_sh  = num.array([num.sum(xx) for xx in corrfunc_prod_sel_sh])
-            corrfunc_sh /= rpbins_npairs_tot_sel
-            ## Inserting `corrfunc_sh` to MCF
-            corrfunc_sh_tot = num.insert(corrfunc_sh_tot,
-                                         len(corrfunc_sh_tot.T),
-                                         corrfunc_sh,
-                                         1)
-
-
-
-        ##
-        ## ---| Only Conformity (Segregation effect removed) |---
-        ##
-        # Selecting the indices that match the criteria `corr_pair_int`
-        galtype_sum_seg = num.array([num.where(xx==corr_pair_int)[0] 
-                                    for xx in galtype_sum_arr])
-        # Galaxy indices of matching pairs
-        gal_idx_seg = num.array([group_idx_arr[kk][galtype_sum_seg[kk]]
-                                for kk in range(len(group_idx_arr))])
-        # Unique galaxy indices of matching pairs
-        gal_idx_seg_unq = num.array([num.unique(xx.T) for xx in gal_idx_seg])
-        # Selecting the `galtype` of each unique galaxy in `gal_idx_seg_unq`
-        galtype_corrpair_seg = num.array([df_galtype_arr[xx]
-                                        for xx in gal_idx_seg_unq])
-        ## -- Centrals
-        # Normalizing centrals
-        prop_cens_mean_seg = df_bin.loc[df_bin[galtype_key]==Cens,prop_seg].mean()
-        df_bin.loc[df_bin[galtype_key]==Cens,prop_seg] /= prop_cens_mean_seg
-        ## -- Satellites
-        # Indices of satellite galaxies in matched galaxy pairs
-        gal_idx_sats_seg = num.array([
-            gal_idx_seg_unq[kk][galtype_corrpair_seg[kk]==Sats]
-            for kk in range(len(gal_idx_seg_unq))])
-        # Mean of galaxy `prop` for only Satellites
-        prop_sats_mean_seg = num.array([num.mean(df_galprop_orig[xx]) 
-                                        for xx in gal_idx_sats_seg])
-        # Normalizing Satellites in each `rp`bin
-        for rp_ii in range(len(gal_idx_seg_unq)):
-            df_bin.loc[gal_idx_sats_seg[rp_ii],prop_seg] /= prop_sats_mean_seg[rp_ii]
-        ##
-        ## Computing MCF with `segregation removed`
-        # Making copy of `prop` for segregation case
-        galprop_arr_seg = df_bin[prop_seg].copy().values
-        ## Computing MCF products
-        corrfunc_prod_seg = num.array([ galprop_arr_seg[xx.T[0]]*
-                                        galprop_arr_seg[xx.T[1]]
-                                        for xx in gal_idx_seg])
-        ## Total number of pairs in each `rp` bin
-        rpbins_npairs_tot_sel_seg = num.array([len(xx) for xx in corrfunc_prod_seg])
-        rpbins_npairs_tot_sel_seg = rpbins_npairs_tot_sel_seg.astype(float)
-        ##
-        ## Normalizing MCF
-        ##
-        corrfunc_seg = (num.array([num.sum(xx) for xx in corrfunc_prod_seg])/
-                                    rpbins_npairs_tot_sel_seg)
-        npairs_tot_seg = num.sum(rpbins_npairs_tot_sel_seg)
-
-
-
-        ###
-        ### -- Shuffling of Galaxy `prop` -- ###
-        ###
-        ## Initializing arrays for the `shuffle` case
-        corrfunc_sh_tot     = num.zeros((param_dict['nrpbins'],1))
-        corrfunc_sh_tot_seg = num.zeros((param_dict['nrpbins'],1))
-        ## Only selecting 2 columns 
-        df_bin_sh     = df_bin[[prop, prop_seg, galtype_key]].copy()
-        ##
-        ## Looping over iterations to estimate the spread of the shuffles
-        for ii in range(param_dict['itern_tot']):
-            ###
-            ### ---| Conformity + Segregation |---
-            ###
-            # Copying default `prop` array to DataFrame
-            df_bin_sh.loc[:,prop] = copy.deepcopy(gal_prop_arr)
-            # Types of Shuffles
-            if param_dict['shuffle_marks']=='censat_sh':
-                ## Shuffling centrals' and satellites' `prop` arrays
-                # Centrals
-                mark_sh_cen = df_bin_sh.loc[cen_idx, prop].copy().values
-                num.random.shuffle(mark_sh_cen)
-                df_bin_sh.loc[cen_idx, prop] = mark_sh_cen
-                # Satellites
-                mark_sh_sat = df_bin_sh.loc[sat_idx, prop].copy().values
-                num.random.shuffle(mark_sh_sat)
-                df_bin_sh.loc[sat_idx, prop] = mark_sh_sat
-            ## Shuffling only centrals' `prop` array
-            if param_dict['shuffle_marks']=='cen_sh':
-                # Centrals
-                mark_sh_cen = df_bin_sh.loc[cen_idx, prop].copy().values
-                num.random.shuffle(mark_sh_cen)
-                df_bin_sh.loc[cen_idx, prop] = mark_sh_cen
-            ## Shuffling only satellites' `prop` array
-            if param_dict['shuffle_marks']=='sat_sh':
-                # Satellites
-                mark_sh_sat = df_bin_sh.loc[sat_idx, prop].copy().values
-                num.random.shuffle(mark_sh_sat)
-                df_bin_sh.loc[sat_idx, prop] = mark_sh_sat
-            ##
-            ## Saving new galaxy properties array for shuffles
-            gal_prop_sh = df_bin_sh[prop].copy().values
-            ##
-            ## Product of `marks`
-            corrfunc_prod_sh = num.array([  gal_prop_sh[xx.T[0]]*
-                                            gal_prop_sh[xx.T[1]]
-                                            for xx in group_idx_arr])
-            ## Choosing only selected `Galaxy Pairs`
-            corrfunc_prod_sel_sh = num.array([  corrfunc_prod_sh[xx.T[0]]*
-                                                corrfunc_prod_sh[xx.T[1]]
-                                                for xx in galtype_sum_arr])
-            ## Normalizing MCF
-            corrfunc_sh  = num.array([num.sum(xx) for xx in corrfunc_prod_sel_sh])
-            corrfunc_sh /= rpbins_npairs_tot_sel
-            ## Inserting `corrfunc_sh` to MCF
-            corrfunc_sh_tot = num.insert(corrfunc_sh_tot,
-                                         len(corrfunc_sh_tot.T),
-                                         corrfunc_sh,
-                                         1)
-            ###
-            ### ---| Only Conformity (Segregation effect removed) |---
-            ###
-            ## Restoring `prop_seg` to original values
-            ## Each time, the `prop_seg` with be normalized, after having 
-            ## removed the `segregation` signature in satellites
+    ## MCF for `Conformity Only`
+    mcf_dict_conf     = MCF_conf(   prop,
+                                    df_bin_org,
+                                    group_idx_arr,
+                                    rpbins_npairs_tot,
+                                    param_dict,
+                                    catl_keys_dict)
+    ## MCF for `Conformity + Segregation`
+    mcf_dict_conf_seg = MCF_conf_seg(prop,
+                                    df_bin_org,
+                                    group_idx_arr,
+                                    rpbins_npairs_tot,
+                                    param_dict,
+                                    catl_keys_dict)
 
 
 
