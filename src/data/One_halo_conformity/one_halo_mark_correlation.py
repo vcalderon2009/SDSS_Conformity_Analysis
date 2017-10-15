@@ -35,6 +35,7 @@ import astropy.units as u
 from astropy.coordinates import SkyCoord
 from astropy.coordinates import Distance
 import warnings
+from multiprocessing import Pool, Process, cpu_count
 
 ## Cython modules
 from pair_counter_rp import pairwise_distance_rp
@@ -332,6 +333,18 @@ def get_parser():
                         type=str,
                         choices=['astropy', 'approx'],
                         default='astropy')
+    ## CPU Counts
+    parser.add_argument('-cpu',
+                        dest='cpu_frac',
+                        help='Fraction of total number of CPUs to use',
+                        type=float,
+                        default=0.75)
+    ## Show Progbar
+    parser.add_argument('-prog',
+                        dest='prog_bar',
+                        help='Option to print out progress bars for each for loop',
+                        type=_str2bool,
+                        default=False)
 
     ## Parsing Objects
     args = parser.parse_args()
@@ -960,7 +973,7 @@ def MCF_conf(prop, df_bin_org, group_idx_arr, rpbins_npairs_tot, param_dict,
 
     return mcf_dict
 
-def prop_sh_one_halo(df_bin_org, prop, GM_str, param_dict,
+def prop_sh_one_halo(df_bin_org, prop, GM_str, param_dict, proj_dict,
     catl_name, catl_keys_dict, Prog_msg = '1 >>>  '):
     """
     Shuffles the galaxy properties for the 1-halo term (same-halo pairs)
@@ -978,6 +991,9 @@ def prop_sh_one_halo(df_bin_org, prop, GM_str, param_dict,
 
     param_dict: python dictionary
         dictionary with input parameters and values
+
+    proj_dict: python dictionary
+        Dictionary with current and new paths to project directories
 
     catl_name: string
         prefix of the catalogue being analyzed
@@ -1217,6 +1233,9 @@ def halo_corr(catl_pd, catl_name, param_dict, proj_dict, nmin=2,
     proj_dict: python dictionary
         Dictionary with current and new paths to project directories
 
+    nmin: int, optional (default = 2)
+        minimum number of galaxies (including central galaxy) in a galaxy group
+
     """
     ### Catalogue Variables
     # `Group mass`, `groupid`, and `galtype` keys
@@ -1235,7 +1254,7 @@ def halo_corr(catl_pd, catl_name, param_dict, proj_dict, nmin=2,
     # Galaxy Properties
     if param_dict['catl_kind']=='data':
         pd_keys     = ['logssfr', 'g_r', 'sersic']
-    elif param_dict['catl_kind']==mocks:
+    elif param_dict['catl_kind']=='mocks':
         pd_keys = ['logssfr']
     # Cleaning catalogue with groups of N > `ngals_min`
     catl_pd_clean = cu.sdss_catl_clean_nmin(catl_pd, param_dict['catl_kind'],
@@ -1285,6 +1304,7 @@ def halo_corr(catl_pd, catl_name, param_dict, proj_dict, nmin=2,
                             prop,
                             GM_str,
                             param_dict,
+                            proj_dict,
                             catl_name,
                             catl_keys_dict)
             ##
@@ -1334,9 +1354,81 @@ def main(args, Prog_msg = '1 >>>  '):#,
                                     perf_opt =param_dict['perf_opt'],
                                     catl_info='members',
                                     print_filedir=False)
+    ##
+    ## Only reading desired number of catalogues
     catl_arr = catl_arr_all[param_dict['catl_start']:param_dict['catl_finish']]
-    # Looping over catalogues
-    for ii, catl_ii in enumerate(catl_arr):
+    ##
+    ## Number of catalogues to analyze
+    ncatls = len(catl_arr)
+    ##
+    ## Choosing whether or not to use multiprocessing for the analysis
+    if ncatls==1:
+        # Looping over catalogues
+        catl_ii = catl_arr[0]     
+        print('{0} Analyzing `{1}`\n'.format(Prog_msg, catl_ii))
+        ## Extracting `name` of the catalogue
+        catl_name = os.path.splitext(os.path.split(catl_ii)[1])[0]
+        ## Converting to pandas DataFrame
+        catl_pd   = cu.read_hdf5_file_to_pandas_DF(catl_ii)
+        ## Computing cartesian coordinates
+        catl_pd = spherical_to_cart(catl_pd,
+                                    cosmo_model, 
+                                    method=param_dict['cart_method'])
+        # MCF Calculations
+        halo_corr(catl_pd, catl_name, param_dict, proj_dict,
+                    nmin=param_dict['ngals_min'])
+    else:
+        ###
+        ### Using multiprocessing to analyze catalogues
+        ## Number of CPUs to use
+        cpu_number = int(cpu_count() * param_dict['cpu_frac'])
+        ## Defining step-size for each CPU
+        catl_step  = int(ncatls / cpu_number)
+        ## Array with designanted catalogue numbers for each CPU
+        memb_arr     = num.arange(0, ncatls+1, catl_step)
+        memb_arr[-1] = ncatls
+        ## Tuples of the ID of each catalogue
+        memb_tuples  = num.asarray([(memb_arr[xx], memb_arr[xx+1])
+                                for xx in range(memb_arr.size-1)])
+        ## Assigning `memb_tuples` to function `multiprocessing_catls`
+        start_time = datetime.now()
+        procs = []
+        for ii in range(len(memb_tuples)):
+            # Defining `proc` element
+            proc = Process(target=multiprocessing_catls, 
+                            args=(catl_arr, param_dict, memb_tuples[ii]))
+            # Appending to main `procs` list
+            procs.append(proc)
+            proc.start()
+        ##
+        ## Joining `procs`
+        for proc in procs:
+            proc.join()
+        ##
+        ## End time for running the catalogues
+        end_time = datetime.now()
+        total_time = end_time - start_time
+        print('{0} Total Time taken (Create): {1}'.format(Prog_msg, total_time))
+
+def multiprocessing_catls(catl_arr, param_dict, memb_tuples_ii):
+    """
+    Distributes the analysis of the catalogues into more than 1 processor
+
+    Parameters:
+    -----------
+    catl_arr: numpy.ndarray, shape(n_catls,)
+        array of paths to the catalogues to analyze
+
+    param_dict: python dictionary
+        dictionary with `project` variables
+
+    memb_tuples_ii: 
+    """
+    ## Reading in Catalogue IDs
+    start_ii, end_ii = memb_tuples_ii
+    ##
+    ## Looping the desired catalogues
+    for ii, catl_ii in enumerate(catl_arr[start_ii : end_ii]):
         print('{0} Analyzing `{1}`\n'.format(Prog_msg, catl_ii))
         catl_name = os.path.splitext(os.path.split(catl_ii)[1])[0]
         catl_pd   = cu.read_hdf5_file_to_pandas_DF(catl_ii)
@@ -1347,6 +1439,8 @@ def main(args, Prog_msg = '1 >>>  '):#,
         # MCF Calculations
         halo_corr(catl_pd, catl_name, param_dict, proj_dict,
                     nmin=param_dict['ngals_min'])
+
+
 
 # Main function
 if __name__=='__main__':
