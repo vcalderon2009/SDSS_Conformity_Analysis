@@ -971,8 +971,8 @@ def MCF_conf(prop, df_bin_org, group_idx_arr, rpbins_npairs_tot, param_dict,
 
     return mcf_dict
 
-def prop_sh_one_halo(df_bin_org, prop, GM_str, catl_name, catl_keys_dict,
-    Prog_msg = '1 >>>  '):
+def prop_sh_one_halo(df_bin_org, prop, GM_str, param_dict,
+    catl_name, catl_keys_dict, Prog_msg = '1 >>>  '):
     """
     Shuffles the galaxy properties for the 1-halo term (same-halo pairs)
 
@@ -986,6 +986,9 @@ def prop_sh_one_halo(df_bin_org, prop, GM_str, catl_name, catl_keys_dict,
 
     GM_str: string
         string for the corresponding group/halo mass bin limits
+
+    param_dict: python dictionary
+        dictionary with input parameters and values
 
     catl_name: string
         prefix of the catalogue being analyzed
@@ -1292,6 +1295,7 @@ def halo_corr(catl_pd, catl_name, param_dict, proj_dict, nmin=2,
             ngroups = prop_sh_one_halo(df_bin_org,
                             prop,
                             GM_str,
+                            param_dict,
                             catl_name,
                             catl_keys_dict)
             ##
