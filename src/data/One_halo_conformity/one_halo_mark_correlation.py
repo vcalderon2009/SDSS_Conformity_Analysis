@@ -461,85 +461,6 @@ def directory_skeleton(param_dict, proj_dict):
 
     return proj_dict
 
-def halo_corr(catl_pd, catl_name, param_dict, proj_dict, nmin=2,
-    Prog_msg = '1 >>>  '):
-    """
-    1-halo mark correlation function for galaxy groups in each group mass bin.
-
-    Parameters
-    ----------
-    catl_pd: pandas DataFrame
-        DataFrame with information on catalogue
-
-    catl_name: string
-        name of the `catl_pd`
-
-    param_dict: python dictionary
-        dictionary with `project` variables
-
-    proj_dict: python dictionary
-        Dictionary with current and new paths to project directories
-
-    """
-    ### Catalogue Variables
-    # `Group mass`, `groupid`, and `galtype` keys
-    gm_key, id_key, galtype_key = cu.catl_keys(catl_kind=param_dict['catl_kind'],
-                                                return_type='list',
-                                                perf_opt=param_dict['perf_opt'])
-    catl_keys_dict = cu.catl_keys(  catl_kind=param_dict['catl_kind'],
-                                    return_type='dict',
-                                    perf_opt=param_dict['perf_opt'])
-    gm_key      = catl_keys_dict['gm_key']
-    id_key      = catl_keys_dict['id_key']
-    galtype_key = catl_keys_dict['galtype_key']
-    # ssfr and mstar keys
-    ssfr_key, mstar_key = cu.catl_keys_prop(catl_kind=param_dict['catl_kind'], 
-                                                catl_info='members')
-    # Galaxy Properties
-    if param_dict['catl_kind']=='data':
-        pd_keys     = ['logssfr', 'g_r', 'sersic']
-    elif param_dict['catl_kind']==mocks:
-        pd_keys = ['logssfr']
-    # Cleaning catalogue with groups of N > `ngals_min`
-    catl_pd_clean = cu.sdss_catl_clean_nmin(catl_pd, param_dict['catl_kind'],
-        nmin=param_dict['ngals_min'])
-    ### Mass limits
-    GM_min  = catl_pd_clean[gm_key].min()
-    GM_max  = catl_pd_clean[gm_key].max()
-    GM_arr  = cu.Bins_array_create([GM_min,GM_max], param_dict['Mg_bin'])
-    GM_bins = [[GM_arr[ii],GM_arr[ii+1]] for ii in range(GM_arr.shape[0]-1)]
-    GM_bins = num.asarray(GM_bins)
-    ## Pickle file
-    p_arr = [   proj_dict['pickdir']   , param_dict['fig_idx']       ,
-                catl_name              , 
-                param_dict['corr_type'], param_dict['sample']        ,
-                param_dict['itern_tot'], param_dict['rpmin']         ,
-                param_dict['rpmax']    , param_dict['nrpbins']       ,
-                param_dict['pimax']    , param_dict['corr_pair_type'],
-                param_dict['prop_log'] , param_dict['shuffle_marks'] ,
-                param_dict['perf_str'] ]
-    p_fname = '{0}{1}_{2}_{3}_corr_Mr{4}_{5}_{6}_{7}_{8}_{9}_{10}_{11}_{12}_{13}.p'
-    p_fname = p_fname.format(*p_arr)
-    ## Dictionary for storing results for each GM bin
-    GM_prop_dict = {}
-    # Looping over each GM bin
-    for ii, GM_ii in enumerate(GM_bins):
-        # GM string
-        GMbin_min, GMbin_max = GM_ii
-        GM_str = '{0:.2f}_{1:.2f}'.format(GMbin_min, GMbin_max)
-        if param_dict['perf_opt']:
-            print('{0} Halo Mass range: {1}'.format(Prog_msg, GM_str))
-        else:
-            print('{0} Group Mass range: {1}'.format(Prog_msg, GM_str))
-        ## Galaxies in Group-mass bin
-        df_bin_org = catl_pd_clean.loc[ (catl_pd_clean[gm_key] >= GMbin_min) &\
-                                    (catl_pd_clean[gm_key] <  GMbin_max)].copy()
-        df_bin_org.reset_index(inplace=True, drop=True)
-        ## Looping over galaxy properties
-        for jj, prop in enumerate(pd_keys):
-            print('{0} >> Galaxy Prop: {1}'.format(Prog_msg, prop))
-            prop_sh_one_halo()
-
 def wp_idx_calc(group_df, param_dict):
     """
     Counts the pairs in each `rp` bins for each galaxy-pairs
@@ -578,7 +499,7 @@ def wp_idx_calc(group_df, param_dict):
     rp_npairs = num.array([len(xx) for xx in rp_idx])
 
     return rp_idx, rp_npairs
-        
+
 def MCF_conf_seg(prop, df_bin_org, group_idx_arr, rpbins_npairs_tot, 
     param_dict, catl_keys_dict):
     """
@@ -592,7 +513,7 @@ def MCF_conf_seg(prop, df_bin_org, group_idx_arr, rpbins_npairs_tot,
     -----------
     prop: string
         galaxy property being analyzed
-    
+
     df_bin_org: pandas DataFrame
     
     group_idx_arr: numpy.ndarraym, shape (param_dict['nrpbins'])
@@ -1050,20 +971,6 @@ def MCF_conf(prop, df_bin_org, group_idx_arr, rpbins_npairs_tot, param_dict,
 
     return mcf_dict
 
-
-
-
-
-
-
-
-
-
-
-    
-    
-
-
 def prop_sh_one_halo(df_bin_org, prop, GM_str, catl_name, catl_keys_dict,
     Prog_msg = '1 >>>  '):
     """
@@ -1088,6 +995,18 @@ def prop_sh_one_halo(df_bin_org, prop, GM_str, catl_name, catl_keys_dict,
     
     Returns
     ----------
+    mcf_dict_conf: python dictionary
+        dictionary with the statistics of the `shuffles` and the MCF 
+        of the catalogue.
+        This dictionary corresponds to the "Conformity Only" scenario
+
+    mcf_dict_conf_seg: python dictionary
+        dictionary with the statistics of the `shuffles` and the MCF 
+        of the catalogue.
+        This dictionary corresponds to the "Conformity + Segregation" scenario
+
+    ngroups: int
+        total number of groups in the desired group-mass bin
 
     """
     ## Constants
@@ -1174,11 +1093,22 @@ def prop_sh_one_halo(df_bin_org, prop, GM_str, catl_name, catl_keys_dict,
                 sigma1_arr      = sigma_arr.copy()
                 sigma2_arr      = sigma_arr.copy()
                 sigma3_arr      = sigma_arr.copy()
+                # Converting sigma's to dictionary
+                sigma_dict = {}
+                for jj in range(3):
+                    sigma_dict[jj] = sigma_arr.copy()
+                ## Converting to dictionaries
+                # Conformity Only
+                mcf_dict = {}
+                mcf_dict['mcf'         ] = corrfunc
+                mcf_dict['npairs'      ] = npairs_tot
+                mcf_dict['npairs_rp'   ] = rpbins_npairs_tot
+                mcf_dict['mcf_sh_mean' ] = mark_nanmean
+                mcf_dict['mcf_sh_std'  ] = mark_nanstd
+                mcf_dict['sigma'       ] = sigma_dict
+                mcf_dict['mcf_sh'      ] = corrfunc_sh_tot
 
-                return (corrfunc, sigma1_arr, sigma2_arr, sigma3_arr, ngroups,
-                        npairs_tot, rpbins_npairs_tot, corrfunc_sh_tot, 
-                        mark_nanmean, mark_nanstd, corrfunc_seg, sigma1_arr, 
-                        sigma2_arr, sigma3_arr)
+                return mcf_dict_conf, mcf_dict_conf_seg, ngroups
     else:
         ## Running complete analysis
         ## Running `wp_idx_calc` for pair counting
@@ -1227,14 +1157,35 @@ def prop_sh_one_halo(df_bin_org, prop, GM_str, catl_name, catl_keys_dict,
             sigma1_arr      = sigma_arr.copy()
             sigma2_arr      = sigma_arr.copy()
             sigma3_arr      = sigma_arr.copy()
+            # Converting sigma's to dictionary
+            sigma_dict = {}
+            for jj in range(3):
+                sigma_dict[jj] = sigma_arr.copy()
+            ## Converting to dictionaries
+            # Conformity Only
+            mcf_dict_conf = {}
+            mcf_dict_conf['mcf'         ] = corrfunc
+            mcf_dict_conf['npairs'      ] = npairs_tot
+            mcf_dict_conf['npairs_rp'   ] = rpbins_npairs_tot
+            mcf_dict_conf['mcf_sh_mean' ] = mark_nanmean
+            mcf_dict_conf['mcf_sh_std'  ] = mark_nanstd
+            mcf_dict_conf['sigma'       ] = sigma_dict
+            mcf_dict_conf['mcf_sh'      ] = corrfunc_sh_tot
+            # Conformity + Segregation
+            mcf_dict_conf_seg = {}
+            mcf_dict_conf_seg['mcf'         ] = corrfunc
+            mcf_dict_conf_seg['npairs'      ] = npairs_tot
+            mcf_dict_conf_seg['npairs_rp'   ] = rpbins_npairs_tot
+            mcf_dict_conf_seg['mcf_sh_mean' ] = mark_nanmean
+            mcf_dict_conf_seg['mcf_sh_std'  ] = mark_nanstd
+            mcf_dict_conf_seg['sigma'       ] = sigma_dict
+            mcf_dict_conf_seg['mcf_sh'      ] = corrfunc_sh_tot
 
-            return (corrfunc, sigma1_arr, sigma2_arr, sigma3_arr, ngroups,
-                    npairs_tot, rpbins_npairs_tot, corrfunc_sh_tot, 
-                    mark_nanmean, mark_nanstd, corrfunc_seg, sigma1_arr, 
-                    sigma2_arr, sigma3_arr)
+            return mcf_dict_conf, mcf_dict_conf_seg, ngroups
     ###
     ### --- | Marked Correlation Function - Calculations | --- ###
     ###
+    ##
     ## MCF for `Conformity Only`
     mcf_dict_conf     = MCF_conf(   prop,
                                     df_bin_org,
@@ -1242,6 +1193,7 @@ def prop_sh_one_halo(df_bin_org, prop, GM_str, catl_name, catl_keys_dict,
                                     rpbins_npairs_tot,
                                     param_dict,
                                     catl_keys_dict)
+    ##
     ## MCF for `Conformity + Segregation`
     mcf_dict_conf_seg = MCF_conf_seg(prop,
                                     df_bin_org,
@@ -1249,15 +1201,113 @@ def prop_sh_one_halo(df_bin_org, prop, GM_str, catl_name, catl_keys_dict,
                                     rpbins_npairs_tot,
                                     param_dict,
                                     catl_keys_dict)
+    ##
+    ## Saving to dictionaries to new variables
 
+    return mcf_dict_conf, mcf_dict_conf_seg, ngroups
 
+def halo_corr(catl_pd, catl_name, param_dict, proj_dict, nmin=2,
+    Prog_msg = '1 >>>  '):
+    """
+    1-halo mark correlation function for galaxy groups in each group mass bin.
 
+    Parameters
+    ----------
+    catl_pd: pandas DataFrame
+        DataFrame with information on catalogue
 
+    catl_name: string
+        name of the `catl_pd`
 
+    param_dict: python dictionary
+        dictionary with `project` variables
 
+    proj_dict: python dictionary
+        Dictionary with current and new paths to project directories
 
-
-
+    """
+    ### Catalogue Variables
+    # `Group mass`, `groupid`, and `galtype` keys
+    gm_key, id_key, galtype_key = cu.catl_keys(catl_kind=param_dict['catl_kind'],
+                                                return_type='list',
+                                                perf_opt=param_dict['perf_opt'])
+    catl_keys_dict = cu.catl_keys(  catl_kind=param_dict['catl_kind'],
+                                    return_type='dict',
+                                    perf_opt=param_dict['perf_opt'])
+    gm_key      = catl_keys_dict['gm_key']
+    id_key      = catl_keys_dict['id_key']
+    galtype_key = catl_keys_dict['galtype_key']
+    # ssfr and mstar keys
+    ssfr_key, mstar_key = cu.catl_keys_prop(catl_kind=param_dict['catl_kind'], 
+                                                catl_info='members')
+    # Galaxy Properties
+    if param_dict['catl_kind']=='data':
+        pd_keys     = ['logssfr', 'g_r', 'sersic']
+    elif param_dict['catl_kind']==mocks:
+        pd_keys = ['logssfr']
+    # Cleaning catalogue with groups of N > `ngals_min`
+    catl_pd_clean = cu.sdss_catl_clean_nmin(catl_pd, param_dict['catl_kind'],
+        nmin=param_dict['ngals_min'])
+    ### Mass limits
+    GM_min  = catl_pd_clean[gm_key].min()
+    GM_max  = catl_pd_clean[gm_key].max()
+    GM_arr  = cu.Bins_array_create([GM_min,GM_max], param_dict['Mg_bin'])
+    GM_bins = [[GM_arr[ii],GM_arr[ii+1]] for ii in range(GM_arr.shape[0]-1)]
+    GM_bins = num.asarray(GM_bins)
+    ## Pickle file
+    p_arr = [   proj_dict['pickdir']   , param_dict['fig_idx']       ,
+                catl_name              , 
+                param_dict['corr_type'], param_dict['sample']        ,
+                param_dict['itern_tot'], param_dict['rpmin']         ,
+                param_dict['rpmax']    , param_dict['nrpbins']       ,
+                param_dict['pimax']    , param_dict['corr_pair_type'],
+                param_dict['prop_log'] , param_dict['shuffle_marks'] ,
+                param_dict['perf_str'] ]
+    p_fname = '{0}{1}_{2}_{3}_corr_Mr{4}_{5}_{6}_{7}_{8}_{9}_{10}_{11}_{12}_{13}.p'
+    p_fname = p_fname.format(*p_arr)
+    ## Dictionary for storing results for each GM bin
+    GM_prop_dict = {}
+    # Looping over each GM bin
+    for ii, GM_ii in enumerate(GM_bins):
+        # GM string
+        GMbin_min, GMbin_max = GM_ii
+        GM_str = '{0:.2f}_{1:.2f}'.format(GMbin_min, GMbin_max)
+        if param_dict['perf_opt']:
+            print('{0} Halo Mass range: {1}'.format(Prog_msg, GM_str))
+        else:
+            print('{0} Group Mass range: {1}'.format(Prog_msg, GM_str))
+        ## Galaxies in Group-mass bin
+        df_bin_org = catl_pd_clean.loc[ (catl_pd_clean[gm_key] >= GMbin_min) &\
+                                    (catl_pd_clean[gm_key] <  GMbin_max)].copy()
+        df_bin_org.reset_index(inplace=True, drop=True)
+        ##
+        ## Creating dictionary that contains results for all galaxy properties
+        stat_vals = [[] for x in range(3)]
+        prop_dict = dict(zip(pd_keys,[list(stat_vals) for x in range(len(pd_keys))]))
+        ## Looping over galaxy properties
+        for jj, prop in enumerate(pd_keys):
+            print('{0} >> Galaxy Prop: {1}'.format(Prog_msg, prop))
+            mcf_dict_conf, \
+            mcf_dict_conf_seg, \
+            ngroups = prop_sh_one_halo(df_bin_org,
+                            prop,
+                            GM_str,
+                            catl_name,
+                            catl_keys_dict)
+            ##
+            ## Saving results to dictionary
+            prop_dict[prop][0] = mcf_dict_conf
+            prop_dict[prop][1] = mcf_dict_conf_seg
+            prop_dict[prop][2] = ngroups
+        ##
+        ## Saving results to final dictionary
+        GM_prop_dict[GM_str] = prop_dict
+    ##
+    ## saving data to Pickle file
+    print('{0} Saving data to Pickle: \n\t{1}\n'.format(Prog_msg, p_fname))
+    p_data = [param_dict, proj_dict, GM_prop_dict, catl_name, GM_arr]
+    pickle.dump(p_data, open(p_fname,'wb'))
+    print('{0} Data saved to Pickle: \n\t{1}\n'.format(Prog_msg, p_fname))
 
 def main(args, Prog_msg = '1 >>>  '):#,
     # Prog_msg = cu.Program_Msg(__file__)):
@@ -1304,9 +1354,6 @@ def main(args, Prog_msg = '1 >>>  '):#,
         # MCF Calculations
         halo_corr(catl_pd, catl_name, param_dict, proj_dict,
                     nmin=param_dict['ngals_min'])
-
-
-
 
 # Main function
 if __name__=='__main__':
