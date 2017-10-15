@@ -34,9 +34,13 @@ import astropy.constants as ac
 import astropy.units as u
 from astropy.coordinates import SkyCoord
 from astropy.coordinates import Distance
+import warnings
 
 ## Cython modules
 from pair_counter_rp import pairwise_distance_rp
+
+# Ignoring certain warnings
+warnings.simplefilter("ignore", category=RuntimeWarning)
 
 ## Functions
 def cosmo_create(cosmo_choice='LasDamas', H0=100., Om0=0.25, Ob0=0.04,
@@ -430,34 +434,12 @@ def directory_skeleton(param_dict, proj_dict):
     ### Directory of `Pickle files` with input parameters
     pickdir = '{0}/pickle_files/{1}/{2}'.format(
         outdir, param_dict['corr_type'], param_dict['param_str'])
-    ### Directories for MCF
-    corrdir = 'wq_{0}_idx_calc/'.format(param_dict['corr_type'])
-    # Indices from wp(rp)
-    out_idx = '{0}/{1}/{2}/indices'.format(
-        outdir, param_dict['corr_type'], param_dict['param_str_pic'])
-    # Results from wp(rp)
-    out_res = '{0}/{1}/{2}/results'.format(
-        outdir, param_dict['corr_type'], param_dict['param_str_pic'])
-    # Results from DDrppi
-    out_ddrp = '{0}/{1}/{2}/DDrppi_res'.format(
-        outdir, param_dict['corr_type'], param_dict['param_str_pic'])
-    # Output for catalogues - Pickle
-    out_catl_p = '{0}/{1}/{2}/catl_pickle_pairs'.format(
-        outdir, param_dict['corr_type'], param_dict['param_str_pic'])
     # Creating Folders
     cu.Path_Folder(outdir)
     cu.Path_Folder(pickdir)
-    cu.Path_Folder(out_idx)
-    cu.Path_Folder(out_res)
-    cu.Path_Folder(out_ddrp)
-    cu.Path_Folder(out_catl_p)
     ## Adding to `proj_dict`
     proj_dict['outdir'    ] = outdir
     proj_dict['pickdir'   ] = pickdir
-    proj_dict['out_idx'   ] = out_idx
-    proj_dict['out_res'   ] = out_res
-    proj_dict['out_ddrp'  ] = out_ddrp
-    proj_dict['out_catl_p'] = out_catl_p
 
     return proj_dict
 
