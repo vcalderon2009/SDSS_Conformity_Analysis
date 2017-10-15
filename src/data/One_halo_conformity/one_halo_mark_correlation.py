@@ -432,14 +432,21 @@ def directory_skeleton(param_dict, proj_dict):
         proj_dict['data_dir'], param_dict['catl_kind'],
         param_dict['catl_type'], param_dict['sample'])
     ### Directory of `Pickle files` with input parameters
-    pickdir = '{0}/pickle_files/{1}/{2}'.format(
+    pickdir = '{0}/catl_pickle_files/{1}/{2}'.format(
         outdir, param_dict['corr_type'], param_dict['param_str'])
+    ### Directories for MCF
+    corrdir = 'wq_{0}_idx_calc/'.format(param_dict['corr_type'])
+    # Output for catalogues - Pickle
+    out_catl_p = '{0}/DDrppi_results/{1}/{2}/catl_pickle_pairs'.format(
+        outdir, param_dict['corr_type'], param_dict['param_str_pic'])
     # Creating Folders
     cu.Path_Folder(outdir)
     cu.Path_Folder(pickdir)
+    cu.Path_Folder(out_catl_p)
     ## Adding to `proj_dict`
     proj_dict['outdir'    ] = outdir
     proj_dict['pickdir'   ] = pickdir
+    proj_dict['out_catl_p'] = out_catl_p
 
     return proj_dict
 
