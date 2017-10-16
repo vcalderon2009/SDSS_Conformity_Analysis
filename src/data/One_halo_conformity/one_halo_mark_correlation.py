@@ -428,6 +428,71 @@ def add_to_dict(param_dict):
 
     return param_dict
 
+def param_vals_test(param_dict):
+    """
+    Checks if values are consistent with each other.
+
+    Parameters
+    -----------
+    param_dict: python dictionary
+        dictionary with `project` variables
+
+    Raises
+    -----------
+    ValueError: Error
+        This function raises a `ValueError` error if one or more of the 
+        required criteria are not met
+    """
+    ##
+    ## Checking that `nmin` is larger than 2
+    if param_dict['ngals_min'] >= 2:
+        pass
+    else:
+        msg = '{0} `ngals_min` ({1}) must be larger than `2`'.format(
+            param_dict['Prog_msg'],
+            param_dict['ngals_min'])
+        raise ValueError(msg)
+    ##
+    ## Checking `cpu_frac` range
+    if (param_dict['cpu_frac'] > 0) and (param_dict['cpu_frac'] <= 1):
+        pass
+    else:
+        msg = '{0} `cpu_frac` ({1}) must be between (0,1]'.format(
+            param_dict['Prog_msg'],
+            param_dict['cpu_frac'])
+        raise ValueError(msg)
+    ##
+    ## Number of bins
+    if (param_dict['nrpbins'] > 0):
+        pass
+    else:
+        msg = '{0} `nrpbins` ({1}) must be larger than 0'.format(
+            param_dict['Prog_msg'],
+            param_dict['nrpbins'])
+        raise ValueError(msg)
+    ##
+    ## Checking that `catl_start` < `catl_finish`
+    if param_dict['catl_start'] < param_dict['catl_finish']:
+        pass
+    else:
+        msg = '{0} `catl_start` ({1}) must smaller than `catl_finish` ({2})'\
+            .format(
+            param_dict['Prog_msg'],
+            param_dict['catl_start'],
+            param_dict['catl_finish'])
+        raise ValueError(msg)
+    ##
+    ## Checking that `rpmin` < `rpmax`
+    if param_dict['rpmin'] < param_dict['rpmax']:
+        pass
+    else:
+        msg = '{0} `rpmin` ({1}) must smaller than `rpmax` ({2})'\
+            .format(
+            param_dict['Prog_msg'],
+            param_dict['rpmin'],
+            param_dict['rpmax'])
+        raise ValueError(msg)
+
 def directory_skeleton(param_dict, proj_dict):
     """
     Creates the directory skeleton for the current project
@@ -1049,8 +1114,8 @@ def prop_sh_one_halo(df_bin_org, prop, GM_str, param_dict, proj_dict,
                 param_dict['rpmax']    , param_dict['nrpbins'],
                 param_dict['corr_type'], param_dict['pimax'],
                 param_dict['Mg_bin']   , param_dict['perf_str'],
-                catl_name]
-    catl_idx_file = '{0}/Mr{1}_{2}_{3}_{4}_{5}_{6}_{7}_{8}_{9}_{10}.p'
+                param_dict['ngals_min'], catl_name]
+    catl_idx_file = '{0}/Mr{1}_{2}_{3}_{4}_{5}_{6}_{7}_{8}_{9}_{10}_{11}.p'
     catl_idx_file = catl_idx_file.format(*idx_arr)
     ## Reading in file
     # Pair-counting for each galaxy group
@@ -1234,7 +1299,7 @@ def prop_sh_one_halo(df_bin_org, prop, GM_str, param_dict, proj_dict,
 
     return mcf_dict_conf, mcf_dict_conf_seg, ngroups
 
-def halo_corr(catl_pd, catl_name, param_dict, proj_dict, nmin=2):
+def halo_corr(catl_pd, catl_name, param_dict, proj_dict):
     """
     1-halo mark correlation function for galaxy groups in each group mass bin.
 
@@ -1251,10 +1316,7 @@ def halo_corr(catl_pd, catl_name, param_dict, proj_dict, nmin=2):
 
     proj_dict: python dictionary
         Dictionary with current and new paths to project directories
-
-    nmin: int, optional (default = 2)
-        minimum number of galaxies (including central galaxy) in a galaxy group
-
+    
     """
     ## Program message
     Prog_msg = param_dict['Prog_msg']
@@ -1294,8 +1356,8 @@ def halo_corr(catl_pd, catl_name, param_dict, proj_dict, nmin=2):
                 param_dict['rpmax']    , param_dict['nrpbins']       ,
                 param_dict['pimax']    , param_dict['corr_pair_type'],
                 param_dict['prop_log'] , param_dict['shuffle_marks'] ,
-                param_dict['perf_str'] ]
-    p_fname = '{0}{1}_{2}_{3}_corr_Mr{4}_{5}_{6}_{7}_{8}_{9}_{10}_{11}_{12}_{13}.p'
+                param_dict['ngals_min'], param_dict['perf_str'] ]
+    p_fname = '{0}{1}_{2}_{3}_corr_Mr{4}_{5}_{6}_{7}_{8}_{9}_{10}_{11}_{12}_{13}_{14}.p'
     p_fname = p_fname.format(*p_arr)
     ##
     ## Checking if file exists
@@ -1416,8 +1478,7 @@ def main(args):
                                     param_dict['cosmo_model'],
                                     method=param_dict['cart_method'])
         # MCF Calculations
-        halo_corr(catl_pd, catl_name, param_dict, proj_dict,
-                    nmin=param_dict['ngals_min'])
+        halo_corr(catl_pd, catl_name, param_dict, proj_dict)
     else:
         ###
         ## Changing `prog_bar` to 'False'
@@ -1490,73 +1551,7 @@ def multiprocessing_catls(catl_arr, param_dict, proj_dict, memb_tuples_ii):
                                     param_dict['cosmo_model'], 
                                     method=param_dict['cart_method'])
         # MCF Calculations
-        halo_corr(catl_pd, catl_name, param_dict, proj_dict,
-                    nmin=param_dict['ngals_min'])
-
-def param_vals_test(param_dict):
-    """
-    Checks if values are consistent with each other.
-
-    Parameters
-    -----------
-    param_dict: python dictionary
-        dictionary with `project` variables
-
-    Raises
-    -----------
-    ValueError: Error
-        This function raises a `ValueError` error if one or more of the 
-        required criteria are not met
-    """
-    ##
-    ## Checking that `nmin` is larger than 2
-    if param_dict['ngals_min'] >= 2:
-        pass
-    else:
-        msg = '{0} `ngals_min` ({1}) must be larger than `2`'.format(
-            param_dict['Prog_msg'],
-            param_dict['ngals_min'])
-        raise ValueError(msg)
-    ##
-    ## Checking `cpu_frac` range
-    if (param_dict['cpu_frac'] > 0) and (param_dict['cpu_frac'] <= 1):
-        pass
-    else:
-        msg = '{0} `cpu_frac` ({1}) must be between (0,1]'.format(
-            param_dict['Prog_msg'],
-            param_dict['cpu_frac'])
-        raise ValueError(msg)
-    ##
-    ## Number of bins
-    if (param_dict['nrpbins'] > 0):
-        pass
-    else:
-        msg = '{0} `nrpbins` ({1}) must be larger than 0'.format(
-            param_dict['Prog_msg'],
-            param_dict['nrpbins'])
-        raise ValueError(msg)
-    ##
-    ## Checking that `catl_start` < `catl_finish`
-    if param_dict['catl_start'] < param_dict['catl_finish']:
-        pass
-    else:
-        msg = '{0} `catl_start` ({1}) must smaller than `catl_finish` ({2})'\
-            .format(
-            param_dict['Prog_msg'],
-            param_dict['catl_start'],
-            param_dict['catl_finish'])
-        raise ValueError(msg)
-    ##
-    ## Checking that `rpmin` < `rpmax`
-    if param_dict['rpmin'] < param_dict['rpmax']:
-        pass
-    else:
-        msg = '{0} `rpmin` ({1}) must smaller than `rpmax` ({2})'\
-            .format(
-            param_dict['Prog_msg'],
-            param_dict['rpmin'],
-            param_dict['rpmax'])
-        raise ValueError(msg)
+        halo_corr(catl_pd, catl_name, param_dict, proj_dict)
 
 
 
