@@ -1288,45 +1288,52 @@ def halo_corr(catl_pd, catl_name, param_dict, proj_dict, nmin=2,
                 param_dict['perf_str'] ]
     p_fname = '{0}{1}_{2}_{3}_corr_Mr{4}_{5}_{6}_{7}_{8}_{9}_{10}_{11}_{12}_{13}.p'
     p_fname = p_fname.format(*p_arr)
+    ##
+    ## Checking if file exists
+    if (cu.File_Exists(p_fname)) and (param_dict['remove_files']):
+        os.remove(p_fname)
     ## Dictionary for storing results for each GM bin
     GM_prop_dict = {}
-    # Looping over each GM bin
-    for ii, GM_ii in enumerate(GM_bins):
-        # GM string
-        GMbin_min, GMbin_max = GM_ii
-        GM_str = '{0:.2f}_{1:.2f}'.format(GMbin_min, GMbin_max)
-        if param_dict['perf_opt']:
-            print('\n{0} Halo Mass range: {1}'.format(Prog_msg, GM_str))
-        else:
-            print('\n{0} Group Mass range: {1}'.format(Prog_msg, GM_str))
-        ## Galaxies in Group-mass bin
-        df_bin_org = catl_pd_clean.loc[ (catl_pd_clean[gm_key] >= GMbin_min) &\
-                                    (catl_pd_clean[gm_key] <  GMbin_max)].copy()
-        df_bin_org.reset_index(inplace=True, drop=True)
-        ##
-        ## Creating dictionary that contains results for all galaxy properties
-        stat_vals = [[] for x in range(3)]
-        prop_dict = dict(zip(pd_keys,[list(stat_vals) for x in range(len(pd_keys))]))
-        ## Looping over galaxy properties
-        for jj, prop in enumerate(pd_keys):
-            print('{0} >> Galaxy Prop: {1}'.format(Prog_msg, prop))
-            mcf_dict_conf, \
-            mcf_dict_conf_seg, \
-            ngroups = prop_sh_one_halo(df_bin_org,
-                            prop,
-                            GM_str,
-                            param_dict,
-                            proj_dict,
-                            catl_name,
-                            catl_keys_dict)
+    # Looping over each GM bin (if file doesn't exist)
+    if not (cu.File_Exists(p_fname)):
+        ## Executing MCF calculations if file does not exist for the give 
+        ## catalogue.
+        for ii, GM_ii in enumerate(GM_bins):
+            # GM string
+            GMbin_min, GMbin_max = GM_ii
+            GM_str = '{0:.2f}_{1:.2f}'.format(GMbin_min, GMbin_max)
+            if param_dict['perf_opt']:
+                print('\n{0} Halo Mass range: {1}'.format(Prog_msg, GM_str))
+            else:
+                print('\n{0} Group Mass range: {1}'.format(Prog_msg, GM_str))
+            ## Galaxies in Group-mass bin
+            df_bin_org = catl_pd_clean.loc[ (catl_pd_clean[gm_key] >= GMbin_min) &\
+                                        (catl_pd_clean[gm_key] <  GMbin_max)].copy()
+            df_bin_org.reset_index(inplace=True, drop=True)
             ##
-            ## Saving results to dictionary
-            prop_dict[prop][0] = mcf_dict_conf
-            prop_dict[prop][1] = mcf_dict_conf_seg
-            prop_dict[prop][2] = ngroups
-        ##
-        ## Saving results to final dictionary
-        GM_prop_dict[GM_str] = prop_dict
+            ## Creating dictionary that contains results for all galaxy properties
+            stat_vals = [[] for x in range(3)]
+            prop_dict = dict(zip(pd_keys,[list(stat_vals) for x in range(len(pd_keys))]))
+            ## Looping over galaxy properties
+            for jj, prop in enumerate(pd_keys):
+                print('{0} >> Galaxy Prop: {1}'.format(Prog_msg, prop))
+                mcf_dict_conf, \
+                mcf_dict_conf_seg, \
+                ngroups = prop_sh_one_halo(df_bin_org,
+                                prop,
+                                GM_str,
+                                param_dict,
+                                proj_dict,
+                                catl_name,
+                                catl_keys_dict)
+                ##
+                ## Saving results to dictionary
+                prop_dict[prop][0] = mcf_dict_conf
+                prop_dict[prop][1] = mcf_dict_conf_seg
+                prop_dict[prop][2] = ngroups
+            ##
+            ## Saving results to final dictionary
+            GM_prop_dict[GM_str] = prop_dict
     ##
     ## saving data to Pickle file
     print('{0} Saving data to Pickle: \n\t{1}\n'.format(Prog_msg, p_fname))
@@ -1391,6 +1398,8 @@ def main(args, Prog_msg = '1 >>>  '):#,
                     nmin=param_dict['ngals_min'])
     else:
         ###
+        ## Changing `prog_bar` to 'False'
+        param_dict['prog_bar'] = False
         ### Using multiprocessing to analyze catalogues
         ## Number of CPUs to use
         cpu_number = int(cpu_count() * param_dict['cpu_frac'])
