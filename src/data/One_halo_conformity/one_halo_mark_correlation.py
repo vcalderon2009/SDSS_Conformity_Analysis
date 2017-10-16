@@ -345,6 +345,12 @@ def get_parser():
                         help='Option to print out progress bars for each for loop',
                         type=_str2bool,
                         default=False)
+    ## Program message
+    parser.add_argument('-progmsg',
+                        dest='Prog_msg',
+                        help='Program message to use throught the script',
+                        type=str,
+                        default=cu.Program_Msg(__file__))
 
     ## Parsing Objects
     args = parser.parse_args()
@@ -980,7 +986,7 @@ def MCF_conf(prop, df_bin_org, group_idx_arr, rpbins_npairs_tot, param_dict,
     return mcf_dict
 
 def prop_sh_one_halo(df_bin_org, prop, GM_str, param_dict, proj_dict,
-    catl_name, catl_keys_dict, Prog_msg = '1 >>>  '):
+    catl_name, catl_keys_dict):
     """
     Shuffles the galaxy properties for the 1-halo term (same-halo pairs)
 
@@ -1023,6 +1029,8 @@ def prop_sh_one_halo(df_bin_org, prop, GM_str, param_dict, proj_dict,
         total number of groups in the desired group-mass bin
 
     """
+    ## Program message
+    Prog_msg = param_dict['Prog_msg']
     ## Constants
     Cens = int(1)
     Sats = int(0)
@@ -1226,8 +1234,7 @@ def prop_sh_one_halo(df_bin_org, prop, GM_str, param_dict, proj_dict,
 
     return mcf_dict_conf, mcf_dict_conf_seg, ngroups
 
-def halo_corr(catl_pd, catl_name, param_dict, proj_dict, nmin=2,
-    Prog_msg = '1 >>>  '):
+def halo_corr(catl_pd, catl_name, param_dict, proj_dict, nmin=2):
     """
     1-halo mark correlation function for galaxy groups in each group mass bin.
 
@@ -1249,6 +1256,8 @@ def halo_corr(catl_pd, catl_name, param_dict, proj_dict, nmin=2,
         minimum number of galaxies (including central galaxy) in a galaxy group
 
     """
+    ## Program message
+    Prog_msg = param_dict['Prog_msg']
     ### Catalogue Variables
     # `Group mass`, `groupid`, and `galtype` keys
     gm_key, id_key, galtype_key = cu.catl_keys(catl_kind=param_dict['catl_kind'],
@@ -1343,8 +1352,7 @@ def halo_corr(catl_pd, catl_name, param_dict, proj_dict, nmin=2,
     pickle.dump(p_data, open(p_fname,'wb'))
     print('{0} Data saved to Pickle: \n\t{1}\n'.format(Prog_msg, p_fname))
 
-def main(args, Prog_msg = '1 >>>  '):#,
-    # Prog_msg = cu.Program_Msg(__file__)):
+def main(args):
     """
     Computes the 1-halo galactic conformity results on SDSS DR7
 
@@ -1360,13 +1368,25 @@ def main(args, Prog_msg = '1 >>>  '):#,
     """
     ## Reading all elements and converting to python dictionary
     param_dict = vars(args)
+    ## Checking for correct input
+    param_vals_test(param_dict)
     ## ---- Adding to `param_dict` ---- 
     param_dict = add_to_dict(param_dict)
+    ## Program message
+    Prog_msg = param_dict['Prog_msg']
     ## Creating Folder Structure
     # proj_dict  = directory_skeleton(param_dict, cu.cookiecutter_paths(__file__))
     proj_dict  = directory_skeleton(param_dict, cu.cookiecutter_paths('./'))
     ## Choosing cosmological model
     cosmo_model = cosmo_create(cosmo_choice=param_dict['cosmo_choice'])
+    # Assigning the cosmological model to `param_dict`
+    param_dict['cosmo_model'] = cosmo_model
+    # Printing out project variables
+    print('\n'+50*'='+'\n')
+    for key, key_val in sorted(param_dict.items()):
+        if key !='Prog_msg':
+            print('{0} `{1}`: {2}'.format(Prog_msg, key, key_val))
+    print('\n'+50*'='+'\n')
     ## Running analysis
     # Reading catalogues
     catl_arr_all = cu.extract_catls(catl_kind=param_dict['catl_kind'],
@@ -1393,7 +1413,7 @@ def main(args, Prog_msg = '1 >>>  '):#,
         catl_pd   = cu.read_hdf5_file_to_pandas_DF(catl_ii)
         ## Computing cartesian coordinates
         catl_pd = spherical_to_cart(catl_pd,
-                                    cosmo_model, 
+                                    param_dict['cosmo_model'],
                                     method=param_dict['cart_method'])
         # MCF Calculations
         halo_corr(catl_pd, catl_name, param_dict, proj_dict,
@@ -1422,7 +1442,8 @@ def main(args, Prog_msg = '1 >>>  '):#,
         for ii in range(len(memb_tuples)):
             # Defining `proc` element
             proc = Process(target=multiprocessing_catls, 
-                            args=(catl_arr, param_dict, memb_tuples[ii]))
+                            args=(catl_arr, param_dict, proj_dict, 
+                                    memb_tuples[ii]))
             # Appending to main `procs` list
             procs.append(proc)
             proc.start()
@@ -1436,7 +1457,7 @@ def main(args, Prog_msg = '1 >>>  '):#,
         total_time = end_time - start_time
         print('{0} Total Time taken (Create): {1}'.format(Prog_msg, total_time))
 
-def multiprocessing_catls(catl_arr, param_dict, memb_tuples_ii):
+def multiprocessing_catls(catl_arr, param_dict, proj_dict, memb_tuples_ii):
     """
     Distributes the analysis of the catalogues into more than 1 processor
 
@@ -1448,8 +1469,14 @@ def multiprocessing_catls(catl_arr, param_dict, memb_tuples_ii):
     param_dict: python dictionary
         dictionary with `project` variables
 
-    memb_tuples_ii: 
+    proj_dict: python dictionary
+        Dictionary with current and new paths to project directories
+
+    memb_tuples_ii: tuple
+        tuple of catalogue indices to be analyzed
     """
+    ## Program Message
+    Prog_msg = param_dict['Prog_msg']
     ## Reading in Catalogue IDs
     start_ii, end_ii = memb_tuples_ii
     ##
@@ -1460,7 +1487,7 @@ def multiprocessing_catls(catl_arr, param_dict, memb_tuples_ii):
         catl_pd   = cu.read_hdf5_file_to_pandas_DF(catl_ii)
         ## Computing cartesian coordinates
         catl_pd = spherical_to_cart(catl_pd,
-                                    cosmo_model, 
+                                    param_dict['cosmo_model'], 
                                     method=param_dict['cart_method'])
         # MCF Calculations
         halo_corr(catl_pd, catl_name, param_dict, proj_dict,
@@ -1477,7 +1504,61 @@ def param_vals_test(param_dict):
 
     Raises
     -----------
+    ValueError: Error
+        This function raises a `ValueError` error if one or more of the 
+        required criteria are not met
     """
+    ##
+    ## Checking that `nmin` is larger than 2
+    if param_dict['ngals_min'] >= 2:
+        pass
+    else:
+        msg = '{0} `ngals_min` ({1}) must be larger than `2`'.format(
+            param_dict['Prog_msg'],
+            param_dict['ngals_min'])
+        raise ValueError(msg)
+    ##
+    ## Checking `cpu_frac` range
+    if (param_dict['cpu_frac'] > 0) and (param_dict['cpu_frac'] <= 1):
+        pass
+    else:
+        msg = '{0} `cpu_frac` ({1}) must be between (0,1]'.format(
+            param_dict['Prog_msg'],
+            param_dict['cpu_frac'])
+        raise ValueError(msg)
+    ##
+    ## Number of bins
+    if (param_dict['nrpbins'] > 0):
+        pass
+    else:
+        msg = '{0} `nrpbins` ({1}) must be larger than 0'.format(
+            param_dict['Prog_msg'],
+            param_dict['nrpbins'])
+        raise ValueError(msg)
+    ##
+    ## Checking that `catl_start` < `catl_finish`
+    if param_dict['catl_start'] < param_dict['catl_finish']:
+        pass
+    else:
+        msg = '{0} `catl_start` ({1}) must smaller than `catl_finish` ({2})'\
+            .format(
+            param_dict['Prog_msg'],
+            param_dict['catl_start'],
+            param_dict['catl_finish'])
+        raise ValueError(msg)
+    ##
+    ## Checking that `rpmin` < `rpmax`
+    if param_dict['rpmin'] < param_dict['rpmax']:
+        pass
+    else:
+        msg = '{0} `rpmin` ({1}) must smaller than `rpmax` ({2})'\
+            .format(
+            param_dict['Prog_msg'],
+            param_dict['rpmin'],
+            param_dict['rpmax'])
+        raise ValueError(msg)
+
+
 
 
 # Main function
