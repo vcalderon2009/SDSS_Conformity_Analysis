@@ -1290,12 +1290,14 @@ def halo_corr(catl_pd, catl_name, param_dict, proj_dict, nmin=2,
     p_fname = p_fname.format(*p_arr)
     ##
     ## Checking if file exists
-    if (cu.File_Exists(p_fname)) and (param_dict['remove_files']):
+    if (os.path.isfile(p_fname)) and (param_dict['remove_files']):
         os.remove(p_fname)
+        print('{0} `p_fname` ({1}) removed! Calculating MCF statistics!'.format(
+            Prog_msg, p_fname))
     ## Dictionary for storing results for each GM bin
     GM_prop_dict = {}
     # Looping over each GM bin (if file doesn't exist)
-    if not (cu.File_Exists(p_fname)):
+    if not (os.path.isfile(p_fname)):
         ## Executing MCF calculations if file does not exist for the give 
         ## catalogue.
         for ii, GM_ii in enumerate(GM_bins):
