@@ -628,8 +628,9 @@ def MCF_conf_seg(prop, df_bin_org, group_idx_arr, rpbins_npairs_tot,
     ##
     ## Looping over iterations to estimate the spread of the shuffles
     # ProgressBar properties
-    widgets   = [Bar('>'), ' ', ETA(), ' ', ReverseBar('<')]
-    pbar_mock = ProgressBar( widgets=widgets, maxval= 10 * itern).start()
+    if param_dict['prog_bar']:
+        widgets   = [Bar('>'), 'MCF Conf+Seg Itern: ', ETA(), ' ', ReverseBar('<')]
+        pbar_mock = ProgressBar( widgets=widgets, maxval= 10 * itern).start()
     for ii in range(param_dict['itern_tot']):
         ##
         ## Copying default `prop` array to DataFrame `df_bin_sh`
@@ -681,8 +682,10 @@ def MCF_conf_seg(prop, df_bin_org, group_idx_arr, rpbins_npairs_tot,
                                     len(corrfunc_sh_tot.T),
                                     corrfunc_sh,
                                     1)
-        pbar_mock.update(10*ii)
-    pbar_mock.finish()
+        if param_dict['prog_bar']:
+            pbar_mock.update(10*ii)
+    if param_dict['prog_bar']:
+        pbar_mock.finish()
     ###
     ### ---| Statistics |--- ###
     ###
@@ -875,8 +878,9 @@ def MCF_conf(prop, df_bin_org, group_idx_arr, rpbins_npairs_tot, param_dict,
     ##
     ## Looping over iterations to estimate the spread of the shuffles
     # ProgressBar properties
-    widgets   = [Bar('>'), ' ', ETA(), ' ', ReverseBar('<')]
-    pbar_mock = ProgressBar( widgets=widgets, maxval= 10 * itern).start()
+    if param_dict['prog_bar']:
+        widgets   = [Bar('>'), 'MCF Conf Itern: ', ETA(), ' ', ReverseBar('<')]
+        pbar_mock = ProgressBar( widgets=widgets, maxval= 10 * itern).start()
     for ii in range(param_dict['itern_tot']):
         ##
         ## Copying default `prop` array to DataFrame `df_bin_sh`
@@ -936,8 +940,10 @@ def MCF_conf(prop, df_bin_org, group_idx_arr, rpbins_npairs_tot, param_dict,
                                     len(corrfunc_sh_tot.T),
                                     corrfunc_sh,
                                     1)
-        pbar_mock.update(10*ii)
-    pbar_mock.finish()
+        if param_dict['prog_bar']:
+            pbar_mock.update(10*ii)
+    if param_dict['prog_bar']:
+        pbar_mock.finish()
     ###
     ### ---| Statistics |--- ###
     ###
@@ -1058,8 +1064,9 @@ def prop_sh_one_halo(df_bin_org, prop, GM_str, param_dict, proj_dict,
             ## Running `wp(rp)` for pair counting
             ## Looping over all galaxy groups
             # ProgressBar properties
-            widgets   = [Bar('>'), ' ', ETA(), ' ', ReverseBar('<')]
-            pbar_mock = ProgressBar( widgets=widgets, maxval= 10*ngroups).start()
+            if param_dict['prog_bar']:
+                widgets   = [Bar('>'), 'DDrppi Groups:', ETA(), ' ', ReverseBar('<')]
+                pbar_mock = ProgressBar( widgets=widgets, maxval= 10*ngroups).start()
             for ii, group_ii in enumerate(groupid_unq):
                 # DataFrame for `group_ii`
                 group_df  = df_bin_org.loc[df_bin_org[id_key]==group_ii]
@@ -1080,9 +1087,11 @@ def prop_sh_one_halo(df_bin_org, prop, GM_str, param_dict, proj_dict,
                             group_idx_arr[x],rp_idx_arr[x],0) \
                             for x in range(len(gm_rp_idx))])
                     ## Increasing `zz`
-                    pbar_mock.update(10*zz)
+                    if param_dict['prog_bar']:
+                        pbar_mock.update(10*zz)
                     zz += int(1)
-            pbar_mock.finish()
+            if param_dict['prog_bar']:
+                pbar_mock.finish()
             ## Saving indices into a Pickle file if file does not exist
             if num.sum(rpbins_npairs_tot) != 0:
                 pickle.dump([group_idx_arr, rpbins_npairs_tot],
@@ -1122,8 +1131,9 @@ def prop_sh_one_halo(df_bin_org, prop, GM_str, param_dict, proj_dict,
         ## Running `wp_idx_calc` for pair counting
         ## Looping over all galaxy groups
         # ProgressBar properties
-        widgets   = [Bar('>'), ' ', ETA(), ' ', ReverseBar('<')]
-        pbar_mock = ProgressBar( widgets=widgets, maxval= 10*ngroups).start()
+        if param_dict['prog_bar']:
+            widgets   = [Bar('>'), 'DDrppi Groups: ', ETA(), ' ', ReverseBar('<')]
+            pbar_mock = ProgressBar( widgets=widgets, maxval= 10*ngroups).start()
         for ii, group_ii in enumerate(groupid_unq):
             # DataFrame for `group_ii`
             group_df  = df_bin_org.loc[df_bin_org[id_key]==group_ii]
@@ -1144,9 +1154,11 @@ def prop_sh_one_halo(df_bin_org, prop, GM_str, param_dict, proj_dict,
                         group_idx_arr[x], rp_idx_arr[x],0) \
                         for x in range(len(gm_rp_idx))])
                 ## Increasing `zz`
-                pbar_mock.update(10*zz)
+                if param_dict['prog_bar']:
+                    pbar_mock.update(10*zz)
                 zz += int(1)
-        pbar_mock.finish()
+        if param_dict['prog_bar']:
+            pbar_mock.finish()
         ## Saving indices into a Pickle file if file does not exist
         if num.sum(rpbins_npairs_tot) != 0:
             pickle.dump([group_idx_arr, rpbins_npairs_tot],
@@ -1284,9 +1296,9 @@ def halo_corr(catl_pd, catl_name, param_dict, proj_dict, nmin=2,
         GMbin_min, GMbin_max = GM_ii
         GM_str = '{0:.2f}_{1:.2f}'.format(GMbin_min, GMbin_max)
         if param_dict['perf_opt']:
-            print('{0} Halo Mass range: {1}'.format(Prog_msg, GM_str))
+            print('\n{0} Halo Mass range: {1}'.format(Prog_msg, GM_str))
         else:
-            print('{0} Group Mass range: {1}'.format(Prog_msg, GM_str))
+            print('\n{0} Group Mass range: {1}'.format(Prog_msg, GM_str))
         ## Galaxies in Group-mass bin
         df_bin_org = catl_pd_clean.loc[ (catl_pd_clean[gm_key] >= GMbin_min) &\
                                     (catl_pd_clean[gm_key] <  GMbin_max)].copy()
@@ -1440,6 +1452,18 @@ def multiprocessing_catls(catl_arr, param_dict, memb_tuples_ii):
         halo_corr(catl_pd, catl_name, param_dict, proj_dict,
                     nmin=param_dict['ngals_min'])
 
+def param_vals_test(param_dict):
+    """
+    Checks if values are consistent with each other.
+
+    Parameters
+    -----------
+    param_dict: python dictionary
+        dictionary with `project` variables
+
+    Raises
+    -----------
+    """
 
 
 # Main function
