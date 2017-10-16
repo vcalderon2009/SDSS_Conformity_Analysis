@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # Victor Calderon
-# DATE
+# Oct 16, 2017
 # Vanderbilt University
 from __future__ import print_function, division, absolute_import
 __author__     =['Victor Calderon']
