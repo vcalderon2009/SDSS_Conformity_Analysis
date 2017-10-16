@@ -394,23 +394,27 @@ def add_to_dict(param_dict):
                         param_dict['nrpbins']       , param_dict['Mg_bin']   ,
                         param_dict['pimax' ]        , param_dict['itern_tot'],
                         param_dict['corr_pair_type'], param_dict['prop_log'] ,
-                        param_dict['shuffle_marks'] , perf_str ]
+                        param_dict['shuffle_marks'] , param_dict['ngals_min'],
+                        perf_str ]
     param_str  = 'rpmin_{0}_rpmax_{1}_nrpbins_{2}_Mgbin_{3}_pimax_{4}_'
-    param_str += 'itern_{5}_corrpair_type_{6}_proplog_{7}_shuffle_{8}'
+    param_str += 'itern_{5}_corrpair_type_{6}_proplog_{7}_shuffle_{8}_'
+    param_str += 'nmin_{9}'
     if param_dict['perf_opt']:
-        param_str += '_perf_opt_str_{9}/'
+        param_str += '_perf_opt_str_{10}/'
     else:
-        param_str += '{9}/'
+        param_str += '{10}/'
     param_str  = param_str.format(*param_str_arr)
     # String for Main Figures
     param_str_pic_arr = [param_dict['rpmin']  , param_dict['rpmax'] ,
                          param_dict['nrpbins'], param_dict['Mg_bin'],
-                         param_dict['pimax']  , perf_str ]
-    param_str_pic = 'rpmin_{0}_rpmax_{1}_nrpbins_{2}_Mgbin_{3}_pimax_{4}'
+                         param_dict['pimax']  , param_dict['ngals_min'],
+                         perf_str ]
+    param_str_pic  = 'rpmin_{0}_rpmax_{1}_nrpbins_{2}_Mgbin_{3}_pimax_{4}_'
+    param_str_pic += 'nmin_{5}'
     if param_dict['perf_opt']:
-        param_str_pic += '_perf_opt_str_{5}/'
+        param_str_pic += '_perf_opt_str_{6}/'
     else:
-        param_str_pic += '{5}/'
+        param_str_pic += '{6}/'
     param_str_pic = param_str_pic.format(*param_str_pic_arr)
     ###
     ### To dictionary
@@ -1061,7 +1065,7 @@ def MCF_conf(prop, df_bin_org, group_idx_arr, rpbins_npairs_tot, param_dict,
 
     return mcf_dict
 
-def prop_sh_one_halo(df_bin_org, prop, GM_str, param_dict, proj_dict,
+def prop_sh_two_halo(df_bin_org, prop, GM_str, param_dict, proj_dict,
     catl_name, catl_keys_dict):
     """
     Shuffles the galaxy properties for the 1-halo term (same-halo pairs)
@@ -1312,7 +1316,7 @@ def prop_sh_one_halo(df_bin_org, prop, GM_str, param_dict, proj_dict,
 
 def halo_corr(catl_pd, catl_name, param_dict, proj_dict):
     """
-    1-halo mark correlation function for galaxy groups in each group mass bin.
+    2-halo mark correlation function for galaxies in each group mass bin.
 
     Parameters
     ----------
@@ -1402,8 +1406,7 @@ def halo_corr(catl_pd, catl_name, param_dict, proj_dict):
             for jj, prop in enumerate(pd_keys):
                 print('{0} >> Galaxy Prop: {1}'.format(Prog_msg, prop))
                 mcf_dict_conf, \
-                mcf_dict_conf_seg, \
-                ngroups = prop_sh_one_halo(df_bin_org,
+                ngroups = prop_sh_two_halo(df_bin_org,
                                 prop,
                                 GM_str,
                                 param_dict,
@@ -1413,8 +1416,7 @@ def halo_corr(catl_pd, catl_name, param_dict, proj_dict):
                 ##
                 ## Saving results to dictionary
                 prop_dict[prop][0] = mcf_dict_conf
-                prop_dict[prop][1] = mcf_dict_conf_seg
-                prop_dict[prop][2] = ngroups
+                prop_dict[prop][1] = ngroups
             ##
             ## Saving results to final dictionary
             GM_prop_dict[GM_str] = prop_dict
