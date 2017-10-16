@@ -444,6 +444,18 @@ def param_vals_test(param_dict):
         required criteria are not met
     """
     ##
+    ## Check the `perf_opt` for when `catl_kind` is 'data'
+    if (param_dict['catl_kind']=='data') and (param_dict['perf_opt']):
+        msg = '{0} `catl_kind` ({1}) must smaller than `perf_opt` ({2})'\
+            .format(
+            param_dict['Prog_msg'],
+            param_dict['catl_kind'],
+            param_dict['perf_opt'])
+        raise ValueError(msg)
+    else:
+        pass
+
+    ##
     ## Checking that `nmin` is larger than 2
     if param_dict['ngals_min'] >= 2:
         pass
