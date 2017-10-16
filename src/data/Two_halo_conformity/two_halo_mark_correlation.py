@@ -715,7 +715,7 @@ def MCF_conf(prop, df_bin_org_cen, group_idx_arr, rpbins_npairs_tot,
     ## Looping over iterations to estimate the spread of the shuffles
     # ProgressBar properties
     if param_dict['prog_bar']:
-        widgets   = [Bar('>'), 'MCF Conf+Seg Itern: ', ETA(), ' ', ReverseBar('<')]
+        widgets   = [Bar('>'), 'MCF 2-halo Itern: ', ETA(), ' ', ReverseBar('<')]
         pbar_mock = ProgressBar( widgets=widgets, maxval= 10 * itern).start()
     for ii in range(param_dict['itern_tot']):
         ##
