@@ -10,7 +10,10 @@ python setup.py build_ext --inplace
     mv ./${name_mod}*.so  ./${name_mod}.so &&
     rm -rf ./${name_mod} &&
     rm -rf ./build) || (
-    printf "\n\n\nAhora si no se puede\n\n\n")
+    
+    mv ./${name_mod}*.so ./${name_mod}.so &&
+    rm -rf ./build &&
+    printf "\n\n\n Ahora si se pudo" )
 
 
 
