@@ -454,7 +454,6 @@ def param_vals_test(param_dict):
         raise ValueError(msg)
     else:
         pass
-
     ##
     ## Checking that `nmin` is larger than 2
     if param_dict['ngals_min'] >= 2:
