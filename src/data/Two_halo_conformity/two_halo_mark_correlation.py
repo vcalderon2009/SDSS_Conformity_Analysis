@@ -588,7 +588,7 @@ def wp_idx_calc(group_df, param_dict):
 
     return rp_idx, rp_npairs
 
-def MCF_conf_seg(prop, df_bin_org, group_idx_arr, rpbins_npairs_tot, 
+def MCF_conf(prop, df_bin_org, group_idx_arr, rpbins_npairs_tot, 
     param_dict, catl_keys_dict):
     """
     Marked correlation function calculation for the case,
@@ -807,264 +807,6 @@ def MCF_conf_seg(prop, df_bin_org, group_idx_arr, rpbins_npairs_tot,
 
     return mcf_dict
 
-def MCF_conf(prop, df_bin_org, group_idx_arr, rpbins_npairs_tot, param_dict, 
-    catl_keys_dict):
-    """
-    Marked correlation function calculation for the case,
-    where `Conformity only` is considered
-    In here, we 'remove' the segregation effect of satellites, and 
-    thus, it does not show the "true" signal of galactic conformity 
-    alone. This means that satellites are normalized by the mean 
-    `prop` in each `rp`-bin, rather than by the total mean of `prop` 
-    for satellites
-
-    Parameters
-    -----------
-    prop: string
-        galaxy property being analyzed
-
-    df_bin_org: pandas DataFrame
-    
-    group_idx_arr: numpy.ndarraym, shape (param_dict['nrpbins'])
-
-    rpbins_npairs_tot: numpy.ndarray, shape (param_dict['nrpbins'])
-
-    param_dict: python dictionary
-
-    catl_keys_dict: python dictionary
-
-    Returns
-    -----------
-    mcf_dict: python dictionary
-        dictionary containing the statistics of the MCF and the `shuffled` MCF
-        Keys:
-            - 'mcf': Marked correlation function for `non-shuffled` scenario
-            - 'npairs': Total number of pairs for the `selected` galaxy pairs
-            - 'npairs_rp': Number of selected galaxy-pairs in each `rp`-bin
-            - 'mcf_sh_mean': Mean of the Shuffled MCF.
-            - 'mcf_sh_std': St. Dev. of the Shuffled MCF.
-            - 'sigma': Dictionary of 1,2,3- sigma ranges for the `shuffled` MCF
-            - 'mcf_sh': MCFs for all iterations for the shuffled scenario
-    """
-    ## Creating new DataFrame
-    df_bin = df_bin_org.copy()
-    ## Constants
-    Cens  = int(1)
-    Sats  = int(0)
-    itern = param_dict['itern_tot']
-    ## Galaxy Property Labels
-    prop_orig = prop + '_orig'
-    ## Catalogue Variables for galaxy properties
-    gm_key      = catl_keys_dict['gm_key']
-    id_key      = catl_keys_dict['id_key']
-    galtype_key = catl_keys_dict['galtype_key']
-    ##
-    ## Type of correlation Galaxy Pair
-    ## Adding the values for 'Cens' and 'Sats' and determining which 
-    ## galaxy pair to keep for the analysis.
-    if param_dict['corr_pair_type']=='cen_sat':
-        ## Keeping 'Central-Satellite' pairs
-        corr_pair_int = Cens + Sats
-    elif param_dict['corr_pair_type']=='cen_cen':
-        corr_pair_int = Cens + Cens
-    ##
-    ## Correctint for `log` in `prop`
-    nonlog_arr = ['logssfr', 'logMstar_JHU']
-    if (prop in nonlog_arr) and (param_dict['prop_log']=='nonlog'):
-        df_bin.loc[:,prop] = 10**df_bin[prop].values
-    ##
-    ## Galaxy type, `prop`, and `original` arrays
-    galtype_arr   = df_bin[galtype_key].copy().values
-    galidx_arr    = df_bin.index.values.copy()
-    prop_orig_arr = copy.deepcopy(df_bin[prop].values)
-    ##
-    ## Assigning original `prop` to new column in `df_bn`
-    df_bin.loc[:,prop_orig] = prop_orig_arr.copy()
-    ##
-    ## Indices of `Centrals` and `Satellites
-    cen_idx = df_bin.loc[df_bin[galtype_key]==Cens].index.values
-    sat_idx = df_bin.loc[df_bin[galtype_key]==Sats].index.values
-    ##
-    ## --| Normalization of Centrals and Satellites |--- ##
-    ##
-    # Normalizing `Central` galaxies
-    cens_prop_mean = df_bin.loc[cen_idx, prop].mean()
-    df_bin.loc[cen_idx, prop] /= cens_prop_mean
-    ##
-    ## Normalizing `Satellites`
-    # Create a row for the `rp` of each Satellite
-    df_bin.loc[:,'rpbin'] = -10*num.ones(df_bin.shape[0])
-    # Assigning `rpbin` to centrals
-    df_bin.loc[cen_idx, 'rpbin'] = -1
-    ##
-    ## Selecting the indices that match the criteria `corr_pair_int`
-    # Sum of 'galaxy pairs'
-    galtype_sum = num.array([galtype_arr[xx.T[0]] + 
-                             galtype_arr[xx.T[1]]
-                             for xx in group_idx_arr])
-    #
-    # Only choosing the galaxy-pairs that meet `corr_pair_int`
-    galtype_sum_seg = num.array([num.where(xx==corr_pair_int)[0]
-                                for xx in galtype_sum])
-    #
-    # Creating new array of galaxy-pair indices
-    # This array contains the indices of galaxy-pairs that meet the 
-    # criteria 'corr_pair_int'
-    gal_pair_idx_seg = num.array([group_idx_arr[kk][galtype_sum_seg[kk]]
-                                for kk in range(len(galtype_sum_seg))])
-    # Array for saving indices of Satellites to change
-    id_sats_arr = [[] for x in range(param_dict['nrpbins'])]
-    # Assigning `rp` values to satellites
-    for rp_ii in range(param_dict['nrpbins']):
-        ## Getting id's of satellites in each rp_bin
-        id_rp_ii           = num.unique(gal_pair_idx_seg[rp_ii])
-        id_sats            = id_rp_ii[galtype_arr[id_rp_ii]==Sats]
-        id_sats_arr[rp_ii] = id_sats
-        # Assigning `rp` values
-        df_bin.loc[id_sats, 'rpbin'] = rp_ii
-    # Changing type of data for `rpbin` column
-    df_bin      = df_bin.astype({'rpbin':int})
-    id_sats_arr = num.array(id_sats_arr)
-    #
-    # Normalizing Satellites by each value of `prop` in each `rpbin`
-    for ii, id_ii in enumerate(id_sats_arr):
-        df_bin.loc[id_ii, prop] /= df_bin.loc[id_ii, prop].mean()
-    ##
-    ## ---| Computing MCF |--- ##
-    ##
-    # Copy of the 'newly normalized' galaxy property `prop` array
-    prop_arr = df_bin[prop].values
-    # Product of galaxy `prop` values
-    galprop_prod_sel = num.array([  prop_arr[xx.T[0]]*
-                                    prop_arr[xx.T[1]]
-                                    for xx in gal_pair_idx_seg])
-    #
-    # Total number of galaxy-pairs in each selected `rp`-bin
-    rp_npairs_tot_sel = num.array([len(xx) for xx in gal_pair_idx_seg],
-                                    dtype=float)
-    ##
-    ## Normalizing MCF
-    # Summing over all `prop` products and normalizing by `counts`
-    corrfunc = (num.array([num.sum(xx) for xx in galprop_prod_sel])/
-                            rp_npairs_tot_sel)
-    # Total number of counts in each `rp` bin
-    npairs_tot = num.sum(rp_npairs_tot_sel)
-    ##
-    ## ---| Shuffles |--- ##
-    ##
-    # Selecting 2 columns only
-    df_bin_sh = df_bin_org[[prop, galtype_key]].copy()
-    #
-    # Creating new column for `shuffled` case with the original `prop` array
-    prop_sh = prop + '_sh'
-    df_bin_sh.loc[:, prop_sh] = df_bin_org[prop].values.copy()
-    ##
-    ## Initializing array for the `shuffle` case
-    corrfunc_sh_tot = num.zeros((param_dict['nrpbins'], 1))
-    ##
-    ## Looping over iterations to estimate the spread of the shuffles
-    # ProgressBar properties
-    if param_dict['prog_bar']:
-        widgets   = [Bar('>'), 'MCF Conf Itern: ', ETA(), ' ', ReverseBar('<')]
-        pbar_mock = ProgressBar( widgets=widgets, maxval= 10 * itern).start()
-    for ii in range(param_dict['itern_tot']):
-        ##
-        ## Copying default `prop` array to DataFrame `df_bin_sh`
-        df_bin_sh.loc[:,prop_sh] = copy.deepcopy(prop_orig_arr)
-        ##
-        ## Shuffling based on `shuffle_marks`
-        if param_dict['shuffle_marks']=='censat_sh':
-            ## Shuffling `centrals` and `satellites` `prop` arrays
-            # Centrals
-            mark_sh_cen = df_bin_sh.loc[cen_idx, prop_sh].copy().values
-            num.random.shuffle(mark_sh_cen)
-            df_bin_sh.loc[cen_idx, prop_sh] = mark_sh_cen
-            # Satellites
-            mark_sh_sat = df_bin_sh.loc[sat_idx, prop_sh].copy().values
-            num.random.shuffle(mark_sh_sat)
-            df_bin_sh.loc[sat_idx, prop_sh] = mark_sh_sat
-        ## Shuffling only centrals' `prop` array
-        elif param_dict['shuffle_marks']=='cen_sh':
-            # Centrals
-            mark_sh_cen = df_bin_sh.loc[cen_idx, prop_sh].copy().values
-            num.random.shuffle(mark_sh_cen)
-            df_bin_sh.loc[cen_idx, prop_sh] = mark_sh_cen
-        ## Shuffling only satellites' `prop` array
-        elif param_dict['shuffle_marks']=='sat_sh':
-            # Satellites
-            mark_sh_sat = df_bin_sh.loc[sat_idx, prop_sh].copy().values
-            num.random.shuffle(mark_sh_sat)
-            df_bin_sh.loc[sat_idx, prop_sh] = mark_sh_sat
-        ##
-        ## --| Normalizing Central and Satellites in each `rp` bin |--- ##
-        ##
-        # Normalizing `Central` galaxies
-        cen_prop_mean = df_bin_sh.loc[cen_idx, prop_sh].mean()
-        df_bin_sh.loc[cen_idx, prop_sh] /= cens_prop_mean
-        #
-        # Normalizing `Satellite` galaxies by each value of `prop` in each 
-        # `rp`-bin
-        for zz, id_zz in enumerate(id_sats_arr):
-            df_bin_sh.loc[id_zz, prop_sh] /= df_bin_sh.loc[id_zz, prop_sh].mean()
-        ##
-        ## Copy of the `newly normalized` galaxy property `prop_sh` in 
-        ## each `rp` bin
-        prop_sh_arr = df_bin_sh[prop_sh].copy().values
-        ##
-        ## Product of `marks`
-        galprop_prod_sh = num.array([   prop_sh_arr[xx.T[0]]*
-                                        prop_sh_arr[xx.T[1]]
-                                        for xx in gal_pair_idx_seg])
-        ##
-        ## Normalizing MCF
-        # Summing over all `prop` products and normalizing by `counts`
-        corrfunc_sh = (num.array([num.sum(xx) for xx in galprop_prod_sh])/
-                                    rp_npairs_tot_sel)
-        ##
-        ## Appending to main MCF-Shuffles array
-        corrfunc_sh_tot = num.insert(corrfunc_sh_tot,
-                                    len(corrfunc_sh_tot.T),
-                                    corrfunc_sh,
-                                    1)
-        if param_dict['prog_bar']:
-            pbar_mock.update(10*ii)
-    if param_dict['prog_bar']:
-        pbar_mock.finish()
-    ###
-    ### ---| Statistics |--- ###
-    ###
-    # Removing first column of `zero's`
-    corrfunc_sh_tot = num.delete(corrfunc_sh_tot, 0, axis=1)
-    ##
-    ## Percentiles
-    perc_arr = [68., 95., 99.7]
-    # Creating dictionary for calculating percentiles
-    sigma_dict = {}
-    for ii in range(len(perc_arr)):
-        sigma_dict[ii] = []
-    # Populating dictionary
-    for ii, perc_ii in enumerate(perc_arr):
-        mark_lower = num.nanpercentile(corrfunc_sh_tot, 50.-(perc_ii/2),axis=1)
-        mark_upper = num.nanpercentile(corrfunc_sh_tot, 50.+(perc_ii/2),axis=1)
-        # Saving to dictionary
-        sigma_dict[ii] = num.column_stack((mark_lower, mark_upper)).T
-    ## Mean and St. Dev.
-    mark_mean = num.nanmean(corrfunc_sh_tot, axis=1)
-    mark_std  = num.nanstd( corrfunc_sh_tot, axis=1)
-    ##
-    ## --| Saving everything to a dictionary
-    ##
-    mcf_dict = {}
-    mcf_dict['mcf'         ] = corrfunc
-    mcf_dict['npairs'      ] = npairs_tot
-    mcf_dict['npairs_rp'   ] = rp_npairs_tot_sel
-    mcf_dict['mcf_sh_mean' ] = mark_mean
-    mcf_dict['mcf_sh_std'  ] = mark_std
-    mcf_dict['sigma'       ] = sigma_dict
-    mcf_dict['mcf_sh'      ] = corrfunc_sh_tot
-
-    return mcf_dict
-
 def prop_sh_two_halo(df_bin_org, prop, GM_str, param_dict, proj_dict,
     catl_name, catl_keys_dict):
     """
@@ -1118,8 +860,12 @@ def prop_sh_two_halo(df_bin_org, prop, GM_str, param_dict, proj_dict,
     gm_key      = catl_keys_dict['gm_key']
     id_key      = catl_keys_dict['id_key']
     galtype_key = catl_keys_dict['galtype_key']
+    ##
+    ## Creating new DataFrame with only `Centrals` for the given group mass bin
+    df_bin_org_cen = df_bin_org.loc[df_bin_org[galtype_key]==Cens].copy()
+    df_bin_org_cen.reset_index(inplace=True, drop=True)
     ## Group statistics
-    groupid_unq = df_bin_org[id_key].unique()
+    groupid_unq = df_bin_org_cen[id_key].unique()
     ngroups     = groupid_unq.shape[0]
     ## Total number of galaxy pairs in `rp`
     rpbins_npairs_tot = num.zeros(param_dict['nrpbins'])
@@ -1142,6 +888,7 @@ def prop_sh_two_halo(df_bin_org, prop, GM_str, param_dict, proj_dict,
             Prog_msg, catl_idx_file))
     if (os.path.isfile(catl_idx_file)):
         try:
+            ## Reading in Pickle file
             catl_idx_pickle = pickle.load(open(catl_idx_file,'rb'))
             print('catl_idx_file: `{0}`'.format(catl_idx_file))
             group_idx_arr, rpbins_npairs_tot = catl_idx_pickle
@@ -1149,45 +896,17 @@ def prop_sh_two_halo(df_bin_org, prop, GM_str, param_dict, proj_dict,
             os.remove(catl_idx_file)
             print('{0} Removing `catl_idx_file`:{1}'.format(
                 Prog_msg, catl_idx_file))
-            ## Running `wp(rp)` for pair counting
-            ## Looping over all galaxy groups
-            # ProgressBar properties
-            if param_dict['prog_bar']:
-                widgets   = [Bar('>'), 'DDrppi Groups:', ETA(), ' ', ReverseBar('<')]
-                pbar_mock = ProgressBar( widgets=widgets, maxval= 10*ngroups).start()
-            for ii, group_ii in enumerate(groupid_unq):
-                # DataFrame for `group_ii`
-                group_df  = df_bin_org.loc[df_bin_org[id_key]==group_ii]
-                group_idx = group_df.index.values
-                ## Pair Counting
-                gm_rp_idx, gm_rp_npairs = wp_idx_calc(group_df, param_dict)
-                ## Converting to galaxy indices and checkin total number pairs
-                if num.sum(gm_rp_npairs) != 0:
-                    # Converting to galaxy indices
-                    rp_idx_arr = num.array([group_idx[xx] for xx in gm_rp_idx])
-                    # Total number of pairs
-                    rpbins_npairs_tot += gm_rp_npairs
-                    # Saving idx's and galaxy properties into arrays
-                    if zz==0:
-                        group_idx_arr = rp_idx_arr.copy()
-                    else:
-                        group_idx_arr = num.array([num.append(
-                            group_idx_arr[x],rp_idx_arr[x],0) \
-                            for x in range(len(gm_rp_idx))])
-                    ## Increasing `zz`
-                    if param_dict['prog_bar']:
-                        pbar_mock.update(10*zz)
-                    zz += int(1)
-            if param_dict['prog_bar']:
-                pbar_mock.finish()
-            ## Saving indices into a Pickle file if file does not exist
+            ##
+            ## Running `DDrppi(rp)` for pair counting on `Central-Central`
+            group_idx_arr, rpbins_npairs_tot = wp_idx_calc(df_bin_org_cen, param_dict)
+            ##
+            ## Savin indices into a Pickle file if file does not exist
             if num.sum(rpbins_npairs_tot) != 0:
                 pickle.dump([group_idx_arr, rpbins_npairs_tot],
                     open(catl_idx_file,'wb'))
             else:
                 corrfunc     = num.zeros(param_dict['nrpbins'])
                 corrfunc [:] = num.nan
-                corrfunc_seg = corrfunc.copy()
                 npairs_tot   = num.sum(rpbins_npairs_tot)
                 corrfunc_sh_tot = corrfunc.copy()
                 mark_nanmean    = corrfunc.copy()
@@ -1204,57 +923,29 @@ def prop_sh_two_halo(df_bin_org, prop, GM_str, param_dict, proj_dict,
                     sigma_dict[jj] = sigma_arr.copy()
                 ## Converting to dictionaries
                 # Conformity Only
-                mcf_dict = {}
-                mcf_dict['mcf'         ] = corrfunc
-                mcf_dict['npairs'      ] = npairs_tot
-                mcf_dict['npairs_rp'   ] = rpbins_npairs_tot
-                mcf_dict['mcf_sh_mean' ] = mark_nanmean
-                mcf_dict['mcf_sh_std'  ] = mark_nanstd
-                mcf_dict['sigma'       ] = sigma_dict
-                mcf_dict['mcf_sh'      ] = corrfunc_sh_tot
+                mcf_dict_conf = {}
+                mcf_dict_conf['mcf'         ] = corrfunc
+                mcf_dict_conf['npairs'      ] = npairs_tot
+                mcf_dict_conf['npairs_rp'   ] = rpbins_npairs_tot
+                mcf_dict_conf['mcf_sh_mean' ] = mark_nanmean
+                mcf_dict_conf['mcf_sh_std'  ] = mark_nanstd
+                mcf_dict_conf['sigma'       ] = sigma_dict
+                mcf_dict_conf['mcf_sh'      ] = corrfunc_sh_tot
 
                 return mcf_dict_conf, mcf_dict_conf_seg, ngroups
     else:
+        ##
         ## Running complete analysis
-        ## Running `wp_idx_calc` for pair counting
-        ## Looping over all galaxy groups
-        # ProgressBar properties
-        if param_dict['prog_bar']:
-            widgets   = [Bar('>'), 'DDrppi Groups: ', ETA(), ' ', ReverseBar('<')]
-            pbar_mock = ProgressBar( widgets=widgets, maxval= 10*ngroups).start()
-        for ii, group_ii in enumerate(groupid_unq):
-            # DataFrame for `group_ii`
-            group_df  = df_bin_org.loc[df_bin_org[id_key]==group_ii]
-            group_idx = group_df.index.values
-            ## Pair Counting
-            gm_rp_idx, gm_rp_npairs = wp_idx_calc(group_df, param_dict)
-            ## Converting to galaxy indices and checkin total number pairs
-            if num.sum(gm_rp_npairs) != 0:
-                # Converting to galaxy indices
-                rp_idx_arr = num.array([group_idx[xx] for xx in gm_rp_idx])
-                # Total number of pairs
-                rpbins_npairs_tot += gm_rp_npairs
-                # Saving idx's and galaxy properties into arrays
-                if zz==0:
-                    group_idx_arr = rp_idx_arr.copy()
-                else:
-                    group_idx_arr = num.array([num.append(
-                        group_idx_arr[x], rp_idx_arr[x],0) \
-                        for x in range(len(gm_rp_idx))])
-                ## Increasing `zz`
-                if param_dict['prog_bar']:
-                    pbar_mock.update(10*zz)
-                zz += int(1)
-        if param_dict['prog_bar']:
-            pbar_mock.finish()
-        ## Saving indices into a Pickle file if file does not exist
+        ## Running `DDrppi(rp)` for pair counting on `Central-Central`
+        group_idx_arr, rpbins_npairs_tot = wp_idx_calc(df_bin_org_cen, param_dict)
+        ##
+        ## Savin indices into a Pickle file if file does not exist
         if num.sum(rpbins_npairs_tot) != 0:
             pickle.dump([group_idx_arr, rpbins_npairs_tot],
                 open(catl_idx_file,'wb'))
         else:
             corrfunc     = num.zeros(param_dict['nrpbins'])
             corrfunc [:] = num.nan
-            corrfunc_seg = corrfunc.copy()
             npairs_tot   = num.sum(rpbins_npairs_tot)
             corrfunc_sh_tot = corrfunc.copy()
             mark_nanmean    = corrfunc.copy()
@@ -1279,15 +970,6 @@ def prop_sh_two_halo(df_bin_org, prop, GM_str, param_dict, proj_dict,
             mcf_dict_conf['mcf_sh_std'  ] = mark_nanstd
             mcf_dict_conf['sigma'       ] = sigma_dict
             mcf_dict_conf['mcf_sh'      ] = corrfunc_sh_tot
-            # Conformity + Segregation
-            mcf_dict_conf_seg = {}
-            mcf_dict_conf_seg['mcf'         ] = corrfunc
-            mcf_dict_conf_seg['npairs'      ] = npairs_tot
-            mcf_dict_conf_seg['npairs_rp'   ] = rpbins_npairs_tot
-            mcf_dict_conf_seg['mcf_sh_mean' ] = mark_nanmean
-            mcf_dict_conf_seg['mcf_sh_std'  ] = mark_nanstd
-            mcf_dict_conf_seg['sigma'       ] = sigma_dict
-            mcf_dict_conf_seg['mcf_sh'      ] = corrfunc_sh_tot
 
             return mcf_dict_conf, mcf_dict_conf_seg, ngroups
     ###
@@ -1296,15 +978,7 @@ def prop_sh_two_halo(df_bin_org, prop, GM_str, param_dict, proj_dict,
     ##
     ## MCF for `Conformity Only`
     mcf_dict_conf     = MCF_conf(   prop,
-                                    df_bin_org,
-                                    group_idx_arr,
-                                    rpbins_npairs_tot,
-                                    param_dict,
-                                    catl_keys_dict)
-    ##
-    ## MCF for `Conformity + Segregation`
-    mcf_dict_conf_seg = MCF_conf_seg(prop,
-                                    df_bin_org,
+                                    df_bin_org_cen,
                                     group_idx_arr,
                                     rpbins_npairs_tot,
                                     param_dict,
