@@ -1212,6 +1212,15 @@ def prop_sh_one_halo(df_bin_org, prop, GM_str, param_dict, proj_dict,
                 mcf_dict['mcf_sh_std'  ] = mark_nanstd
                 mcf_dict['sigma'       ] = sigma_dict
                 mcf_dict['mcf_sh'      ] = corrfunc_sh_tot
+                # Conformity + Segregation
+                mcf_dict_conf_seg = {}
+                mcf_dict_conf_seg['mcf'         ] = corrfunc
+                mcf_dict_conf_seg['npairs'      ] = npairs_tot
+                mcf_dict_conf_seg['npairs_rp'   ] = rpbins_npairs_tot
+                mcf_dict_conf_seg['mcf_sh_mean' ] = mark_nanmean
+                mcf_dict_conf_seg['mcf_sh_std'  ] = mark_nanstd
+                mcf_dict_conf_seg['sigma'       ] = sigma_dict
+                mcf_dict_conf_seg['mcf_sh'      ] = corrfunc_sh_tot
 
                 return mcf_dict_conf, mcf_dict_conf_seg, ngroups
     else:
