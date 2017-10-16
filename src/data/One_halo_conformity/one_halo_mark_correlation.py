@@ -1553,9 +1553,6 @@ def multiprocessing_catls(catl_arr, param_dict, proj_dict, memb_tuples_ii):
         # MCF Calculations
         halo_corr(catl_pd, catl_name, param_dict, proj_dict)
 
-
-
-
 # Main function
 if __name__=='__main__':
     ## Input arguments
