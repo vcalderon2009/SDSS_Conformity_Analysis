@@ -588,7 +588,7 @@ def wp_idx_calc(group_df, param_dict):
 
     return rp_idx, rp_npairs
 
-def MCF_conf(prop, df_bin_org, group_idx_arr, rpbins_npairs_tot, 
+def MCF_conf(prop, df_bin_org_cen, group_idx_arr, rpbins_npairs_tot, 
     param_dict, catl_keys_dict):
     """
     Marked correlation function calculation for the case,
@@ -602,7 +602,7 @@ def MCF_conf(prop, df_bin_org, group_idx_arr, rpbins_npairs_tot,
     prop: string
         galaxy property being analyzed
 
-    df_bin_org: pandas DataFrame
+    df_bin_org_cen: pandas DataFrame
     
     group_idx_arr: numpy.ndarraym, shape (param_dict['nrpbins'])
 
@@ -626,7 +626,7 @@ def MCF_conf(prop, df_bin_org, group_idx_arr, rpbins_npairs_tot,
             - 'mcf_sh': MCFs for all iterations for the shuffled scenario
     """
     ## Creating new DataFrame
-    df_bin = df_bin_org.copy()
+    df_bin = df_bin_org_cen.copy()
     ## Constants
     Cens  = int(1)
     Sats  = int(0)
@@ -841,12 +841,7 @@ def prop_sh_two_halo(df_bin_org, prop, GM_str, param_dict, proj_dict,
         dictionary with the statistics of the `shuffles` and the MCF 
         of the catalogue.
         This dictionary corresponds to the "Conformity Only" scenario
-
-    mcf_dict_conf_seg: python dictionary
-        dictionary with the statistics of the `shuffles` and the MCF 
-        of the catalogue.
-        This dictionary corresponds to the "Conformity + Segregation" scenario
-
+    
     ngroups: int
         total number of groups in the desired group-mass bin
 
@@ -878,9 +873,8 @@ def prop_sh_two_halo(df_bin_org, prop, GM_str, param_dict, proj_dict,
                 param_dict['ngals_min'], catl_name]
     catl_idx_file = '{0}/Mr{1}_{2}_{3}_{4}_{5}_{6}_{7}_{8}_{9}_{10}_{11}.p'
     catl_idx_file = catl_idx_file.format(*idx_arr)
+    ##
     ## Reading in file
-    # Pair-counting for each galaxy group
-    zz = 0
     # Removing file if needed
     if (os.path.isfile(catl_idx_file)) and (param_dict['remove_files']):
         os.remove(catl_idx_file)
@@ -905,12 +899,12 @@ def prop_sh_two_halo(df_bin_org, prop, GM_str, param_dict, proj_dict,
                 pickle.dump([group_idx_arr, rpbins_npairs_tot],
                     open(catl_idx_file,'wb'))
             else:
-                corrfunc     = num.zeros(param_dict['nrpbins'])
-                corrfunc [:] = num.nan
-                npairs_tot   = num.sum(rpbins_npairs_tot)
+                corrfunc        = num.zeros(param_dict['nrpbins'])
+                corrfunc [:]    = num.nan
+                npairs_tot      = num.sum(rpbins_npairs_tot)
                 corrfunc_sh_tot = corrfunc.copy()
                 mark_nanmean    = corrfunc.copy()
-                mark_nanstd  = corrfunc.copy()
+                mark_nanstd     = corrfunc.copy()
                 sigma_arr       = num.zeros(2*param_dict['nrpbins']).reshape(
                     2, param_dict['nrpbins'])
                 sigma_arr[:]    = num.nan
@@ -932,7 +926,7 @@ def prop_sh_two_halo(df_bin_org, prop, GM_str, param_dict, proj_dict,
                 mcf_dict_conf['sigma'       ] = sigma_dict
                 mcf_dict_conf['mcf_sh'      ] = corrfunc_sh_tot
 
-                return mcf_dict_conf, mcf_dict_conf_seg, ngroups
+                return mcf_dict_conf, ngroups
     else:
         ##
         ## Running complete analysis
@@ -944,12 +938,12 @@ def prop_sh_two_halo(df_bin_org, prop, GM_str, param_dict, proj_dict,
             pickle.dump([group_idx_arr, rpbins_npairs_tot],
                 open(catl_idx_file,'wb'))
         else:
-            corrfunc     = num.zeros(param_dict['nrpbins'])
-            corrfunc [:] = num.nan
-            npairs_tot   = num.sum(rpbins_npairs_tot)
+            corrfunc        = num.zeros(param_dict['nrpbins'])
+            corrfunc [:]    = num.nan
+            npairs_tot      = num.sum(rpbins_npairs_tot)
             corrfunc_sh_tot = corrfunc.copy()
             mark_nanmean    = corrfunc.copy()
-            mark_nanstd  = corrfunc.copy()
+            mark_nanstd     = corrfunc.copy()
             sigma_arr       = num.zeros(2*param_dict['nrpbins']).reshape(
                 2, param_dict['nrpbins'])
             sigma_arr[:]    = num.nan
@@ -971,7 +965,7 @@ def prop_sh_two_halo(df_bin_org, prop, GM_str, param_dict, proj_dict,
             mcf_dict_conf['sigma'       ] = sigma_dict
             mcf_dict_conf['mcf_sh'      ] = corrfunc_sh_tot
 
-            return mcf_dict_conf, mcf_dict_conf_seg, ngroups
+            return mcf_dict_conf, ngroups
     ###
     ### --- | Marked Correlation Function - Calculations | --- ###
     ###
@@ -986,7 +980,7 @@ def prop_sh_two_halo(df_bin_org, prop, GM_str, param_dict, proj_dict,
     ##
     ## Saving to dictionaries to new variables
 
-    return mcf_dict_conf, mcf_dict_conf_seg, ngroups
+    return mcf_dict_conf, ngroups
 
 def halo_corr(catl_pd, catl_name, param_dict, proj_dict):
     """
