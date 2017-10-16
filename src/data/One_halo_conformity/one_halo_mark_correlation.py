@@ -344,7 +344,7 @@ def get_parser():
                         dest='prog_bar',
                         help='Option to print out progress bars for each for loop',
                         type=_str2bool,
-                        default=False)
+                        default=True)
     ## Program message
     parser.add_argument('-progmsg',
                         dest='Prog_msg',
