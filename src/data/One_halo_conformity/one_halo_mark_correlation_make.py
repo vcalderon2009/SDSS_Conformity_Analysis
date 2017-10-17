@@ -99,6 +99,12 @@ def get_parser():
                         help='Program message to use throught the script',
                         type=str,
                         default=cu.Program_Msg(__file__))
+    ## Option for removing file
+    parser.add_argument('-remove',
+                        dest='remove_files',
+                        help='Delete pickle files containing pair counts',
+                        type=_str2bool,
+                        default=False)
     ## Parsing Objects
     args = parser.parse_args()
 
