@@ -131,7 +131,8 @@ def get_analysis_params():
                             ('catl_finish'   ,'-catl_finish',100),
                             ('perf_opt'      ,'-perf'       ,'False'),
                             ('cosmo_choice'  ,'-cosmo'      ,'LasDamas'),
-                            ('cpu_frac'      ,'-cpu'        ,0.7)])
+                            ('cpu_frac'      ,'-cpu'        ,0.7),
+                            ('remove_files'  ,'-remove'     ,'False')])
     ##
     ## Converting to pandas DataFrame
     colnames = ['Name','Flag','Value']
@@ -288,6 +289,11 @@ def main():
     ##
     ## Parameters for the analysis
     params_pd = get_analysis_params()
+    ##
+    ## Choosing if to delete files
+    if param_dict['remove_files']:
+        ## Overwriting `remove_files` from `params_pd`
+        params_pd.loc[params_pd['Name']=='remove_files','Value'] = 'True'
     ##
     ## Running analysis
     file_construction_and_execution(params_pd, param_dict)
