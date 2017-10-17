@@ -470,6 +470,15 @@ def directory_skeleton(param_dict, proj_dict):
                                         param_dict['sample'],
                                         param_dict['corr_type'],
                                         param_dict['param_str'] ])
+    ## Pickle directory (results for `data`)
+    pickle_data  = '{0}/interim/SDSS/{1}/{2}/Mr{3}/conformity_output/'
+    pickle_data += 'catl_pickle_files/{4}/{5}'
+    pickle_data  = pickle_data.format(*[    proj_dict['data_dir'],
+                                            'data',
+                                            param_dict['catl_type'],
+                                            param_dict['sample'],
+                                            param_dict['corr_type'],
+                                            param_dict['param_str'] ])
     ## Figure out directory
     figure_dir  = '{0}/SDSS/{1}/{2}/Mr{3}/conformity_output/'
     figure_dir += 'MCF_figures/{4}/{5}'
@@ -488,14 +497,25 @@ def directory_skeleton(param_dict, proj_dict):
             param_dict['Prog_msg'], pickle_res)
         raise ValueError(msg)
     ##
+    ## Checking if `pickle_data` exists
+    if os.path.exists(pickle_data):
+        pass
+    else:
+        msg = '{0} `pickle_data` ({1}) does not exist! Exiting!!'.format(
+            param_dict['Prog_msg'], pickle_data)
+        raise ValueError(msg)
+    ##
     ## Creating `figure_dir` folder
     cu.Path_Folder(figure_dir)
     ##
     ## Adding to main dictionary `proj_dict`
-    proj_dict['pickle_res'] = pickle_res
-    proj_dict['figure_dir'] = figure_dir
+    proj_dict['pickle_res' ] = pickle_res
+    proj_dict['pickle_data'] = pickle_data
+    proj_dict['figure_dir' ] = figure_dir
 
     return proj_dict
+
+# def data_extraction
 
 def main():
     """
@@ -520,6 +540,9 @@ def main():
         if key !='Prog_msg':
             print('{0} `{1}`: {2}'.format(Prog_msg, key, key_val))
     print('\n'+50*'='+'\n')
+    ## Running the analysis
+    # Reading catalogues
+
 
 
 # Main function
