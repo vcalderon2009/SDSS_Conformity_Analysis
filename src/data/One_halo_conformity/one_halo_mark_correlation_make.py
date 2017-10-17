@@ -7,7 +7,7 @@
 # Vanderbilt University
 from __future__ import print_function, division, absolute_import
 __author__     =['Victor Calderon']
-__copyright__  =["Copyright 2017 Victor Calderon, "]
+__copyright__  =["Copyright 2017 Victor Calderon, 1-halo MCF Make"]
 __email__      =['victor.calderon@vanderbilt.edu']
 __maintainer__ =['Victor Calderon']
 """
