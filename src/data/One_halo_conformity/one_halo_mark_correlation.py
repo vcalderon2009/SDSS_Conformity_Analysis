@@ -26,6 +26,8 @@ from progressbar import (Bar, ETA, FileTransferSpeed, Percentage, ProgressBar,
 # Extra-modules
 import argparse
 from argparse import ArgumentParser
+from argparse import HelpFormatter
+from operator import attrgetter
 import copy
 from datetime import datetime
 import subprocess
@@ -44,6 +46,14 @@ from pair_counter_rp import pairwise_distance_rp
 warnings.simplefilter("ignore", category=RuntimeWarning)
 
 ## Functions
+class SortingHelpFormatter(HelpFormatter):
+    def add_arguments(self, actions):
+        """
+        Modifier for `argparse` help parameters, that sorts them alphabetically
+        """
+        actions = sorted(actions, key=attrgetter('option_strings'))
+        super(SortingHelpFormatter, self).add_arguments(actions)
+
 def cosmo_create(cosmo_choice='LasDamas', H0=100., Om0=0.25, Ob0=0.04,
     Tcmb0=2.7255):
     """
@@ -197,7 +207,8 @@ def get_parser():
     """
     ## Define parser object
     description_msg = 'Script to evaluate 1-halo conformity on SDSS DR7'
-    parser = ArgumentParser(description=description_msg)
+    parser = ArgumentParser(description=description_msg,
+                            formatter_class=SortingHelpFormatter,)
     # 
     parser.add_argument('--version', action='version', version='%(prog)s 1.0')
     ## SDSS Sample
