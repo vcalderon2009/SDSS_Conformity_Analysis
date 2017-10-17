@@ -211,7 +211,6 @@ def file_construction_and_execution(params_pd, param_dict):
     outfile_path = os.path.abspath('./'+outfile_name)
     ##
     ## Opening file
-    out_f.write(b"""\n""")
     with open(outfile_path, 'wb') as out_f:
         out_f.write(b"""#!/usr/bin/env bash\n\n""")
         out_f.write(b"""## Author: Victor Calderon\n\n""")
