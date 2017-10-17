@@ -255,7 +255,7 @@ def get_parser():
                         dest='rpmax',
                         help='Maximum value for projected distance `rp`',
                         type=_check_pos_val,
-                        default=10)
+                        default=10.)
     ## Number of `rp` bins
     parser.add_argument('-nrp',
                         dest='nrpbins',
