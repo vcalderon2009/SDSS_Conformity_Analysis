@@ -1467,7 +1467,7 @@ def main(args):
     param_dict = vars(args)
     ## Checking for correct input
     param_vals_test(param_dict)
-    ## ---- Adding to `param_dict` ---- 
+    ## ---- Adding to `param_dict` ----
     param_dict = add_to_dict(param_dict)
     ## Program message
     Prog_msg = param_dict['Prog_msg']

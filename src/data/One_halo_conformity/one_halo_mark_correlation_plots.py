@@ -216,20 +216,6 @@ def get_parser():
                         type=str,
                         choices=['galgal'],
                         default='galgal')
-    ## Cosmology Choice
-    parser.add_argument('-cosmo',
-                        dest='cosmo_choice',
-                        help='Choice of Cosmology',
-                        type=str,
-                        choices=['LasDamas', 'Planck'],
-                        default='LasDamas')
-    ## Cartesian method
-    parser.add_argument('-cart',
-                        dest='cart_method',
-                        help='Method for calculating distances to galaxies',
-                        type=str,
-                        choices=['astropy', 'approx'],
-                        default='astropy')
     ## CPU Counts
     parser.add_argument('-cpu',
                         dest='cpu_frac',
@@ -254,6 +240,81 @@ def get_parser():
 
     return args
 
+def add_to_dict(param_dict):
+    """
+    Aggregates extra variables to dictionary
+
+    Parameters
+    ----------
+    param_dict: python dictionary
+        dictionary with input parameters and values
+
+    Returns
+    ----------
+    param_dict: python dictionary
+        dictionary with old and new values added
+    """
+    ### Sample - Int
+    sample_s = str(param_dict['sample'])
+    ### Perfect Catalogue
+    if param_dict['perf_opt']:
+        perf_str = 'haloperf'
+    else:
+        perf_str = ''
+    ### Figure
+    fig_idx = 20
+    ### Projected distance `rp` bins
+    logrpmin    = num.log10(param_dict['rpmin'])
+    logrpmax    = num.log10(param_dict['rpmax'])
+    dlogrp      = (logrpmax - logrpmin)/float(param_dict['nrpbins'])
+    rpbin_arr   = num.linspace(logrpmin, logrpmax, param_dict['nrpbins']+1)
+    rpbins_cens = rpbin_arr[:-1]+0.5*(rpbin_arr[1:]-rpbin_arr[:-1])
+    ### Survey Details
+    sample_title = r'\boldmath$M_{r}< -%d$' %(param_dict['sample'])
+    ## Project Details
+    # String for Main directories
+    param_str_arr = [   param_dict['rpmin']         , param_dict['rpmax']    ,
+                        param_dict['nrpbins']       , param_dict['Mg_bin']   ,
+                        param_dict['pimax' ]        , param_dict['itern_tot'],
+                        param_dict['corr_pair_type'], param_dict['prop_log'] ,
+                        param_dict['shuffle_marks'] , param_dict['ngals_min'],
+                        perf_str ]
+    param_str  = 'rpmin_{0}_rpmax_{1}_nrpbins_{2}_Mgbin_{3}_pimax_{4}_'
+    param_str += 'itern_{5}_corrpair_type_{6}_proplog_{7}_shuffle_{8}_'
+    param_str += 'nmin_{9}'
+    if param_dict['perf_opt']:
+        param_str += '_perf_opt_str_{10}/'
+    else:
+        param_str += '{10}/'
+    param_str  = param_str.format(*param_str_arr)
+    # String for Main Figures
+    param_str_pic_arr = [param_dict['rpmin']  , param_dict['rpmax'] ,
+                         param_dict['nrpbins'], param_dict['Mg_bin'],
+                         param_dict['pimax']  , param_dict['ngals_min'],
+                         perf_str ]
+    param_str_pic  = 'rpmin_{0}_rpmax_{1}_nrpbins_{2}_Mgbin_{3}_pimax_{4}_'
+    param_str_pic += 'nmin_{5}'
+    if param_dict['perf_opt']:
+        param_str_pic += '_perf_opt_str_{6}/'
+    else:
+        param_str_pic += '{6}/'
+    param_str_pic = param_str_pic.format(*param_str_pic_arr)
+    ###
+    ### To dictionary
+    param_dict['sample_s'     ] = sample_s
+    param_dict['perf_str'     ] = perf_str
+    param_dict['fig_idx'      ] = fig_idx
+    param_dict['logrpmin'     ] = logrpmin
+    param_dict['logrpmax'     ] = logrpmax
+    param_dict['dlogrp'       ] = dlogrp
+    param_dict['rpbin_arr'    ] = rpbin_arr
+    param_dict['rpbins_cens'  ] = rpbins_cens
+    param_dict['sample_title' ] = sample_title
+    param_dict['param_str'    ] = param_str
+    param_dict['param_str_pic'] = param_str_pic
+
+    return param_dict
+
 def param_vals_test(param_dict):
     """
     Checks if values are consistent with each other.
@@ -270,7 +331,65 @@ def param_vals_test(param_dict):
         required criteria are not met
     """
     ##
-    ## This is where the tests for `param_dict` input parameters go.
+    ## Check the `perf_opt` for when `catl_kind` is 'data'
+    if (param_dict['catl_kind']=='data') and (param_dict['perf_opt']):
+        msg = '{0} `catl_kind` ({1}) must smaller than `perf_opt` ({2})'\
+            .format(
+            param_dict['Prog_msg'],
+            param_dict['catl_kind'],
+            param_dict['perf_opt'])
+        raise ValueError(msg)
+    else:
+        pass
+    ##
+    ## Checking that `nmin` is larger than 2
+    if param_dict['ngals_min'] >= 2:
+        pass
+    else:
+        msg = '{0} `ngals_min` ({1}) must be larger than `2`'.format(
+            param_dict['Prog_msg'],
+            param_dict['ngals_min'])
+        raise ValueError(msg)
+    ##
+    ## Checking `cpu_frac` range
+    if (param_dict['cpu_frac'] > 0) and (param_dict['cpu_frac'] <= 1):
+        pass
+    else:
+        msg = '{0} `cpu_frac` ({1}) must be between (0,1]'.format(
+            param_dict['Prog_msg'],
+            param_dict['cpu_frac'])
+        raise ValueError(msg)
+    ##
+    ## Number of bins
+    if (param_dict['nrpbins'] > 0):
+        pass
+    else:
+        msg = '{0} `nrpbins` ({1}) must be larger than 0'.format(
+            param_dict['Prog_msg'],
+            param_dict['nrpbins'])
+        raise ValueError(msg)
+    ##
+    ## Checking that `catl_start` < `catl_finish`
+    if param_dict['catl_start'] < param_dict['catl_finish']:
+        pass
+    else:
+        msg = '{0} `catl_start` ({1}) must smaller than `catl_finish` ({2})'\
+            .format(
+            param_dict['Prog_msg'],
+            param_dict['catl_start'],
+            param_dict['catl_finish'])
+        raise ValueError(msg)
+    ##
+    ## Checking that `rpmin` < `rpmax`
+    if param_dict['rpmin'] < param_dict['rpmax']:
+        pass
+    else:
+        msg = '{0} `rpmin` ({1}) must smaller than `rpmax` ({2})'\
+            .format(
+            param_dict['Prog_msg'],
+            param_dict['rpmin'],
+            param_dict['rpmax'])
+        raise ValueError(msg)
 
 def directory_skeleton(param_dict, proj_dict):
     """
@@ -298,12 +417,14 @@ def directory_skeleton(param_dict, proj_dict):
 
 def main():
     """
-
+    Produces the plots for the 1-halo MCF conformity results
     """
     ## Reading all elements and converting to python dictionary
     param_dict = vars(args)
     ## Checking for correct input
     param_vals_test(param_dict)
+    ## ---- Adding to `param_dict` ---- 
+    param_dict = add_to_dict(param_dict)
     ## Program message
     Prog_msg = param_dict['Prog_msg']
     ##
