@@ -217,7 +217,7 @@ def file_construction_and_execution(params_pd, param_dict):
         out_f.write( """## Last Edited: {0}\n\n""".format(now_str).encode())
         out_f.write(b"""### --- Variables\n""")
         out_f.write(b"""ENV_NAME="conformity"\n""")
-        out_f.write( """WINDOW_NAME="One_Halo_conformity_{0}"\n""".format(param_dict['analysis_type']).encode())
+        out_f.write( """WINDOW_NAME="One_Halo_MCF_conformity_{0}"\n""".format(param_dict['analysis_type']).encode())
         out_f.write(b"""WINDOW_DATA="data"\n""")
         out_f.write(b"""WINDOW_MOCKS="mocks"\n""")
         out_f.write(b"""# Home Directory\n""")
