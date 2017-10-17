@@ -301,7 +301,7 @@ def get_parser():
                         dest='catl_start',
                         help='Starting index of mock catalogues to use',
                         type=int,
-                        choices=range(100),
+                        choices=range(101),
                         metavar='[0-99]',
                         default=0)
     ## Mock Finish
@@ -309,7 +309,7 @@ def get_parser():
                         dest='catl_finish',
                         help='Finishing index of mock catalogues to use',
                         type=int,
-                        choices=range(100),
+                        choices=range(101),
                         metavar='[0-99]',
                         default=1)
     ## `Perfect Catalogue` Option
