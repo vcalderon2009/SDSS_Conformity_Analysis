@@ -300,16 +300,16 @@ def get_parser():
                         dest='catl_start',
                         help='Starting index of mock catalogues to use',
                         type=int,
-                        choices=range(100),
-                        metavar='[0-99]',
+                        choices=range(101),
+                        metavar='[0-100]',
                         default=0)
     ## Mock Finish
     parser.add_argument('-finish',
                         dest='catl_finish',
                         help='Finishing index of mock catalogues to use',
                         type=int,
-                        choices=range(100),
-                        metavar='[0-99]',
+                        choices=range(101),
+                        metavar='[0-100]',
                         default=1)
     ## `Perfect Catalogue` Option
     parser.add_argument('-perf',
