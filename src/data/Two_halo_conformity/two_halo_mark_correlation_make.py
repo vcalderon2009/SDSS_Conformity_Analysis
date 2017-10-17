@@ -169,6 +169,14 @@ def get_exec_string(params_pd, param_dict):
     ## Getting path to `MCF_file`
     file_path = os.path.abspath(MCF_file)
     ##
+    ## Check if File exists
+    if os.path.isfile(file_path):
+        pass
+    else:
+        msg = '{0} `MCF_file` ({1}) not found!! Exiting!'.format(
+            param_dict['Prog_msg'], file_path)
+        raise ValueError(msg)
+    ##
     ## Constructing string
     MCF_string = 'python {0} '.format(file_path)
     for ii in range(params_pd.shape[0]):
