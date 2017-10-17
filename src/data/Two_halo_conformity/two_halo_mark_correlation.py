@@ -1121,6 +1121,8 @@ def main(args):
     To see how to use the code run:
         >>>> python one_halo_mark_correlation.py -h [--help]
     """
+    ## Starting time
+    start_time = datetime.now()
     ## Reading all elements and converting to python dictionary
     param_dict = vars(args)
     ## Checking for correct input
@@ -1191,7 +1193,6 @@ def main(args):
         memb_tuples  = num.asarray([(memb_arr[xx], memb_arr[xx+1])
                                 for xx in range(memb_arr.size-1)])
         ## Assigning `memb_tuples` to function `multiprocessing_catls`
-        start_time = datetime.now()
         procs = []
         for ii in range(len(memb_tuples)):
             # Defining `proc` element
@@ -1205,11 +1206,11 @@ def main(args):
         ## Joining `procs`
         for proc in procs:
             proc.join()
-        ##
-        ## End time for running the catalogues
-        end_time = datetime.now()
-        total_time = end_time - start_time
-        print('{0} Total Time taken (Create): {1}'.format(Prog_msg, total_time))
+    ##
+    ## End time for running the catalogues
+    end_time = datetime.now()
+    total_time = end_time - start_time
+    print('{0} Total Time taken (Create): {1}'.format(Prog_msg, total_time))
 
 def multiprocessing_catls(catl_arr, param_dict, proj_dict, memb_tuples_ii):
     """
