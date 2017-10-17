@@ -215,7 +215,7 @@ def file_construction_and_execution(params_pd, param_dict):
     string_dict = get_exec_string(params_pd, param_dict)
     ##
     ## Parsing text that will go in file
-    outfile_name = 'one_halo_mcf_{0}.sh'.format(param_dict['analysis_type'])
+    outfile_name = 'one_halo_mark_correlation_{0}_run.sh'.format(param_dict['analysis_type'])
     outfile_path = os.path.abspath('./'+outfile_name)
     ##
     ## Opening file
