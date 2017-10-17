@@ -216,6 +216,13 @@ def get_parser():
                         type=str,
                         choices=['galgal'],
                         default='galgal')
+    ## Type of error or `sigma` to use
+    parser.add_argument('-type-error',
+                        dest='type_sigma',
+                        help='Type of error or sigma to calculate for plotting',
+                        type=str,
+                        choices=['std','perc'],
+                        default='std')
     ## CPU Counts
     parser.add_argument('-cpu',
                         dest='cpu_frac',
@@ -234,7 +241,19 @@ def get_parser():
                         help='Program message to use throught the script',
                         type=str,
                         default=cu.Program_Msg(__file__))
-
+    ## Minimim mass bin to show
+    parser.add_argument('-mg_min',
+                        dest='mg_min',
+                        help='Minimim mass bin to show in the results plot',
+                        type=float,
+                        default=12.4)
+    ## Maximum mass bin to show
+    parser.add_argument('-mg_max',
+                        dest='mg_max',
+                        help='Maximum mass bin to show in the results plot',
+                        type=float,
+                        default=14.)
+    ## Maximum mass bin to show
     ## Parsing Objects
     args = parser.parse_args()
 
@@ -254,24 +273,31 @@ def add_to_dict(param_dict):
     param_dict: python dictionary
         dictionary with old and new values added
     """
+    ###
     ### Sample - Int
     sample_s = str(param_dict['sample'])
+    ###
     ### Perfect Catalogue
     if param_dict['perf_opt']:
         perf_str = 'haloperf'
     else:
         perf_str = ''
+    ###
     ### Figure
-    fig_idx = 20
+    fig_idx = 21
+    ###
     ### Projected distance `rp` bins
     logrpmin    = num.log10(param_dict['rpmin'])
     logrpmax    = num.log10(param_dict['rpmax'])
     dlogrp      = (logrpmax - logrpmin)/float(param_dict['nrpbins'])
     rpbin_arr   = num.linspace(logrpmin, logrpmax, param_dict['nrpbins']+1)
     rpbins_cens = rpbin_arr[:-1]+0.5*(rpbin_arr[1:]-rpbin_arr[:-1])
+    ###
     ### Survey Details
     sample_title = r'\boldmath$M_{r}< -%d$' %(param_dict['sample'])
-    ## Project Details
+    sample_name  = {'19':'Consuelo','20':'Esmeralda','21':'Carmen'}
+    ###
+    ### Project Details
     # String for Main directories
     param_str_arr = [   param_dict['rpmin']         , param_dict['rpmax']    ,
                         param_dict['nrpbins']       , param_dict['Mg_bin']   ,
@@ -299,6 +325,17 @@ def add_to_dict(param_dict):
     else:
         param_str_pic += '{6}/'
     param_str_pic = param_str_pic.format(*param_str_pic_arr)
+    #
+    # Figure Prefix
+    fig_prefix = '{0}_{1}'.format(fig_idx, param_str_pic)
+    ###
+    ### Sigma Dictionary
+    perc_arr = [68.,95., 99.7]
+    sigma_dict = {}
+    for ii, perc_ii in enumerate(perc_arr):
+        low_sig        = 50.-(perc_ii/2.)
+        high_sig       = 50.+(perc_ii/2.)
+        sigma_dict[ii] = [low_sig, high_sig]
     ###
     ### To dictionary
     param_dict['sample_s'     ] = sample_s
@@ -312,6 +349,10 @@ def add_to_dict(param_dict):
     param_dict['sample_title' ] = sample_title
     param_dict['param_str'    ] = param_str
     param_dict['param_str_pic'] = param_str_pic
+    # Extras
+    param_dict['sample_name'  ] = sample_name
+    param_dict['sigma_dict'   ] = sigma_dict
+    param_dict['perc_arr'     ] = perc_arr
 
     return param_dict
 
@@ -390,6 +431,17 @@ def param_vals_test(param_dict):
             param_dict['rpmin'],
             param_dict['rpmax'])
         raise ValueError(msg)
+    ##
+    ## Checking that `mg_min` < `mg_max`
+    if param_dict['mg_min'] < param_dict['mg_max']:
+        pass
+    else:
+        msg = '{0} `mg_min` ({1}) must smaller than `mg_max` ({2})'\
+            .format(
+            param_dict['Prog_msg'],
+            param_dict['mg_min'],
+            param_dict['mg_max'])
+        raise ValueError(msg)
 
 def directory_skeleton(param_dict, proj_dict):
     """
@@ -409,11 +461,41 @@ def directory_skeleton(param_dict, proj_dict):
     proj_dict: python dictionary
         Dictionary with current and new paths to project directories
     """
-    ## In here, you define the directories of your project
+    ## Pickle directory (result from 1-halo MCF analysis results)
+    pickle_res  = '{0}/interim/SDSS/{1}/{2}/Mr{3}/conformity_output/'
+    pickle_res += 'catl_pickle_files/{4}/{5}'
+    pickle_res  = pickle_res.format(*[  proj_dict['data_dir'],
+                                        param_dict['catl_kind'],
+                                        param_dict['catl_type'],
+                                        param_dict['sample'],
+                                        param_dict['corr_type'],
+                                        param_dict['param_str'] ])
+    ## Figure out directory
+    figure_dir  = '{0}/SDSS/{1}/{2}/Mr{3}/conformity_output/'
+    figure_dir += 'MCF_figures/{4}/{5}'
+    figure_dir  = figure_dir.format(*[  proj_dict['plot_dir'],
+                                        param_dict['catl_kind'],
+                                        param_dict['catl_type'],
+                                        param_dict['sample'],
+                                        param_dict['corr_type'],
+                                        param_dict['param_str'] ])
+    ##
+    ## Checking if `pickle_res` exists
+    if os.path.exists(pickle_res):
+        pass
+    else:
+        msg = '{0} `pickle_res` ({1}) does not exist! Exiting!!'.format(
+            param_dict['Prog_msg'], pickle_res)
+        raise ValueError(msg)
+    ##
+    ## Creating `figure_dir` folder
+    cu.Path_Folder(figure_dir)
+    ##
+    ## Adding to main dictionary `proj_dict`
+    proj_dict['pickle_res'] = pickle_res
+    proj_dict['figure_dir'] = figure_dir
 
     return proj_dict
-
-
 
 def main():
     """
