@@ -296,7 +296,7 @@ def get_parser():
                         choices=['log', 'nonlog'],
                         default='log')
     ## Mock Start
-    parser.add_argument('-start',
+    parser.add_argument('-catl_start',
                         dest='catl_start',
                         help='Starting index of mock catalogues to use',
                         type=int,
@@ -304,7 +304,7 @@ def get_parser():
                         metavar='[0-100]',
                         default=0)
     ## Mock Finish
-    parser.add_argument('-finish',
+    parser.add_argument('-catl_finish',
                         dest='catl_finish',
                         help='Finishing index of mock catalogues to use',
                         type=int,
