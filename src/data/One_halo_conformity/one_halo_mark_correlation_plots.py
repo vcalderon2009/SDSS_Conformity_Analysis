@@ -515,7 +515,119 @@ def directory_skeleton(param_dict, proj_dict):
 
     return proj_dict
 
-# def data_extraction
+def mgroup_keys_lim(keys_arr, sep='_'):
+    """
+    Convers the list of string sto array of new strings with the 
+    upper and lower limits of the masses.
+
+    Parameters
+    -----------
+    keys_arr: numpy.ndarray
+        array of keys for the different group mass bins
+
+    sep: string
+        character used for separating group bin edges
+
+    Returns
+    -----------
+    gm_lims: array-like, shape (2,1)
+        array of the minimum and maximum mass of the array
+        Shape: [gm_min, gm_max]
+    """
+    ## New array for storing the `GM` keys
+    keys_new = [[] for x in range(2*len(keys_arr))]
+    ## Looping over all `GM` keys
+    ii = 0
+    for zz, mg_ii in enumerate(keys_arr):
+        keys_new[ii],\
+        keys_new[ii+1] = num.asarray(mg_ii.split(sep),dtype=float)
+        ii += 2
+    ## Obtaining minimum and maximum masses for the catalogue
+    keys_new = num.unique(keys_new)[[0,-1]]
+
+    return keys_new
+
+def mgroup_bins_create(mgroup_lims):
+    """
+    Creates the bins from all the catalogue(s)
+
+    Parameters
+    """
+
+def data_shuffles_extraction(param_dict, proj_dict, pickle_ext='.p'):
+    """
+    Extracts the data from the `data` and `shuffles`.
+    Functions used when `catl_kind=='data'`
+
+    Parameters
+    ----------
+    param_dict: python dictionary
+        dictionary with `project` variables
+
+    proj_dict: python dictionary
+        dictionary with info of the project that uses the
+        `Data Science` Cookiecutter template.
+
+    pickle_ext: string, optional (default = '.p')
+        extension of the pickle files to read
+
+    Returns
+    ---------
+
+    """
+    ## Reading in Catalogue
+    catl_arr = cu.Index(proj_dict['pickle_res'], pickle_ext)
+    ncatls   = len(catl_arr)
+    ## Choosing catalogue
+    if ncatls==1:
+        catl_path = catl_arr[0]
+    else:
+        msg = '{0} `catl_arr` ({1}) has more than 1 catalogue in it! '
+        msg += 'It can only contain 1 catalogue!! Exiting!'
+        msg  = msg.format(  param_dict['Prog_msg'],
+                            proj_dict['pickle_res'],
+                            ncatls)
+        raise ValueError(msg)
+    ## Opening pickle file
+    (   param_dict_kk,
+        proj_dict_kk ,
+        GM_prop_dict ,
+        catl_name    ,
+        GM_arr       ) = pickle.load(open(catl_path,'rb'))
+    ##
+    ## Reading array of masses
+    mgroup_bins_lims = [[[],[]] for x in range(ncatls)]
+    for ii in range(ncatls): 
+        mgroup_bins_lims[ii] = mgroup_keys_lim(GM_prop_dict.keys())
+    mgroup_bins_lims = num.array(mgroup_bins_lims)
+    ##
+    ## Creating mass bins
+    mgroup_
+
+
+
+
+def mocks_data_extraction(param_dict, proj_dict, pickle_ext='.p'):
+    """
+    Extracts the data from the `mocks` and `data`.
+    Functions used when `catl_kind=='mocks'`
+
+    Parameters
+    ----------
+    param_dict: python dictionary
+        dictionary with `project` variables
+
+    proj_dict: python dictionary
+        dictionary with info of the project that uses the
+        `Data Science` Cookiecutter template.
+
+    pickle_ext: string, optional (default = '.p')
+        extension of the pickle files to read
+
+    Returns
+    ---------
+
+    """
 
 def main():
     """
@@ -541,7 +653,12 @@ def main():
             print('{0} `{1}`: {2}'.format(Prog_msg, key, key_val))
     print('\n'+50*'='+'\n')
     ## Running the analysis
-    # Reading catalogues
+    # Choosing which kind of plots to produce
+    if param_dict['catl_kind'] == 'data':
+        data_shuffles_extraction(param_dict, proj_dict)
+    elif param_dict['catl_kind'] == 'mocks':
+        mocks_data_extraction(param_dict, proj_dict)
+        
 
 
 
