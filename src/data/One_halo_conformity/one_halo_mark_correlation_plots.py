@@ -547,12 +547,49 @@ def mgroup_keys_lim(keys_arr, sep='_'):
 
     return keys_new
 
-def mgroup_bins_create(mgroup_lims):
+def mgroup_bins_create(mgroup_lims, param_dict):
     """
     Creates the bins from all the catalogue(s)
 
     Parameters
+    -----------
+    mgroup_lims: array_like, shape (ncatls, 2)
+        array of mass limits for the 1st and last mass bin
+
+    param_dict: python dictionary
+        dictionary with `project` variables
+
+    Return
+    -----------
+    param_dict: python dictionary
+        dictionary with 'updated' `project` variables
     """
+    ## Transpoing `mgroup_lims` to obtain array of upper and lower limits
+    mgroup_lims_vals = num.min(mgroup_lims.T, axis=1)
+    ## Bin edges for all catalogues
+    mgroup_bins = num.arange(   mgroup_lims_vals[0],
+                                mgroup_lims_vals[1]+.5*param_dict['Mg_bin'],
+                                param_dict['Mg_bin'])
+    ##
+    ## Bin edges keys in the form of the original keys
+    mgroup_keys_p = ['{0:.1f}_{1:.1f}'.format(mgroup_bins[xx],mgroup_bins[xx+1])\
+                    for xx in range(len(mgroup_bins)-1)]
+    ##
+    ## Labels for Plotting for each mass bin
+    mgroup_labels = ['{0} - {1}'.format(*xx.split('_')) for xx in mgroup_keys_p]
+    ##
+    ## Indices for the DataFrame
+    mgroup_idx    = [xx.replace('.','_') for xx in mgroup_keys_p]
+    ##
+    ## Creating dictionary that contains the label for each mass bin
+    mgroup_dict = dict(zip(mgroup_keys_p, mgroup_labels))
+    ##
+    ## Adding to `param_dict`
+    param_dict['mgroup_dict'] = mgroup_dict
+    param_dict['mgroup_bins'] = mgroup_bins
+
+    return param_dict
+
 
 def data_shuffles_extraction(param_dict, proj_dict, pickle_ext='.p'):
     """
@@ -596,13 +633,12 @@ def data_shuffles_extraction(param_dict, proj_dict, pickle_ext='.p'):
         GM_arr       ) = pickle.load(open(catl_path,'rb'))
     ##
     ## Reading array of masses
-    mgroup_bins_lims = [[[],[]] for x in range(ncatls)]
-    for ii in range(ncatls): 
-        mgroup_bins_lims[ii] = mgroup_keys_lim(GM_prop_dict.keys())
-    mgroup_bins_lims = num.array(mgroup_bins_lims)
+    mgroup_lims = [[[],[]] for x in range(10*ncatls)]
+    for ii in range(10*ncatls): 
+        mgroup_lims[ii] = ii+1*mgroup_keys_lim(GM_prop_dict.keys())
+    mgroup_lims = num.array(mgroup_lims)
     ##
     ## Creating mass bins
-    mgroup_
 
 
 
