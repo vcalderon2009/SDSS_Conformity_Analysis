@@ -138,7 +138,8 @@ def get_analysis_params():
                             ('perf_opt'      ,'-perf'         ,'False'),
                             ('cosmo_choice'  ,'-cosmo'        ,'LasDamas'),
                             ('cpu_frac'      ,'-cpu'          ,0.7),
-                            ('remove_files'  ,'-remove'       ,'False')])
+                            ('remove_files'  ,'-remove'       ,'False')
+                            ('type_sigma'    ,'-sigma'        ,'std')])
     ##
     ## Converting to pandas DataFrame
     colnames = ['Name','Flag','Value']

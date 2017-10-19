@@ -224,7 +224,6 @@ def sigma_calcs(data_arr, type_sigma='std', perc_arr = [68., 95., 99.7],
         return sigma_dict, mark_mean, mark_std
     else:
         return sigma_dict
-    
 
 def _str2bool(v):
     if v.lower() in ('yes', 'true', 't', 'y', '1'):
@@ -860,21 +859,10 @@ def MCF_conf_seg(prop, df_bin_org, group_idx_arr, rpbins_npairs_tot,
     # Removing first column of `zero's`
     corrfunc_sh_tot = num.delete(corrfunc_sh_tot, 0, axis=1)
     ##
-    ## Percentiles
-    perc_arr = [68., 95., 99.7]
-    # Creating dictionary for calculating percentiles
-    sigma_dict = {}
-    for ii in range(len(perc_arr)):
-        sigma_dict[ii] = []
-    # Populating dictionary
-    for ii, perc_ii in enumerate(perc_arr):
-        mark_lower = num.nanpercentile(corrfunc_sh_tot, 50.-(perc_ii/2),axis=1)
-        mark_upper = num.nanpercentile(corrfunc_sh_tot, 50.+(perc_ii/2),axis=1)
-        # Saving to dictionary
-        sigma_dict[ii] = num.column_stack((mark_lower, mark_upper)).T
-    ## Mean and St. Dev.
-    mark_mean = num.nanmean(corrfunc_sh_tot, axis=1)
-    mark_std  = num.nanstd( corrfunc_sh_tot, axis=1)
+    ## Errors, mean and St. Dev.
+    sigma_dict, mark_mean, mark_std = sigma_calcs(corrfunc_sh_tot,
+        type_sigma=param_dict['type_sigma'],
+        return_mean_std=True)
     ##
     ## --| Saving everything to a dictionary
     ##
@@ -1119,7 +1107,7 @@ def MCF_conf(prop, df_bin_org, group_idx_arr, rpbins_npairs_tot, param_dict,
     corrfunc_sh_tot = num.delete(corrfunc_sh_tot, 0, axis=1)
     ##
     ## Errors, mean and St. Dev.
-    sigma_dict, mark_mean, mark_std = sigma_calcs(data_arr,
+    sigma_dict, mark_mean, mark_std = sigma_calcs(corrfunc_sh_tot,
         type_sigma=param_dict['type_sigma'],
         return_mean_std=True)
     ##
