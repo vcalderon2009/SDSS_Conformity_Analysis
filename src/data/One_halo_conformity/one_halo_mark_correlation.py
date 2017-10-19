@@ -1502,7 +1502,7 @@ def main(args):
     ## Choosing whether or not to use multiprocessing for the analysis
     if ncatls==1:
         # Looping over catalogues
-        catl_ii = catl_arr[0]     
+        catl_ii = catl_arr[0]
         print('{0} Analyzing `{1}`\n'.format(Prog_msg, catl_ii))
         ## Extracting `name` of the catalogue
         catl_name = os.path.splitext(os.path.split(catl_ii)[1])[0]
