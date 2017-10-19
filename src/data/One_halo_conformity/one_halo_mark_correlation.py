@@ -159,6 +159,73 @@ def spherical_to_cart(catl_pd, cosmo_model, method='astropy',
 
     return catl_pd
 
+def sigma_calcs(data_arr, type_sigma='std', perc_arr = [68., 95., 99.7],
+    return_mean_std=False):
+    """
+    Calcualates the 1-, 2-, and 3-sigma ranges for `data_arr`
+
+    Parameters
+    -----------
+    data_arr: numpy.ndarray, shape( param_dict['nrpbins'], param_dict['itern_tot'])
+        array of values, from which to calculate percentiles or St. Dev.
+
+    type_sigma: string, optional (default = 'std')
+        option for calculating either `percentiles` or `standard deviations`
+        Options:
+            - 'perc': calculates percentiles
+            - 'std' : uses standard deviations as 1-, 2-, and 3-sigmas
+
+    perc_arr: array_like, optional (default = [68., 95., 99.7])
+        array of percentiles to calculate
+
+    return_mean_std: boolean, optional (default = False)
+        option for returning mean and St. Dev. along with `sigma_dict`
+
+    Return
+    ----------
+    sigma_dict: python dicitionary
+        dictionary containg the 1-, 2-, and 3-sigma upper and lower 
+        ranges for `data-arr`
+
+    mark_mean: array_like
+        array of the mean value of `data_arr`.
+        Only returned if `return_mean_std == True`
+
+    mark_std: array_like
+        array of the St. Dev. value of `data_arr`.
+        Only returned if `return_mean_std == True`
+    """
+    ## Creating dictionary for saving `sigma`s
+    sigma_dict = {}
+    for ii in range(len(perc_arr)):
+        sigma_dict[ii] = []
+    ## Using Percentiles to estimate errors
+    if type_sigma=='perc':
+        for ii, perc_ii in enumerate(perc_arr):
+            mark_lower = num.nanpercentile(data_arr, 50.-(perc_ii/2.),axis=1)
+            mark_upper = num.nanpercentile(data_arr, 50.+(perc_ii/2.),axis=1)
+            # Saving to dictionary
+            sigma_dict[ii] = num.column_stack((mark_lower, mark_upper)).T
+    ## Using standard deviations to estimate errors
+    if type_sigma=='std':
+        mean_val = num.nanmean(data_arr, axis=1)
+        std_val  = num.nanstd( data_arr, axis=1)
+        for ii in range(len(perc_arr)):
+            mark_lower = mean_val - ((ii+1) * std_val)
+            mark_upper = mean_val + ((ii+1) * std_val)
+            # Saving to dictionary
+            sigma_dict[ii] = num.column_stack((mark_lower, mark_upper)).T
+    ##
+    ## Estimating mean and St. Dev. of `data_arr`
+    mark_mean = num.nanmean(data_arr, axis=1)
+    mark_std  = num.nanstd (data_arr, axis=1)
+
+    if return_mean_std:
+        return sigma_dict, mark_mean, mark_std
+    else:
+        return sigma_dict
+    
+
 def _str2bool(v):
     if v.lower() in ('yes', 'true', 't', 'y', '1'):
         return True
@@ -362,7 +429,13 @@ def get_parser():
                         help='Program message to use throught the script',
                         type=str,
                         default=cu.Program_Msg(__file__))
-
+    ## Type of error estimation
+    parser.add_argument('-sigma',
+                        dest='type_sigma',
+                        help='Type of error to use. Percentiles or St. Dev.',
+                        type=str,
+                        choices=['std','perc'],
+                        default='std')
     ## Parsing Objects
     args = parser.parse_args()
 
@@ -1045,21 +1118,10 @@ def MCF_conf(prop, df_bin_org, group_idx_arr, rpbins_npairs_tot, param_dict,
     # Removing first column of `zero's`
     corrfunc_sh_tot = num.delete(corrfunc_sh_tot, 0, axis=1)
     ##
-    ## Percentiles
-    perc_arr = [68., 95., 99.7]
-    # Creating dictionary for calculating percentiles
-    sigma_dict = {}
-    for ii in range(len(perc_arr)):
-        sigma_dict[ii] = []
-    # Populating dictionary
-    for ii, perc_ii in enumerate(perc_arr):
-        mark_lower = num.nanpercentile(corrfunc_sh_tot, 50.-(perc_ii/2),axis=1)
-        mark_upper = num.nanpercentile(corrfunc_sh_tot, 50.+(perc_ii/2),axis=1)
-        # Saving to dictionary
-        sigma_dict[ii] = num.column_stack((mark_lower, mark_upper)).T
-    ## Mean and St. Dev.
-    mark_mean = num.nanmean(corrfunc_sh_tot, axis=1)
-    mark_std  = num.nanstd( corrfunc_sh_tot, axis=1)
+    ## Errors, mean and St. Dev.
+    sigma_dict, mark_mean, mark_std = sigma_calcs(data_arr,
+        type_sigma=param_dict['type_sigma'],
+        return_mean_std=True)
     ##
     ## --| Saving everything to a dictionary
     ##
