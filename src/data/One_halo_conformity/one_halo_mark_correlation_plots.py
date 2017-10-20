@@ -25,6 +25,7 @@ import matplotlib
 matplotlib.use( 'Agg' )
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
+import matplotlib.gridspec as gridspec
 plt.rc('text', usetex=True)
 import seaborn as sns
 #sns.set()
@@ -35,6 +36,7 @@ from progressbar import (Bar, ETA, FileTransferSpeed, Percentage, ProgressBar,
 from argparse import ArgumentParser
 from argparse import HelpFormatter
 from operator import attrgetter
+import copy
 
 ## Functions
 class SortingHelpFormatter(HelpFormatter):
@@ -287,11 +289,12 @@ def add_to_dict(param_dict):
     fig_idx = 21
     ###
     ### Projected distance `rp` bins
-    logrpmin    = num.log10(param_dict['rpmin'])
-    logrpmax    = num.log10(param_dict['rpmax'])
-    dlogrp      = (logrpmax - logrpmin)/float(param_dict['nrpbins'])
-    rpbin_arr   = num.linspace(logrpmin, logrpmax, param_dict['nrpbins']+1)
-    rpbins_cens = rpbin_arr[:-1]+0.5*(rpbin_arr[1:]-rpbin_arr[:-1])
+    logrpmin          = num.log10(param_dict['rpmin'])
+    logrpmax          = num.log10(param_dict['rpmax'])
+    dlogrp            = (logrpmax - logrpmin)/float(param_dict['nrpbins'])
+    rpbin_arr         = num.linspace(logrpmin, logrpmax, param_dict['nrpbins']+1)
+    rpbins_cens       = rpbin_arr[:-1]+0.5*(rpbin_arr[1:]-rpbin_arr[:-1])
+    rpbins_cens_unlog = 10**rpbins_cens
     ###
     ### Survey Details
     sample_title = r'\boldmath$M_{r}< -%d$' %(param_dict['sample'])
@@ -321,9 +324,9 @@ def add_to_dict(param_dict):
     param_str_pic  = 'rpmin_{0}_rpmax_{1}_nrpbins_{2}_Mgbin_{3}_pimax_{4}_'
     param_str_pic += 'nmin_{5}'
     if param_dict['perf_opt']:
-        param_str_pic += '_perf_opt_str_{6}/'
+        param_str_pic += '_perf_opt_str_{6}'
     else:
-        param_str_pic += '{6}/'
+        param_str_pic += '{6}'
     param_str_pic = param_str_pic.format(*param_str_pic_arr)
     #
     # Figure Prefix
@@ -338,21 +341,23 @@ def add_to_dict(param_dict):
         sigma_dict[ii] = [low_sig, high_sig]
     ###
     ### To dictionary
-    param_dict['sample_s'     ] = sample_s
-    param_dict['perf_str'     ] = perf_str
-    param_dict['fig_idx'      ] = fig_idx
-    param_dict['logrpmin'     ] = logrpmin
-    param_dict['logrpmax'     ] = logrpmax
-    param_dict['dlogrp'       ] = dlogrp
-    param_dict['rpbin_arr'    ] = rpbin_arr
-    param_dict['rpbins_cens'  ] = rpbins_cens
-    param_dict['sample_title' ] = sample_title
-    param_dict['param_str'    ] = param_str
-    param_dict['param_str_pic'] = param_str_pic
+    param_dict['sample_s'         ] = sample_s
+    param_dict['perf_str'         ] = perf_str
+    param_dict['fig_idx'          ] = fig_idx
+    param_dict['logrpmin'         ] = logrpmin
+    param_dict['logrpmax'         ] = logrpmax
+    param_dict['dlogrp'           ] = dlogrp
+    param_dict['rpbin_arr'        ] = rpbin_arr
+    param_dict['rpbins_cens'      ] = rpbins_cens
+    param_dict['rpbins_cens_unlog'] = rpbins_cens_unlog
+    param_dict['sample_title'     ] = sample_title
+    param_dict['param_str'        ] = param_str
+    param_dict['param_str_pic'    ] = param_str_pic
     # Extras
-    param_dict['sample_name'  ] = sample_name
-    param_dict['sigma_dict'   ] = sigma_dict
-    param_dict['perc_arr'     ] = perc_arr
+    param_dict['sample_name'      ] = sample_name
+    param_dict['sigma_dict'       ] = sigma_dict
+    param_dict['perc_arr'         ] = perc_arr
+    param_dict['fig_prefix'       ] = fig_prefix
 
     return param_dict
 
@@ -572,24 +577,24 @@ def mgroup_bins_create(mgroup_lims, param_dict):
                                 param_dict['Mg_bin'])
     ##
     ## Bin edges keys in the form of the original keys
-    mgroup_keys_p = ['{0:.1f}_{1:.1f}'.format(mgroup_bins[xx],mgroup_bins[xx+1])\
+    mgroup_keys = ['{0:.2f}_{1:.2f}'.format(mgroup_bins[xx],mgroup_bins[xx+1])\
                     for xx in range(len(mgroup_bins)-1)]
     ##
     ## Labels for Plotting for each mass bin
-    mgroup_labels = ['{0} - {1}'.format(*xx.split('_')) for xx in mgroup_keys_p]
+    mgroup_labels = ['{0} - {1}'.format(*xx.split('_')) for xx in mgroup_keys]
     ##
     ## Indices for the DataFrame
-    mgroup_idx    = [xx.replace('.','_') for xx in mgroup_keys_p]
+    mgroup_idx    = [xx.replace('.','_') for xx in mgroup_keys]
     ##
     ## Creating dictionary that contains the label for each mass bin
-    mgroup_dict = dict(zip(mgroup_keys_p, mgroup_labels))
+    mgroup_dict = dict(zip(mgroup_keys, mgroup_labels))
     ##
     ## Adding to `param_dict`
     param_dict['mgroup_dict'] = mgroup_dict
     param_dict['mgroup_bins'] = mgroup_bins
+    param_dict['mgroup_keys'] = mgroup_keys
 
     return param_dict
-
 
 def data_shuffles_extraction(param_dict, proj_dict, pickle_ext='.p'):
     """
@@ -639,6 +644,397 @@ def data_shuffles_extraction(param_dict, proj_dict, pickle_ext='.p'):
     mgroup_lims = num.array(mgroup_lims)
     ##
     ## Creating mass bins
+    param_dict = mgroup_bins_create(mgroup_lims, param_dict)
+    ##
+    ## Sving number of `mgroup` keys
+    param_dict['n_mgroup' ] = len(param_dict['mgroup_keys'])
+    ##
+    ## Determining 'galaxy properties' list
+    prop_keys = num.sort(
+        list(GM_prop_dict[param_dict['mgroup_keys'][0]].keys()))
+    n_prop    = len(prop_keys)
+    ##
+    ## Saving to `param_dict`
+    param_dict['prop_keys'] = prop_keys
+    param_dict['n_prop'   ] = n_prop
+    ##
+    ## Parsing the data into dictionaries
+    prop_keys_tot = dict(zip(param_dict['prop_keys'],
+                            [{} for xx in range(n_prop)]))
+    mgroup_keys_dict = dict(zip(param_dict['mgroup_keys'],
+                                [copy.deepcopy(prop_keys_tot) \
+                                for xx in range(param_dict['n_mgroup' ])]))
+    prop_catl_dict = copy.deepcopy(mgroup_keys_dict)
+    ##
+    ### Restructuring the data
+    ## Looping over group mass bins
+    for gm in param_dict['mgroup_keys']:
+        ## Looping over `galaxy properties`
+        for prop in param_dict['prop_keys']:
+            ## Extracting the data from main dictionary
+            mcf_dict_conf    ,\
+            mcf_dict_conf_seg,\
+            ngroups           = GM_prop_dict[gm][prop]
+            ## Fractional difference - Conformity Only
+            mcf_conf_frac = mcf_dict_conf['mcf']-mcf_dict_conf['mcf_sh_mean']
+            mcf_conf_frac /= mcf_dict_conf['mcf_sh_std']
+            ## Fractional difference - Conformity + Segregation
+            mcf_conf_seg_frac = mcf_dict_conf_seg['mcf']-mcf_dict_conf_seg['mcf_sh_mean']
+            mcf_conf_seg_frac /= mcf_dict_conf_seg['mcf_sh_std']
+            ## Saving data to restructured dictionary `prop_catl_dict`
+            prop_catl_dict[gm][prop]['mcf_conf'    ] = mcf_dict_conf    ['mcf']
+            prop_catl_dict[gm][prop]['mcf_conf_seg'] = mcf_dict_conf_seg['mcf']
+            prop_catl_dict[gm][prop]['mcf_conf_sig'] = mcf_dict_conf    ['sigma']
+            prop_catl_dict[gm][prop]['conf_res'    ] = mcf_conf_frac
+            prop_catl_dict[gm][prop]['conf_seg_res'] = mcf_conf_seg_frac
+
+    return prop_catl_dict
+
+def MCF_data_plotting(prop_catl_dict, param_dict, proj_dict, fig_fmt='pdf',
+    figsize=(10,15.5)):
+    """
+    Funtion to plot the MCF for `data` for the given group mass bins
+
+    Parameters
+    ----------
+    prop_catl_dict: python dictionary
+        dictionary with the necessary information to plot MCF for 
+        `Conformity Only` and `Conformity + Segregation`
+
+    param_dict: python dictionary
+        dictionary with `project` variables
+
+    proj_dict: python dictionary
+        dictionary with info of the project that uses the
+        `Data Science` Cookiecutter template.
+
+    fig_fmt: string, optional (default = 'pdf')
+        extension used to save the figure
+
+    figsize: tuple, optional (10, 15,5)
+        size of the output figure
+    """
+    Prog_msg = param_dict['Prog_msg']
+    ## Matplotlib option
+    matplotlib.rcParams['axes.linewidth'] = 2.5
+    ##
+    ## Figure details
+    nrows = 1
+    ncols = 3
+    ## Labels
+    xlabel       = r'\boldmath $r_{p}\ \left[h^{-1}\ \textrm{Mpc} \right]$'
+    ylabel       = r'\boldmath $\mathcal{M}(r_{p})$'
+    sigma_ylabel = 'Res.'
+    ## Text properties
+    alpha_arr      = [0.7, 0.5, 0.3]
+    color_sig      = 'red'
+    color_prop     = 'black'
+    color_prop_seg = 'grey'
+    ## Figure name
+    fname = ('MCF_{0}_{1}'.format(  param_dict['catl_kind'],
+                                    param_dict['fig_prefix'])
+                                    ).replace('.', 'p')+'.'+fig_fmt
+    fname = proj_dict['figure_dir']+fname
+    ##
+    ## Labels for Galaxy Properties
+    # Choosing label for `ssfr`
+    if param_dict['prop_log']=='log':
+        ssfr_label = r'\boldmath $\log\ \textrm{ssfr}$'
+    elif param_dict['prop_log']=='nonlog':
+        ssfr_label = r'\boldmath $\textrm{ssfr}$'
+    # Dictionary
+    prop_labels = { 'g_r':r'\boldmath$g-r$',
+                    'sersic':'sersic',
+                    'logssfr':ssfr_label}
+    n_prop = param_dict['n_prop']
+    ##
+    ## Type of galaxy pairs - Dictionary
+    corr_pair_dict = {'cen_sat':'Cens - Sats', 'sat_sat':'Sats - Sats',
+    'all':'All Pairs', 'cen_cen':'Cens - Cens'}
+    corr_pair_str = corr_pair_dict[param_dict['corr_pair_type']]
+    ##
+    ## Group mass limits for Plotting
+    Mg_lims = [param_dict['mg_min'],param_dict['mg_max']]
+    Mg_keys = cu.Bins_array_create(Mg_lims, param_dict['Mg_bin'])
+    Mg_keys_str = ['{0:.2f}_{1:.2f}'.format(Mg_keys[xx], Mg_keys[xx+1]) \
+        for xx in range(len(Mg_keys)-1)]
+    Mg_keys_str = num.sort( num.array(Mg_keys_str) )
+    Mg_keys_str = num.intersect1d(Mg_keys_str, param_dict['mgroup_keys'])
+    n_Mgroup    = len(Mg_keys_str)
+    ##
+    ## Group or Halo mass - String
+    if param_dict['perf_opt']:
+        mg_str = r'$M_{\textrm{halo}}$'
+    else:
+        mg_str = r'$M_{\textrm{group}}$'
+    ##
+    ## Colormaps
+    cm_arr = ['green','red','royalblue']
+    ##
+    ## Figure Details
+    ncols = int(param_dict['n_prop'])
+    nrows = len(Mg_keys_str)
+    # Fontsizes
+    size_label  = 20
+    size_xlabel  = 20
+    size_ylabel  = 20
+    size_legend = 10
+    size_text   = 14    
+    # Initializing figure
+    plt.clf()
+    plt.close()
+    propssfr = dict(boxstyle='round', facecolor='white', alpha=0.7)
+    fig = plt.figure(figsize=figsize)
+    gs_prop = gridspec.GridSpec(nrows, ncols, hspace=0.05, wspace=0.1)
+    ## Plotting MCF for each galaxy property and group mass bin
+    gs_ii = int(0)
+    # Looping over Group mass bins
+    for ii, gm in enumerate(Mg_keys_str):
+        gm_str = param_dict['mgroup_dict'][gm]
+        # Looping over galaxy properties
+        for jj, prop in enumerate(param_dict['prop_keys']):
+            ## Creating axis for element in `gs_prop`
+            nrows_ax = int(2)
+            ncols_ax = int(1)
+            gs_prop_axes = gridspec.GridSpecFromSubplotSpec(nrows_ax, ncols_ax, 
+                gs_prop[gs_ii], height_ratios=[2,1], hspace=0 )
+            ##
+            ## Defining axes for `gs_prop_axes`
+            ax_data  = plt.Subplot(fig, gs_prop_axes[0,:])
+            ax_sigma = plt.Subplot(fig, gs_prop_axes[1,:], sharex=ax_data)
+            fig.add_subplot(ax_data)
+            fig.add_subplot(ax_sigma)
+            ax_data.set_facecolor('white')
+            ax_sigma.set_facecolor('white')
+            ## Galaxy Property - Color
+            color_sh = cm_arr[jj]
+            ##
+            ## Plotting in `ax-data`
+            # Sigmas
+            for zz in range(3):
+                ax_data.fill_between(
+                    param_dict['rpbins_cens_unlog'],
+                    prop_catl_dict[gm][prop]['mcf_conf_sig'][zz][0],
+                    prop_catl_dict[gm][prop]['mcf_conf_sig'][zz][1],
+                    facecolor=color_sh,
+                    alpha=alpha_arr[zz],
+                    zorder=zz+1)
+            # MCF - Conformity Only
+            if (ii==0):
+                ax_data.plot(
+                    param_dict['rpbins_cens_unlog'],
+                    prop_catl_dict[gm][prop]['mcf_conf'],
+                    color=color_prop,
+                    marker='o',
+                    linestyle='-',
+                    zorder=4,
+                    label = 'SDSS - Conf. Only')
+            else:
+                ax_data.plot(
+                    param_dict['rpbins_cens_unlog'],
+                    prop_catl_dict[gm][prop]['mcf_conf'],
+                    color=color_prop,
+                    marker='o',
+                    linestyle='-',
+                    zorder=4)
+            #
+            # MCF - Conformity + Segregation
+            if (ii==0):
+                ax_data.plot(
+                    param_dict['rpbins_cens_unlog'],
+                    prop_catl_dict[gm][prop]['mcf_conf_seg'],
+                    color=color_prop_seg,
+                    marker='o',
+                    linestyle='--',
+                    zorder=4,
+                    label = 'SDSS - Conf. Only')
+            else:
+                ax_data.plot(
+                    param_dict['rpbins_cens_unlog'],
+                    prop_catl_dict[gm][prop]['mcf_conf_seg'],
+                    color=color_prop_seg,
+                    marker='o',
+                    linestyle='--',
+                    zorder=4)
+            ##
+            ## Plotting in `ax_sigma`
+            ## MCF - Residuals - Conformity Only
+            if (ii==0):
+                ax_sigma.plot(
+                    param_dict['rpbins_cens_unlog'],
+                    prop_catl_dict[gm][prop]['conf_res'],
+                    color=color_prop,
+                    marker='o',
+                    linestyle='-',
+                    zorder=4,
+                    label = 'SDSS - Conf. Only')
+            else:
+                ax_sigma.plot(
+                    param_dict['rpbins_cens_unlog'],
+                    prop_catl_dict[gm][prop]['conf_res'],
+                    color=color_prop,
+                    marker='o',
+                    linestyle='-',
+                    zorder=4)
+            ##
+            ## MCF - Residuals - Conformity + Segregation
+            if (ii==0):
+                ax_sigma.plot(
+                    param_dict['rpbins_cens_unlog'],
+                    prop_catl_dict[gm][prop]['mcf_conf_seg'],
+                    color=color_prop_seg,
+                    marker='o',
+                    linestyle='--',
+                    zorder=4,
+                    label = 'SDSS - Conf + Seg')
+            else:
+                ax_sigma.plot(
+                    param_dict['rpbins_cens_unlog'],
+                    prop_catl_dict[gm][prop]['mcf_conf_seg'],
+                    color=color_prop_seg,
+                    marker='o',
+                    linestyle='--',
+                    zorder=4)
+            ##
+            ## Sigma Lines in `ax_sigma`
+            for zz in reversed(range(3)):
+                ax_sigma.fill_between(
+                    num.linspace(
+                        param_dict['rpbins_cens_unlog'].min(),
+                        param_dict['rpbins_cens_unlog'].max(),
+                        10),
+                    (zz+1)*num.ones(10),
+                    -(zz+1)*num.ones(10),
+                    facecolor=color_sh,
+                    alpha=alpha_arr[zz],
+                    zorder=1)
+            ##
+            ## Extra options
+            if (jj != 0):
+                plt.setp(ax_data.get_yticklabels(), visible=False)
+                plt.setp(ax_sigma.get_yticklabels(), visible=False)
+            ##
+            ## Axes labels
+            if (jj == 0):
+                ax_data.set_ylabel(ylabel, fontsize=size_ylabel )
+                ax_sigma.set_ylabel(sigma_ylabel, fontsize=size_ylabel )
+            ##
+            ## Hiding `x-ticks` for `ax_data`
+            plt.setp(ax_data.get_xticklabels(), visible=False)
+            #
+            # Showing `xlabel` when necessary
+            if gs_ii in range(n_prop * (n_Mgroup-1), n_prop*n_Mgroup):
+                ax_sigma.set_xlabel( xlabel, fontsize=size_xlabel)
+            else:
+                plt.setp(ax_sigma.get_xticklabels(), visible=False)
+            ##
+            ## Adding text labels
+            if (gs_ii == 0):
+                ax_data.text(0.05, 0.30, corr_pair_str, 
+                    transform=ax_data.transAxes,
+                    verticalalignment='top', color='black',
+                    bbox=propssfr, weight='bold', fontsize=size_text)
+            ##
+            ## Galaxy Property - label
+            if (ii == 0):
+                ax_data.text(0.05, 0.95, prop_labels[prop],
+                    transform=ax_data.transAxes,
+                    verticalalignment='top', color=color_sh,
+                    bbox=propssfr, weight='bold', fontsize=size_text)
+            ##
+            ## Group mass - label
+            if jj == 0:
+                ax_data.text(0.05, 0.15, gm_str,
+                    transform=ax_data.transAxes,
+                    verticalalignment='top', color='#BE0081',
+                    bbox=propssfr, weight='bold', fontsize=size_text)
+            ##
+            ## Changing scales to 'log'
+            ax_data.set_xscale('log')
+            ax_sigma.set_xscale('log')
+            ##
+            ## Axes limits
+            xlim_data  = [0.9*param_dict['rpmin'], 1.1*param_dict['rpmax']]
+            ylim_data  = [0.8, 1.25]
+            ylim_sigma = [-10, 9.8]
+            ax_data.set_xlim(xlim_data)
+            ax_data.set_ylim(ylim_data)
+            ax_sigma.set_ylim(ylim_sigma)
+            ##
+            ## Sigma Lines
+            med_line_color = 'black'
+            med_linewidth  = 1
+            med_linestyle  = '--'
+            med_yline      = 1
+            ax_data.axhline(
+                y=med_yline, 
+                linestyle=med_linestyle, 
+                color=med_line_color, 
+                linewidth=med_linewidth,
+                zorder=4)
+            # Color sigma - Lines
+            ax_sigma.axhline(
+                y=0, 
+                linestyle=med_linestyle,
+                color=med_line_color, 
+                linewidth=med_linewidth,
+                zorder=4)
+            ##
+            ## Sigma Lines - `ax_sigma` axis
+            shade_color  = 'grey'
+            sigma_lines_arr = num.arange(5, 10.1, 5)
+            for sig in sigma_lines_arr:
+                ax_sigma.axhline(y = sig, linestyle='--', color=shade_color,
+                    zorder=0)
+                ax_sigma.axhline(y = -sig, linestyle='--', color=shade_color,
+                    zorder=0)
+            ##
+            ## Tickmars
+            ax_data.yaxis.set_major_locator(ticker.MultipleLocator(base=0.1))
+            ax_data.yaxis.set_minor_locator(ticker.MultipleLocator(base=0.05))
+            ax_sigma.yaxis.set_major_locator(ticker.MultipleLocator(base=5.))
+            ax_sigma.yaxis.set_minor_locator(ticker.MultipleLocator(base=1.))
+            # Tick Spacing - `ax_data'
+            tick_spacing_data = 0.05
+            ml_data           = ticker.MultipleLocator(tick_spacing_data)
+            ax_data.yaxis.set_minor_locator( ml_data)
+            # Making the format of the y-axis scalar
+            ax_sigma.xaxis.set_major_formatter(
+                ticker.FuncFormatter(
+                    lambda y,pos: ('{{:.{:1d}f}}'.format(
+                        int(num.maximum(-num.log10(y),0)))).format(y)))
+            ##
+            ## Legend
+            if (gs_ii==0):
+                leg = ax_data.legend(loc='upper right',
+                    prop={'size':size_legend}) 
+                leg_frame = leg.get_frame()
+                leg_frame.set_facecolor('white')
+            ##
+            ## Increasing `gs_ii` by 1
+            gs_ii += int(1)
+    ##
+    ## Saving figure
+    if fig_fmt=='pdf':
+        plt.savefig(fname, bbox_inches='tight')
+    else:
+        plt.savefig(fname, bbox_inches='tight', dpi=400)
+    print('{0} Figure saved as: {1}'.format(Prog_msg, fname))
+    plt.clf()
+    plt.close()
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -691,9 +1087,12 @@ def main():
     ## Running the analysis
     # Choosing which kind of plots to produce
     if param_dict['catl_kind'] == 'data':
-        data_shuffles_extraction(param_dict, proj_dict)
+        ## Analyzing data
+        prop_catl_dict = data_shuffles_extraction(param_dict, proj_dict)
+        MCF_data_plotting(prop_catl_dict, param_dict, proj_dict)
+        ## Plotting MCF
     elif param_dict['catl_kind'] == 'mocks':
-        mocks_data_extraction(param_dict, proj_dict)
+        prop_catl_dict = mocks_data_extraction(param_dict, proj_dict)
         
 
 
