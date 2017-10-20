@@ -674,10 +674,10 @@ def data_shuffles_extraction(param_dict, proj_dict, pickle_ext='.p'):
             mcf_dict_conf_seg,\
             ngroups           = GM_prop_dict[gm][prop]
             ## Fractional difference - Conformity Only
-            mcf_conf_frac = mcf_dict_conf['mcf']-mcf_dict_conf['mcf_sh_mean']
+            mcf_conf_frac  = mcf_dict_conf['mcf']-mcf_dict_conf['mcf_sh_mean']
             mcf_conf_frac /= mcf_dict_conf['mcf_sh_std']
             ## Fractional difference - Conformity + Segregation
-            mcf_conf_seg_frac = mcf_dict_conf_seg['mcf']-mcf_dict_conf_seg['mcf_sh_mean']
+            mcf_conf_seg_frac  = mcf_dict_conf_seg['mcf']-mcf_dict_conf_seg['mcf_sh_mean']
             mcf_conf_seg_frac /= mcf_dict_conf_seg['mcf_sh_std']
             ## Saving data to restructured dictionary `prop_catl_dict`
             prop_catl_dict[gm][prop]['mcf_conf'    ] = mcf_dict_conf    ['mcf']
@@ -879,7 +879,7 @@ def MCF_data_plotting(prop_catl_dict, param_dict, proj_dict, fig_fmt='pdf',
             if (ii==0):
                 ax_sigma.plot(
                     param_dict['rpbins_cens_unlog'],
-                    prop_catl_dict[gm][prop]['mcf_conf_seg'],
+                    prop_catl_dict[gm][prop]['conf_seg_res'],
                     color=color_prop_seg,
                     marker='o',
                     linestyle='--',
@@ -888,7 +888,7 @@ def MCF_data_plotting(prop_catl_dict, param_dict, proj_dict, fig_fmt='pdf',
             else:
                 ax_sigma.plot(
                     param_dict['rpbins_cens_unlog'],
-                    prop_catl_dict[gm][prop]['mcf_conf_seg'],
+                    prop_catl_dict[gm][prop]['conf_seg_res'],
                     color=color_prop_seg,
                     marker='o',
                     linestyle='--',
