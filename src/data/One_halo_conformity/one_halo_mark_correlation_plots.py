@@ -27,8 +27,6 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import matplotlib.gridspec as gridspec
 plt.rc('text', usetex=True)
-import seaborn as sns
-#sns.set()
 from progressbar import (Bar, ETA, FileTransferSpeed, Percentage, ProgressBar,
                         ReverseBar, RotatingMarker)
 
