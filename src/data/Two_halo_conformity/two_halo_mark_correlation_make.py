@@ -105,6 +105,12 @@ def get_parser():
                         help='Delete pickle files containing pair counts',
                         type=_str2bool,
                         default=False)
+    ## CPU to use
+    parser.add_argument('-cpu_frac',
+                        dest='cpu_frac',
+                        help='Fraction of CPUs to use',
+                        type=float,
+                        default=0.7)
     ## Parsing Objects
     args = parser.parse_args()
 
@@ -301,6 +307,8 @@ def main():
     if param_dict['remove_files']:
         ## Overwriting `remove_files` from `params_pd`
         params_pd.loc[params_pd['Name']=='remove_files','Value'] = 'True'
+    ## Choosing amount of CPUs
+    params_pd.loc[params_pd['Name']=='cpu_frac','Value'] = param_dict['cpu_frac']
     ##
     ## Running analysis
     file_construction_and_execution(params_pd, param_dict)
