@@ -11,7 +11,7 @@ __copyright__  =["Copyright 2017 Victor Calderon, "]
 __email__      =['victor.calderon@vanderbilt.edu']
 __maintainer__ =['Victor Calderon']
 """
-
+Script that plots the 1-halo MCF results for `data` and `mocks`
 """
 # Importing Modules
 import custom_utilities_python as cu
@@ -727,7 +727,7 @@ def MCF_data_plotting(prop_catl_dict, param_dict, proj_dict, fig_fmt='pdf',
     alpha_arr      = [0.7, 0.5, 0.3]
     color_sig      = 'red'
     color_prop     = 'black'
-    color_prop_seg = 'grey'
+    color_prop_seg = 'dimgrey'
     ## Figure name
     fname = ('MCF_{0}_{1}'.format(  param_dict['catl_kind'],
                                     param_dict['fig_prefix'])
@@ -774,10 +774,9 @@ def MCF_data_plotting(prop_catl_dict, param_dict, proj_dict, fig_fmt='pdf',
     nrows = len(Mg_keys_str)
     # Fontsizes
     size_label  = 20
-    size_xlabel  = 20
-    size_ylabel  = 20
     size_legend = 10
-    size_text   = 14    
+    size_text   = 15
+    dashes      = (5,5) 
     # Initializing figure
     plt.clf()
     plt.close()
@@ -810,13 +809,23 @@ def MCF_data_plotting(prop_catl_dict, param_dict, proj_dict, fig_fmt='pdf',
             ## Plotting in `ax-data`
             # Sigmas
             for zz in range(3):
-                ax_data.fill_between(
-                    param_dict['rpbins_cens_unlog'],
-                    prop_catl_dict[gm][prop]['mcf_conf_sig'][zz][0],
-                    prop_catl_dict[gm][prop]['mcf_conf_sig'][zz][1],
-                    facecolor=color_sh,
-                    alpha=alpha_arr[zz],
-                    zorder=zz+1)
+                if zz == 0:
+                    ax_data.fill_between(
+                        param_dict['rpbins_cens_unlog'],
+                        prop_catl_dict[gm][prop]['mcf_conf_sig'][zz][0],
+                        prop_catl_dict[gm][prop]['mcf_conf_sig'][zz][1],
+                        facecolor=color_sh,
+                        alpha=alpha_arr[zz],
+                        zorder=zz+1,
+                        label='Shuffles')
+                else:
+                    ax_data.fill_between(
+                        param_dict['rpbins_cens_unlog'],
+                        prop_catl_dict[gm][prop]['mcf_conf_sig'][zz][0],
+                        prop_catl_dict[gm][prop]['mcf_conf_sig'][zz][1],
+                        facecolor=color_sh,
+                        alpha=alpha_arr[zz],
+                        zorder=zz+1)
             # MCF - Conformity Only
             if (ii==0):
                 ax_data.plot(
@@ -845,7 +854,8 @@ def MCF_data_plotting(prop_catl_dict, param_dict, proj_dict, fig_fmt='pdf',
                     marker='o',
                     linestyle='--',
                     zorder=4,
-                    label = 'SDSS - Conf. Only')
+                    label = 'SDSS - Conf + Seg',
+                    dashes=dashes)
             else:
                 ax_data.plot(
                     param_dict['rpbins_cens_unlog'],
@@ -853,7 +863,8 @@ def MCF_data_plotting(prop_catl_dict, param_dict, proj_dict, fig_fmt='pdf',
                     color=color_prop_seg,
                     marker='o',
                     linestyle='--',
-                    zorder=4)
+                    zorder=4,
+                    dashes=dashes)
             ##
             ## Plotting in `ax_sigma`
             ## MCF - Residuals - Conformity Only
@@ -914,15 +925,15 @@ def MCF_data_plotting(prop_catl_dict, param_dict, proj_dict, fig_fmt='pdf',
             ##
             ## Axes labels
             if (jj == 0):
-                ax_data.set_ylabel(ylabel, fontsize=size_ylabel )
-                ax_sigma.set_ylabel(sigma_ylabel, fontsize=size_ylabel )
+                ax_data.set_ylabel(ylabel, fontsize=size_label )
+                ax_sigma.set_ylabel(sigma_ylabel, fontsize=size_label )
             ##
             ## Hiding `x-ticks` for `ax_data`
             plt.setp(ax_data.get_xticklabels(), visible=False)
             #
             # Showing `xlabel` when necessary
             if gs_ii in range(n_prop * (n_Mgroup-1), n_prop*n_Mgroup):
-                ax_sigma.set_xlabel( xlabel, fontsize=size_xlabel)
+                ax_sigma.set_xlabel( xlabel, fontsize=size_label)
             else:
                 plt.setp(ax_sigma.get_xticklabels(), visible=False)
             ##
@@ -969,23 +980,25 @@ def MCF_data_plotting(prop_catl_dict, param_dict, proj_dict, fig_fmt='pdf',
                 linestyle=med_linestyle, 
                 color=med_line_color, 
                 linewidth=med_linewidth,
-                zorder=4)
+                zorder=4,
+                dashes=dashes)
             # Color sigma - Lines
             ax_sigma.axhline(
                 y=0, 
                 linestyle=med_linestyle,
                 color=med_line_color, 
                 linewidth=med_linewidth,
-                zorder=4)
+                zorder=4,
+                dashes=dashes)
             ##
             ## Sigma Lines - `ax_sigma` axis
             shade_color  = 'grey'
             sigma_lines_arr = num.arange(5, 10.1, 5)
             for sig in sigma_lines_arr:
                 ax_sigma.axhline(y = sig, linestyle='--', color=shade_color,
-                    zorder=0)
+                    zorder=0, dashes=dashes, linewidth=med_linewidth)
                 ax_sigma.axhline(y = -sig, linestyle='--', color=shade_color,
-                    zorder=0)
+                    zorder=0, dashes=dashes, linewidth=med_linewidth)
             ##
             ## Tickmars
             ax_data.yaxis.set_major_locator(ticker.MultipleLocator(base=0.1))
@@ -1008,6 +1021,10 @@ def MCF_data_plotting(prop_catl_dict, param_dict, proj_dict, fig_fmt='pdf',
                     prop={'size':size_legend}) 
                 leg_frame = leg.get_frame()
                 leg_frame.set_facecolor('white')
+            ##
+            ## Adding ticks to both sides of the y-axis
+            ax_data.yaxis.set_ticks_position('both')
+            ax_sigma.yaxis.set_ticks_position('both')
             ##
             ## Increasing `gs_ii` by 1
             gs_ii += int(1)
