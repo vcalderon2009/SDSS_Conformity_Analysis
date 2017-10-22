@@ -389,6 +389,12 @@ def get_parser():
                         help='Delete pickle file containing pair counts',
                         type=_str2bool,
                         default=False)
+    ## Option for removing file from DDRP
+    parser.add_argument('-remove-wp',
+                        dest='remove_wp_files',
+                        help='Delete pickle file containing pair counts from wp',
+                        type=_str2bool,
+                        default=False)
     ## Type of correlation funciton to perform
     parser.add_argument('-corrtype',
                         dest='corr_type',
@@ -1195,7 +1201,7 @@ def prop_sh_one_halo(df_bin_org, prop, GM_str, param_dict, proj_dict,
     # Pair-counting for each galaxy group
     zz = 0
     # Removing file if needed
-    if (os.path.isfile(catl_idx_file)) and (param_dict['remove_files']):
+    if (os.path.isfile(catl_idx_file)) and (param_dict['remove_wp_files']):
         os.remove(catl_idx_file)
         print('{0} Removing `catl_idx_file`: {1}'.format(
             Prog_msg, catl_idx_file))

@@ -105,6 +105,12 @@ def get_parser():
                         help='Delete pickle files containing pair counts',
                         type=_str2bool,
                         default=False)
+    ## Option for removing file - DDRP
+    parser.add_argument('-remove-wp',
+                        dest='remove_wp_files',
+                        help='Delete pickle files containing pair counts from DDrp',
+                        type=_str2bool,
+                        default=False)
     ## Parsing Objects
     args = parser.parse_args()
 
@@ -122,24 +128,25 @@ def get_analysis_params():
     ##
     ## Array of values used for the analysis.
     ## Format: (name of variable, flag, value)
-    params_arr = num.array([('sample'        ,'-sample'     ,19),
-                            ('catl_type'     ,'-abopt'      ,'mr'),
-                            ('corr_pair_type','-pairtype'   ,'cen_sat'),
-                            ('shuffle_marks' ,'-shuffle'    ,'censat_sh'),
-                            ('rpmin'         ,'-rpmin'      ,0.01),
-                            ('rpmax'         ,'-rpmax'      ,10.),
-                            ('nrpbins'       ,'-nrp'        ,10),
-                            ('itern_tot'     ,'-itern'      ,1000),
-                            ('ngals_min'     ,'-nmin'       ,2),
-                            ('Mg_bin'        ,'-mg'         ,0.4),
-                            ('prop_log'      ,'-log'        ,'log'),
-                            ('catl_start'    ,'-catl_start' ,0),
-                            ('catl_finish'   ,'-catl_finish',100),
-                            ('perf_opt'      ,'-perf'       ,'False'),
-                            ('cosmo_choice'  ,'-cosmo'      ,'LasDamas'),
-                            ('cpu_frac'      ,'-cpu'        ,0.7),
-                            ('remove_files'  ,'-remove'     ,'False'),
-                            ('type_sigma'    ,'-sigma'      ,'std')])
+    params_arr = num.array([('sample'         ,'-sample'     ,19),
+                            ('catl_type'      ,'-abopt'      ,'mr'),
+                            ('corr_pair_type' ,'-pairtype'   ,'cen_sat'),
+                            ('shuffle_marks'  ,'-shuffle'    ,'censat_sh'),
+                            ('rpmin'          ,'-rpmin'      ,0.01),
+                            ('rpmax'          ,'-rpmax'      ,10.),
+                            ('nrpbins'        ,'-nrp'        ,10),
+                            ('itern_tot'      ,'-itern'      ,1000),
+                            ('ngals_min'      ,'-nmin'       ,2),
+                            ('Mg_bin'         ,'-mg'         ,0.4),
+                            ('prop_log'       ,'-log'        ,'log'),
+                            ('catl_start'     ,'-catl_start' ,0),
+                            ('catl_finish'    ,'-catl_finish',100),
+                            ('perf_opt'       ,'-perf'       ,'False'),
+                            ('cosmo_choice'   ,'-cosmo'      ,'LasDamas'),
+                            ('cpu_frac'       ,'-cpu'        ,0.7),
+                            ('remove_files'   ,'-remove'     ,'False'),
+                            ('remove_wp_files','-remove-wp'  ,'False'),
+                            ('type_sigma'     ,'-sigma'      ,'std')])
     ##
     ## Converting to pandas DataFrame
     colnames = ['Name','Flag','Value']
@@ -301,6 +308,10 @@ def main():
     if param_dict['remove_files']:
         ## Overwriting `remove_files` from `params_pd`
         params_pd.loc[params_pd['Name']=='remove_files','Value'] = 'True'
+    ## Choosing if to delete files -- DDrp
+    if param_dict['remove_wp_files']:
+        ## Overwriting `remove_files` from `params_pd`
+        params_pd.loc[params_pd['Name']=='remove_wp_files','Value'] = 'True'
     ##
     ## Running analysis
     file_construction_and_execution(params_pd, param_dict)
