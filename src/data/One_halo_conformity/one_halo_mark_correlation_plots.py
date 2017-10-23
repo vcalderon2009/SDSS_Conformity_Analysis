@@ -803,8 +803,8 @@ def data_shuffles_extraction(param_dict, proj_dict, pickle_ext='.p'):
 
     return prop_catl_dict
 
-def MCF_data_plotting(prop_catl_dict, param_dict, proj_dict, fig_fmt='pdf',
-    figsize=(10,15.5)):
+def MCF_one_halo_plotting(prop_catl_dict, param_dict, proj_dict, fig_fmt='pdf',
+    figsize_1=(3.5,15.5), figsize_2=(10,15.5)):
     """
     Funtion to plot the MCF for `data` for the given group mass bins
 
@@ -831,9 +831,6 @@ def MCF_data_plotting(prop_catl_dict, param_dict, proj_dict, fig_fmt='pdf',
     ## Matplotlib option
     matplotlib.rcParams['axes.linewidth'] = 2.5
     ##
-    ## Figure details
-    nrows = 1
-    ncols = 3
     ## Labels
     xlabel       = r'\boldmath $r_{p}\ \left[h^{-1}\ \textrm{Mpc} \right]$'
     ylabel       = r'\boldmath $\mathcal{M}(r_{p})$'
@@ -881,17 +878,31 @@ def MCF_data_plotting(prop_catl_dict, param_dict, proj_dict, fig_fmt='pdf',
     else:
         mg_str = r'$M_{\textrm{group}}$'
     ##
+    ## Shaded regions label
+    if param_dict['catl_kind']=='data':
+        shaded_str = 'Shuffles'
+    elif param_dict['catl_kind']=='mocks':
+        shaded_str = 'Mocks'
+    ##
     ## Colormaps
-    cm_arr = ['green','red','royalblue']
+    cm_dict = {'logssfr':'red', 'sersic':'royalblue', 'g_r':'green'}
     ##
     ## Figure Details
     ncols = int(param_dict['n_prop'])
     nrows = len(Mg_keys_str)
-    # Fontsizes
-    size_label  = 20
-    size_legend = 10
-    size_text   = 15
-    dashes      = (5,5) 
+    # Choosing Figure size and fontsize
+    if ncols == 1:
+        figsize     = figsize_1
+        size_label  = 17
+        size_legend = 11
+        size_text   = 14
+    else:
+        figsize     = figsize_2
+        size_label  = 20
+        size_legend = 10
+        size_text   = 14
+    # Dashes formatting
+    dashes      = (5,5)
     # Initializing figure
     plt.clf()
     plt.close()
@@ -919,7 +930,7 @@ def MCF_data_plotting(prop_catl_dict, param_dict, proj_dict, fig_fmt='pdf',
             ax_data.set_facecolor('white')
             ax_sigma.set_facecolor('white')
             ## Galaxy Property - Color
-            color_sh = cm_arr[jj]
+            color_sh = cm_dict[prop]
             ##
             ## Plotting in `ax-data`
             # Sigmas
@@ -932,7 +943,7 @@ def MCF_data_plotting(prop_catl_dict, param_dict, proj_dict, fig_fmt='pdf',
                         facecolor=color_sh,
                         alpha=alpha_arr[zz],
                         zorder=zz+1,
-                        label='Shuffles')
+                        label=shaded_str)
                 else:
                     ax_data.fill_between(
                         param_dict['rpbins_cens_unlog'],
@@ -1034,20 +1045,29 @@ def MCF_data_plotting(prop_catl_dict, param_dict, proj_dict, fig_fmt='pdf',
                     zorder=1)
             ##
             ## Extra options
-            if (jj != 0):
+            # Hiding 'y-axis' tickmarks
+            if n_prop==1:
                 plt.setp(ax_data.get_yticklabels(), visible=False)
                 plt.setp(ax_sigma.get_yticklabels(), visible=False)
+            else:
+                if (jj != 0):
+                    plt.setp(ax_data.get_yticklabels(), visible=False)
+                    plt.setp(ax_sigma.get_yticklabels(), visible=False)
             ##
             ## Axes labels
-            if (jj == 0):
+            if n_prop==1:
                 ax_data.set_ylabel(ylabel, fontsize=size_label )
                 ax_sigma.set_ylabel(sigma_ylabel, fontsize=size_label )
+            else:
+                if (jj == 0):
+                    ax_data.set_ylabel(ylabel, fontsize=size_label )
+                    ax_sigma.set_ylabel(sigma_ylabel, fontsize=size_label )
             ##
             ## Hiding `x-ticks` for `ax_data`
             plt.setp(ax_data.get_xticklabels(), visible=False)
             #
             # Showing `xlabel` when necessary
-            if gs_ii in range(n_prop * (n_Mgroup-1), n_prop*n_Mgroup):
+            if gs_ii in range(n_prop * (nrows-1), ncols*nrows):
                 ax_sigma.set_xlabel( xlabel, fontsize=size_label)
             else:
                 plt.setp(ax_sigma.get_xticklabels(), visible=False)
@@ -1067,7 +1087,7 @@ def MCF_data_plotting(prop_catl_dict, param_dict, proj_dict, fig_fmt='pdf',
                     bbox=propssfr, weight='bold', fontsize=size_text)
             ##
             ## Group mass - label
-            if jj == 0:
+            if (gs_ii == 0):
                 ax_data.text(0.05, 0.15, gm_str,
                     transform=ax_data.transAxes,
                     verticalalignment='top', color='#BE0081',
@@ -1407,10 +1427,13 @@ def main():
     if param_dict['catl_kind'] == 'data':
         ## Analyzing data
         prop_catl_dict = data_shuffles_extraction(param_dict, proj_dict)
-        MCF_data_plotting(prop_catl_dict, param_dict, proj_dict)
-        ## Plotting MCF
     elif param_dict['catl_kind'] == 'mocks':
+        ## Analyzing data
         prop_catl_dict = mocks_data_extraction(param_dict, proj_dict)
+    ##
+    ## Plotting MCF
+    MCF_one_halo_plotting(prop_catl_dict, param_dict, proj_dict)
+
         
 
 
