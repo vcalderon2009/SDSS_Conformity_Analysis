@@ -35,6 +35,10 @@ from argparse import ArgumentParser
 from argparse import HelpFormatter
 from operator import attrgetter
 import copy
+import warnings
+
+# Ignoring certain warnings
+warnings.simplefilter("ignore", category=RuntimeWarning)
 
 ## Functions
 class SortingHelpFormatter(HelpFormatter):
@@ -518,6 +522,93 @@ def directory_skeleton(param_dict, proj_dict):
 
     return proj_dict
 
+def array_insert(arr1, arr2, axis=1):
+    """
+    Joins the arrays into a signle multi-dimensional array
+
+    Parameters
+    ----------
+    arr1: array_like
+        first array to merge
+
+    arr2: array_like
+        second array to merge
+
+    Return
+    ---------
+    arr3: array_like
+        merged array from `arr1` and `arr2`
+    """
+    arr3 = num.insert(arr1, len(arr1.T), arr2, axis=axis)
+
+    return arr3
+
+def sigma_calcs(data_arr, type_sigma='std', perc_arr = [68., 95., 99.7],
+    return_mean_std=False):
+    """
+    Calcualates the 1-, 2-, and 3-sigma ranges for `data_arr`
+
+    Parameters
+    -----------
+    data_arr: numpy.ndarray, shape( param_dict['nrpbins'], param_dict['itern_tot'])
+        array of values, from which to calculate percentiles or St. Dev.
+
+    type_sigma: string, optional (default = 'std')
+        option for calculating either `percentiles` or `standard deviations`
+        Options:
+            - 'perc': calculates percentiles
+            - 'std' : uses standard deviations as 1-, 2-, and 3-sigmas
+
+    perc_arr: array_like, optional (default = [68., 95., 99.7])
+        array of percentiles to calculate
+
+    return_mean_std: boolean, optional (default = False)
+        option for returning mean and St. Dev. along with `sigma_dict`
+
+    Return
+    ----------
+    sigma_dict: python dicitionary
+        dictionary containg the 1-, 2-, and 3-sigma upper and lower 
+        ranges for `data-arr`
+
+    mark_mean: array_like
+        array of the mean value of `data_arr`.
+        Only returned if `return_mean_std == True`
+
+    mark_std: array_like
+        array of the St. Dev. value of `data_arr`.
+        Only returned if `return_mean_std == True`
+    """
+    ## Creating dictionary for saving `sigma`s
+    sigma_dict = {}
+    for ii in range(len(perc_arr)):
+        sigma_dict[ii] = []
+    ## Using Percentiles to estimate errors
+    if type_sigma=='perc':
+        for ii, perc_ii in enumerate(perc_arr):
+            mark_lower = num.nanpercentile(data_arr, 50.-(perc_ii/2.),axis=1)
+            mark_upper = num.nanpercentile(data_arr, 50.+(perc_ii/2.),axis=1)
+            # Saving to dictionary
+            sigma_dict[ii] = num.column_stack((mark_lower, mark_upper)).T
+    ## Using standard deviations to estimate errors
+    if type_sigma=='std':
+        mean_val = num.nanmean(data_arr, axis=1)
+        std_val  = num.nanstd( data_arr, axis=1)
+        for ii in range(len(perc_arr)):
+            mark_lower = mean_val - ((ii+1) * std_val)
+            mark_upper = mean_val + ((ii+1) * std_val)
+            # Saving to dictionary
+            sigma_dict[ii] = num.column_stack((mark_lower, mark_upper)).T
+    ##
+    ## Estimating mean and St. Dev. of `data_arr`
+    mark_mean = num.nanmean(data_arr, axis=1)
+    mark_std  = num.nanstd (data_arr, axis=1)
+
+    if return_mean_std:
+        return sigma_dict, mark_mean, mark_std
+    else:
+        return sigma_dict
+
 def mgroup_keys_lim(keys_arr, sep='_'):
     """
     Convers the list of string sto array of new strings with the 
@@ -594,6 +685,7 @@ def mgroup_bins_create(mgroup_lims, param_dict):
 
     return param_dict
 
+## --------- DATA ------------##
 def data_shuffles_extraction(param_dict, proj_dict, pickle_ext='.p'):
     """
     Extracts the data from the `data` and `shuffles`.
@@ -613,7 +705,8 @@ def data_shuffles_extraction(param_dict, proj_dict, pickle_ext='.p'):
 
     Returns
     ---------
-
+    prop_catl_dict: python dictionary
+        dictionary with all the results from the 1-halo MCF for `data`
     """
     ## Reading in Catalogue
     catl_arr = cu.Index(proj_dict['pickle_res'], pickle_ext)
@@ -636,9 +729,9 @@ def data_shuffles_extraction(param_dict, proj_dict, pickle_ext='.p'):
         GM_arr       ) = pickle.load(open(catl_path,'rb'))
     ##
     ## Reading array of masses
-    mgroup_lims = [[[],[]] for x in range(10*ncatls)]
-    for ii in range(10*ncatls): 
-        mgroup_lims[ii] = ii+1*mgroup_keys_lim(GM_prop_dict.keys())
+    mgroup_lims = [[[],[]] for x in range(ncatls)]
+    for ii in range(ncatls): 
+        mgroup_lims[ii] = mgroup_keys_lim(GM_prop_dict.keys())
     mgroup_lims = num.array(mgroup_lims)
     ##
     ## Creating mass bins
@@ -1038,21 +1131,7 @@ def MCF_data_plotting(prop_catl_dict, param_dict, proj_dict, fig_fmt='pdf',
     plt.clf()
     plt.close()
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+## --------- Mocks ------------##
 
 def mocks_data_extraction(param_dict, proj_dict, pickle_ext='.p'):
     """
@@ -1073,8 +1152,210 @@ def mocks_data_extraction(param_dict, proj_dict, pickle_ext='.p'):
 
     Returns
     ---------
-
+    prop_catl_dict_stats: python dictionary
+        dictionary with all the results from the 1-halo MCF for `mocks` and 
+        `data`
     """
+    ## -------------- ##
+    ## ---- DATA ---- ##
+    ## -------------- ##
+    catl_arr_data = cu.Index(proj_dict['pickle_data'], pickle_ext)
+    ncatls_data   = len(catl_arr_data)
+    ## Choosing catalogue
+    if ncatls_data==1:
+        catl_data_path = catl_arr_data[0]
+    else:
+        msg = '{0} `catl_arr_data` ({1}) has more than 1 catalogue in it! '
+        msg += 'It can only contain 1 catalogue!! Exiting!'
+        msg  = msg.format(  param_dict['Prog_msg'],
+                            proj_dict['pickle_data'],
+                            ncatls_data)
+        raise ValueError(msg)
+    ##
+    ## Opening `data` pickle file
+    (   param_dict_kk_data,
+        proj_dict_kk_data ,
+        GM_prop_dict_data ,
+        catl_name_data    ,
+        GM_arr_data       ) = pickle.load(open(catl_data_path,'rb'))
+    ##
+    ## Reading array of masses
+    mgroup_lims_data = [[[],[]] for x in range(ncatls_data)]
+    for ii in range(ncatls_data):
+        mgroup_lims_data[ii] = mgroup_keys_lim(GM_prop_dict_data.keys())
+    mgroup_lims_data = num.array(mgroup_lims_data)
+    ##
+    ## Creating mass bins
+    param_dict_data = param_dict.copy()
+    param_dict_data = mgroup_bins_create(mgroup_lims_data, param_dict_data)
+    ##
+    ## Saving number of `mgroup` keys
+    param_dict_data['n_mgroup'] = len(param_dict_data['mgroup_keys'])
+    ##
+    ## Determining `gaalxy properties` list
+    prop_keys_data = num.sort(
+        list(GM_prop_dict_data[param_dict_data['mgroup_keys'][0]].keys()))
+    n_prop_data = len(prop_keys_data)
+    ##
+    ## Saving to `param_dict_data`
+    param_dict_data['prop_keys_data'] = prop_keys_data
+    param_dict_data['n_prop_data'   ] = n_prop_data
+    ##
+    ## Parsing the data into dictionaries - `data`
+    prop_keys_data_tot = dict(zip(param_dict_data['prop_keys_data'],
+        [{} for xx in range(n_prop_data)]))
+    mgroup_keys_data_dict = dict(zip(param_dict_data['mgroup_keys'],
+                                [copy.deepcopy(prop_keys_data_tot) \
+                                for xx in range(param_dict_data['n_mgroup'])]))
+    prop_catl_data_dict = copy.deepcopy(mgroup_keys_data_dict)
+    ##
+    ## Restructuring the data for `data`
+    ## Looping over group mass bins and galaxy properties
+    for gm in param_dict_data['mgroup_keys']:
+        ## Looping over `galaxy properties`
+        for prop in param_dict_data['prop_keys_data']:
+            ## Extracting the data from main dictionary
+            mcf_dict_data_conf,\
+            mcf_dict_data_conf_seg,\
+            n_groups_data = GM_prop_dict_data[gm][prop]
+            ## Saving data to restructured dictionary `prop_catl_data_dict`
+            prop_catl_data_dict[gm][prop]['mcf_conf'    ] = mcf_dict_data_conf    ['mcf']
+            prop_catl_data_dict[gm][prop]['mcf_conf_seg'] = mcf_dict_data_conf_seg['mcf']
+    ## --------------- ##
+    ## ---- MOCKS ---- ##
+    ## --------------- ##
+    catl_arr_mocks = cu.Index(proj_dict['pickle_res'], pickle_ext)
+    catl_arr_mocks = catl_arr_mocks[param_dict['catl_start']:param_dict['catl_finish']]
+    ncatls_mocks   = len(catl_arr_mocks)
+    ##
+    ## Reading in pickle files
+    mgroup_lims_mocks = [[] for x in range(ncatls_mocks)]
+    GM_prop_dict_arr  = [[] for x in range(ncatls_mocks)]
+    ## Looping over all mock catalogues
+    for ii, mock_ii in enumerate(catl_arr_mocks):
+        ## Opening up pickle file
+        (   param_dict_kk  ,
+            proj_dict_kk   ,
+            GM_prop_dict_kk,
+            catl_name_kk   ,
+            GM_arr_kk      ) = pickle.load(open(mock_ii,'rb'))
+        ## Mass limits for `mock_ii`
+        mgroup_lims_mocks[ii] = mgroup_keys_lim(GM_prop_dict_kk.keys())
+        ## Saving MCF results from pickle file
+        GM_prop_dict_arr[ii] = GM_prop_dict_kk
+    ##
+    ## Determining mass limits for each mock catalogue
+    mgroup_lims_mocks = num.array(mgroup_lims_mocks)
+    ##
+    ## Creating mass bins
+    param_dict = mgroup_bins_create(mgroup_lims_mocks, param_dict)
+    ##
+    ## Determining common `mass bin` keys and `prop` in common`
+    mgroup_keys_intersect = num.intersect1d(param_dict     ['mgroup_keys'],
+                                            param_dict_data['mgroup_keys'])
+    param_dict['mgroup_keys'] = mgroup_keys_intersect
+    ##
+    ## Saving number of `mgroup` keys
+    param_dict['n_mgroup'] = len(param_dict['mgroup_keys'])
+    ##
+    ## Determining `galaxy properties` list
+    prop_keys = num.sort(
+        list(GM_prop_dict_arr[0][param_dict['mgroup_keys'][0]].keys()))
+    ##
+    ## Common keys for the `galaxy property`
+    prop_keys_intersect = num.intersect1d(prop_keys, prop_keys_data)
+    n_prop              = len(prop_keys_intersect)
+    ##
+    ## Saving to `param_dict`
+    param_dict['prop_keys'] = prop_keys
+    param_dict['n_prop'   ] = n_prop
+    ##
+    ## Parsing the data into dictionaries
+    zero_arr      = num.zeros((param_dict['nrpbins'],1))
+    mcf_dicts     = {'mcf':zero_arr.copy(), 'mcf_seg':zero_arr.copy()}
+    prop_keys_tot = dict(zip(param_dict['prop_keys'],
+                        [copy.deepcopy(mcf_dicts) for xx in range(n_prop)]))
+    mgroup_keys_dict = dict(zip(param_dict['mgroup_keys'],
+                                [copy.deepcopy(prop_keys_tot) \
+                                for xx in range(param_dict['n_mgroup' ])]))
+    prop_catl_dict = copy.deepcopy(mgroup_keys_dict)
+    ##
+    ## Restructuring the data
+    ## Looping over mock catalogues
+    for ii, gm_prop_ii in enumerate(GM_prop_dict_arr):
+        ## Looping over group mass bins
+        for gm in param_dict['mgroup_keys']:
+            ## Looping over `galaxy properties`
+            for prop in param_dict['prop_keys']:
+                ## Extracting the data from main dictionary
+                (   mcf_dict_conf    ,
+                    mcf_dict_conf_seg,
+                    ngroups          ) = gm_prop_ii[gm][prop]
+                ##
+                ## MCF for 'Conf Only' and 'Conf + Seg'
+                mcf_conf     = mcf_dict_conf    ['mcf']
+                mcf_conf_seg = mcf_dict_conf_seg['mcf']
+                ##
+                ## Appending to `prop_catl_dict`
+                # 'Conformity Only'
+                prop_catl_dict[gm][prop]['mcf'] = array_insert(
+                    prop_catl_dict[gm][prop]['mcf'],
+                    mcf_conf, axis=1)
+                # 'Conformity + Segregation'
+                prop_catl_dict[gm][prop]['mcf_seg'] = array_insert(
+                    prop_catl_dict[gm][prop]['mcf_seg'],
+                    mcf_conf_seg, axis=1)
+    ##
+    ## Statistics of `prop_catl_dict`
+    prop_keys_tot_stats = dict(zip(param_dict['prop_keys'],
+                                [{} for xx in range(n_prop)]))
+    mgroup_keys_dict_stats = dict(zip(param_dict['mgroup_keys'],
+                                [copy.deepcopy(prop_keys_tot_stats) \
+                                for xx in range(param_dict['n_mgroup' ])]))
+    prop_catl_dict_stats = copy.deepcopy(mgroup_keys_dict_stats)
+    ##
+    ## Looping over group mass bins
+    for gm in param_dict['mgroup_keys']:
+        ## Looping over `galaxy properties`
+        for prop in param_dict['prop_keys']:
+            ## Deleting 1st row of zeros
+            mcf_mocks     = num.delete(prop_catl_dict[gm][prop]['mcf'],
+                                0, axis=1)
+            mcf_seg_mocks = num.delete(prop_catl_dict[gm][prop]['mcf_seg'],
+                                0,axis=1)
+            ##
+            ## Statistics: Sigmas, Means, and St. Dev.
+            ## Errors, mean and St. Dev.
+            # 'Conf Only'
+            (   sigma_conf_dict,
+                conf_mean      ,
+                conf_std       ) = sigma_calcs(mcf_mocks,
+                                        type_sigma=param_dict['type_sigma'],
+                                        return_mean_std=True)
+            # 'Conf + Seg'
+            (   sigma_conf_seg_dict,
+                conf_seg_mean      ,
+                conf_seg_std       ) = sigma_calcs(mcf_seg_mocks,
+                                        type_sigma=param_dict['type_sigma'],
+                                        return_mean_std=True)
+            ##
+            ## Defining `mcf` from `data`
+            mcf_conf_data     = prop_catl_data_dict[gm][prop]['mcf_conf']
+            mcf_conf_seg_data = prop_catl_data_dict[gm][prop]['mcf_conf_seg']
+            ##
+            ## Fractional Differences
+            # 'Conf Only'
+            mcf_conf_frac     = (mcf_conf_data - conf_mean)/conf_std
+            # 'Conf + Seg'
+            mcf_conf_seg_frac = (mcf_conf_seg_data - conf_seg_mean)/conf_seg_std
+            ## Saving to `prop_catl_dict_stats`
+            prop_catl_dict_stats[gm][prop]['mcf_conf'    ] = mcf_conf_data
+            prop_catl_dict_stats[gm][prop]['mcf_conf_seg'] = mcf_conf_seg_data
+            prop_catl_dict_stats[gm][prop]['mcf_conf_sig'] = sigma_conf_dict
+            prop_catl_dict_stats[gm][prop]['conf_res'    ] = mcf_conf_frac
+            prop_catl_dict_stats[gm][prop]['conf_seg_res'] = mcf_conf_seg_frac
+
+    return prop_catl_dict_stats
 
 def main():
     """
