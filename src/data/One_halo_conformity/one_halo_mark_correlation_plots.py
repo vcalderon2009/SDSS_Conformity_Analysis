@@ -766,16 +766,38 @@ def data_shuffles_extraction(param_dict, proj_dict, pickle_ext='.p'):
             mcf_dict_conf    ,\
             mcf_dict_conf_seg,\
             ngroups           = GM_prop_dict[gm][prop]
-            ## Fractional difference - Conformity Only
-            mcf_conf_frac  = mcf_dict_conf['mcf']-mcf_dict_conf['mcf_sh_mean']
-            mcf_conf_frac /= mcf_dict_conf['mcf_sh_std']
-            ## Fractional difference - Conformity + Segregation
-            mcf_conf_seg_frac  = mcf_dict_conf_seg['mcf']-mcf_dict_conf_seg['mcf_sh_mean']
-            mcf_conf_seg_frac /= mcf_dict_conf_seg['mcf_sh_std']
+            ##
+            ## Extracting MCFs
+            # 'Conf Only'
+            mcf_conf        = mcf_dict_conf['mcf'   ]
+            mcf_conf_sh     = mcf_dict_conf['mcf_sh']
+            # 'Conf + Seg'
+            mcf_conf_seg    = mcf_dict_conf_seg['mcf'   ]
+            mcf_conf_seg_sh = mcf_dict_conf_seg['mcf_sh']
+            ##
+            ## Errors, mean, and St. Dev.
+            # 'Conf Only'
+            (   sigma_conf_dict,
+                conf_mean      ,
+                conf_std       ) = sigma_calcs(mcf_conf_sh,
+                                        type_sigma=param_dict['type_sigma'],
+                                        return_mean_std=True)
+            # 'Conf + Seg'
+            (   sigma_conf_seg_dict,
+                conf_seg_mean      ,
+                conf_seg_std       ) = sigma_calcs(mcf_conf_seg_sh,
+                                        type_sigma=param_dict['type_sigma'],
+                                        return_mean_std=True)
+            ##
+            ## Fractional Difference
+            # 'Conf. Only'
+            mcf_conf_frac = (mcf_conf - conf_mean)/conf_std
+            # 'Conf. + Seg.'
+            mcf_conf_seg_frac = (mcf_conf_seg - conf_seg_mean)/conf_seg_std
             ## Saving data to restructured dictionary `prop_catl_dict`
-            prop_catl_dict[gm][prop]['mcf_conf'    ] = mcf_dict_conf    ['mcf']
-            prop_catl_dict[gm][prop]['mcf_conf_seg'] = mcf_dict_conf_seg['mcf']
-            prop_catl_dict[gm][prop]['mcf_conf_sig'] = mcf_dict_conf    ['sigma']
+            prop_catl_dict[gm][prop]['mcf_conf'    ] = mcf_conf
+            prop_catl_dict[gm][prop]['mcf_conf_seg'] = mcf_conf_seg
+            prop_catl_dict[gm][prop]['mcf_conf_sig'] = sigma_conf_dict
             prop_catl_dict[gm][prop]['conf_res'    ] = mcf_conf_frac
             prop_catl_dict[gm][prop]['conf_seg_res'] = mcf_conf_seg_frac
 
