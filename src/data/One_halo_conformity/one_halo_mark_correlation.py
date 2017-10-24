@@ -668,7 +668,8 @@ def wp_idx_calc(group_df, param_dict):
                                         coord_1,
                                         rpmin=param_dict['rpmin'],
                                         rpmax=param_dict['rpmax'],
-                                        nrpbins=param_dict['nrpbins'])
+                                        nrpbins=param_dict['nrpbins'],
+                                        pimax=param_dict['pimax'])
     ### Converting to pandas DataFrame
     rp_ith_pd = pd.DataFrame(rp_ith_arr, columns=['rp','i','j'])
     ### Unique `rp` bins

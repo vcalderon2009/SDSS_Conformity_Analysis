@@ -24,7 +24,7 @@ from libc.math cimport sqrt, log10, fabs
 
 ## Functions
 def pairwise_distance_rp(coord_1, coord_2, rpmin=0.01, rpmax=10, 
-    nrpbins=10):
+    nrpbins=10, pimax=20.):
     """
     Cython engine for returning pairs of points separated in 
     projected radial bins with an observer at (0,0,0)
@@ -46,6 +46,9 @@ def pairwise_distance_rp(coord_1, coord_2, rpmin=0.01, rpmax=10,
 
     nrpbins: int, optional (default = 10)
         total number of `rp` bins
+
+    pimax: float, optional (default = 20.)
+        maximum parallel separation distance to serach for and return pairs
 
     Returns
     ----------
@@ -72,6 +75,7 @@ def pairwise_distance_rp(coord_1, coord_2, rpmin=0.01, rpmax=10,
     cdef int nrpbins_p          = nrpbins
     cdef cnp.float64_t rp_min_p = rpmin
     cdef cnp.float64_t rp_max_p = rpmax
+    cdef cnp.float64_t pi_max_p = pimax
     cdef cnp.float64_t logrpmin = log10(rpmin)
     cdef cnp.float64_t logrpmax = log10(rpmax)
     cdef cnp.float64_t dlogrp   = (logrpmax-logrpmin)/nrpbins
@@ -97,11 +101,11 @@ def pairwise_distance_rp(coord_1, coord_2, rpmin=0.01, rpmax=10,
             lz    = 0.5*(z1[i] + z2[j])
             l2    = (lx * lx) + (ly * ly) + (lz * lz)
             ll    = sqrt(l2)
-            spar  = fabs(((sx * lx) + (sy * ly) + (sz * lz)) / ll)
+            spar  = abs(((sx * lx) + (sy * ly) + (sz * lz)) / ll)
             s2    = (sx * sx) + (sy * sy) + (sz * sz)
             sperp = sqrt(s2 - spar * spar)
             ## Criteria for `projected separation`
-            if (sperp > rp_min_p) & (sperp < rp_max_p):
+            if (spar <= pi_max_p) & (sperp > rp_min_p) & (sperp < rp_max_p):
                 # `rp` bin of pair
                 rpbin = (log10(sperp) - logrpmin)/dlogrp
                 # Appending to lists
