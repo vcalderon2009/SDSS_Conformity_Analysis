@@ -1145,7 +1145,7 @@ def halo_corr(catl_pd, catl_name, param_dict, proj_dict):
             df_bin_org.reset_index(inplace=True, drop=True)
             ##
             ## Creating dictionary that contains results for all galaxy properties
-            stat_vals = [[] for x in range(3)]
+            stat_vals = [[] for x in range(2)]
             prop_dict = dict(zip(pd_keys,[list(stat_vals) for x in range(len(pd_keys))]))
             ## Looping over galaxy properties
             for jj, prop in enumerate(pd_keys):
