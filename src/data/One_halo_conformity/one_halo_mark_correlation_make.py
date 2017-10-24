@@ -165,7 +165,8 @@ def get_analysis_params(param_dict):
                                 ('cpu_frac'       ,'-cpu'        ,0.7),
                                 ('remove_files'   ,'-remove'     ,'False'),
                                 ('remove_wp_files','-remove-wp'  ,'False'),
-                                ('type_sigma'     ,'-sigma'      ,'std')])
+                                ('type_sigma'     ,'-sigma'      ,'std'),
+                                ('pimax'          ,'-pimax'      ,20.  )])
     #
     # Variables for plotting
     if param_dict['analysis_type']=='plots':
@@ -186,7 +187,8 @@ def get_analysis_params(param_dict):
                                 ('type_sigma'     ,'-sigma'      ,'std'),
                                 ('mg_min'         ,'-mg_min'     ,12.41),
                                 ('mg_max'         ,'-mg_max'     ,14.),
-                                ('verbose'        ,'-v'          ,'False')])
+                                ('verbose'        ,'-v'          ,'False'),
+                                ('pimax'          ,'-pimax'      ,20.  )])
     ##
     ## Converting to pandas DataFrame
     colnames = ['Name','Flag','Value']
