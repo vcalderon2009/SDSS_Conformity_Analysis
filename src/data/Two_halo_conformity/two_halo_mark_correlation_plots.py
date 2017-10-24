@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # Victor Calderon
-# Created      : 10/17/2017
+# Created      : 10/24/2017
 # Last Modified: 10/24/2017
 # Vanderbilt University
 from __future__ import print_function, division, absolute_import
@@ -11,7 +11,7 @@ __copyright__  =["Copyright 2017 Victor Calderon, "]
 __email__      =['victor.calderon@vanderbilt.edu']
 __maintainer__ =['Victor Calderon']
 """
-Script that plots the 1-halo MCF results for `data` and `mocks`
+Script that plots the 2-halo MCF results for `data` and `mocks`
 """
 # Importing Modules
 import custom_utilities_python as cu
@@ -131,25 +131,25 @@ def get_parser():
                         dest='corr_pair_type',
                         help='Types of galaxy pairs to keep for the MFC and ',
                         type=str,
-                        choices=['cen_sat'],
-                        default='cen_sat')
+                        choices=['cen_cen'],
+                        default='cen_cen')
     ## Shuffling Marks
     parser.add_argument('-shuffle',
                         dest='shuffle_marks',
                         help='Option for shuffling marks of Cens. and Sats.',
-                        choices=['cen_sh', 'sat_sh', 'censat_sh'],
-                        default='censat_sh')
+                        choices=['cen_sh'],
+                        default='cen_sh')
     ## Rpmin and Rpmax
     parser.add_argument('-rpmin',
                         dest='rpmin',
                         help='Minimum value for projected distance `rp`',
                         type=_check_pos_val,
-                        default=0.01)
+                        default=0.09)
     parser.add_argument('-rpmax',
                         dest='rpmax',
                         help='Maximum value for projected distance `rp`',
                         type=_check_pos_val,
-                        default=10.)
+                        default=20.)
     ## Number of `rp` bins
     parser.add_argument('-nrp',
                         dest='nrpbins',
@@ -169,7 +169,7 @@ def get_parser():
                         dest='ngals_min',
                         help='Minimum number of galaxies in a galaxy group',
                         type=int,
-                        default=2)
+                        default=1)
     ## Bin in Group mass
     parser.add_argument('-mg',
                         dest='Mg_bin',
@@ -222,10 +222,10 @@ def get_parser():
                         dest='corr_type',
                         help='Type of correlation function to perform',
                         type=str,
-                        choices=['galgal'],
-                        default='galgal')
+                        choices=['cencen'],
+                        default='cencen')
     ## Type of error or `sigma` to use
-    parser.add_argument('-type-error',
+    parser.add_argument('-sigma',
                         dest='type_sigma',
                         help='Type of error or sigma to calculate for plotting',
                         type=str,
@@ -254,13 +254,13 @@ def get_parser():
                         dest='mg_min',
                         help='Minimim mass bin to show in the results plot',
                         type=float,
-                        default=12.41)
+                        default=11.61)
     ## Maximum mass bin to show
     parser.add_argument('-mg_max',
                         dest='mg_max',
                         help='Maximum mass bin to show in the results plot',
                         type=float,
-                        default=14.)
+                        default=13.2)
     ## Verbose
     parser.add_argument('-v','--verbose',
                         dest='verbose',
@@ -297,7 +297,7 @@ def add_to_dict(param_dict):
         perf_str = ''
     ###
     ### Figure
-    fig_idx = 21
+    fig_idx = 22
     ###
     ### Projected distance `rp` bins
     logrpmin          = num.log10(param_dict['rpmin'])
@@ -400,10 +400,10 @@ def param_vals_test(param_dict):
         pass
     ##
     ## Checking that `nmin` is larger than 2
-    if param_dict['ngals_min'] >= 2:
+    if param_dict['ngals_min'] >= 1:
         pass
     else:
-        msg = '{0} `ngals_min` ({1}) must be larger than `2`'.format(
+        msg = '{0} `ngals_min` ({1}) must be larger than `1`'.format(
             param_dict['Prog_msg'],
             param_dict['ngals_min'])
         raise ValueError(msg)
@@ -598,6 +598,22 @@ def sigma_calcs(data_arr, type_sigma='std', perc_arr = [68., 95., 99.7],
     sigma_dict = {}
     for ii in range(len(perc_arr)):
         sigma_dict[ii] = []
+    ### --- Temporary
+    try:
+        temp = data_arr.shape[1]
+    except IndexError:
+        data_new     = num.zeros((data_arr.shape[0],1000))
+        sigma_arr    = num.zeros(2*data_arr.shape[0]).reshape(2, data_arr.shape[0])
+        sigma_arr[:] = num.nan
+        sigma_dict   = {}
+        for jj in range(3):
+            sigma_dict[jj] = sigma_arr.copy()
+        ## Returning new elements
+        if return_mean_std:
+            return sigma_dict, data_arr.copy(), data_arr.copy()
+        else:
+            return sigma_dict
+    ### -------------------
     ## Using Percentiles to estimate errors
     if type_sigma=='perc':
         for ii, perc_ii in enumerate(perc_arr):
@@ -779,17 +795,14 @@ def data_shuffles_extraction(param_dict, proj_dict, pickle_ext='.p'):
         ## Looping over `galaxy properties`
         for prop in param_dict['prop_keys']:
             ## Extracting the data from main dictionary
-            mcf_dict_conf    ,\
-            mcf_dict_conf_seg,\
-            ngroups           = GM_prop_dict[gm][prop]
+            mcf_dict_conf,\
+            ngroups      ,\
+            aa           = GM_prop_dict[gm][prop]
             ##
             ## Extracting MCFs
             # 'Conf Only'
             mcf_conf        = mcf_dict_conf['mcf'   ]
             mcf_conf_sh     = mcf_dict_conf['mcf_sh']
-            # 'Conf + Seg'
-            mcf_conf_seg    = mcf_dict_conf_seg['mcf'   ]
-            mcf_conf_seg_sh = mcf_dict_conf_seg['mcf_sh']
             ##
             ## Errors, mean, and St. Dev.
             # 'Conf Only'
@@ -798,24 +811,14 @@ def data_shuffles_extraction(param_dict, proj_dict, pickle_ext='.p'):
                 conf_std       ) = sigma_calcs(mcf_conf_sh,
                                         type_sigma=param_dict['type_sigma'],
                                         return_mean_std=True)
-            # 'Conf + Seg'
-            (   sigma_conf_seg_dict,
-                conf_seg_mean      ,
-                conf_seg_std       ) = sigma_calcs(mcf_conf_seg_sh,
-                                        type_sigma=param_dict['type_sigma'],
-                                        return_mean_std=True)
             ##
             ## Fractional Difference
             # 'Conf. Only'
             mcf_conf_frac = (mcf_conf - conf_mean)/conf_std
-            # 'Conf. + Seg.'
-            mcf_conf_seg_frac = (mcf_conf_seg - conf_seg_mean)/conf_seg_std
             ## Saving data to restructured dictionary `prop_catl_dict`
             prop_catl_dict[gm][prop]['mcf_conf'    ] = mcf_conf
-            prop_catl_dict[gm][prop]['mcf_conf_seg'] = mcf_conf_seg
             prop_catl_dict[gm][prop]['mcf_conf_sig'] = sigma_conf_dict
             prop_catl_dict[gm][prop]['conf_res'    ] = mcf_conf_frac
-            prop_catl_dict[gm][prop]['conf_seg_res'] = mcf_conf_seg_frac
 
     return prop_catl_dict
 
@@ -904,11 +907,10 @@ def mocks_data_extraction(param_dict, proj_dict, pickle_ext='.p'):
         for prop in param_dict_data['prop_keys_data']:
             ## Extracting the data from main dictionary
             mcf_dict_data_conf,\
-            mcf_dict_data_conf_seg,\
-            n_groups_data = GM_prop_dict_data[gm][prop]
+            n_groups_data,\
+            aa = GM_prop_dict_data[gm][prop]
             ## Saving data to restructured dictionary `prop_catl_data_dict`
-            prop_catl_data_dict[gm][prop]['mcf_conf'    ] = mcf_dict_data_conf    ['mcf']
-            prop_catl_data_dict[gm][prop]['mcf_conf_seg'] = mcf_dict_data_conf_seg['mcf']
+            prop_catl_data_dict[gm][prop]['mcf_conf'] = mcf_dict_data_conf['mcf']
     ## --------------- ##
     ## ---- MOCKS ---- ##
     ## --------------- ##
@@ -960,7 +962,7 @@ def mocks_data_extraction(param_dict, proj_dict, pickle_ext='.p'):
     ##
     ## Parsing the data into dictionaries
     zero_arr      = num.zeros((param_dict['nrpbins'],1))
-    mcf_dicts     = {'mcf':zero_arr.copy(), 'mcf_seg':zero_arr.copy()}
+    mcf_dicts     = {'mcf':zero_arr.copy()}
     prop_keys_tot = dict(zip(param_dict['prop_keys'],
                         [copy.deepcopy(mcf_dicts) for xx in range(n_prop)]))
     mgroup_keys_dict = dict(zip(param_dict['mgroup_keys'],
@@ -977,22 +979,17 @@ def mocks_data_extraction(param_dict, proj_dict, pickle_ext='.p'):
             for prop in param_dict['prop_keys']:
                 ## Extracting the data from main dictionary
                 (   mcf_dict_conf    ,
-                    mcf_dict_conf_seg,
-                    ngroups          ) = gm_prop_ii[gm][prop]
+                    ngroups          ,
+                    aa ) = gm_prop_ii[gm][prop]
                 ##
                 ## MCF for 'Conf Only' and 'Conf + Seg'
                 mcf_conf     = mcf_dict_conf    ['mcf']
-                mcf_conf_seg = mcf_dict_conf_seg['mcf']
                 ##
                 ## Appending to `prop_catl_dict`
                 # 'Conformity Only'
                 prop_catl_dict[gm][prop]['mcf'] = array_insert(
                     prop_catl_dict[gm][prop]['mcf'],
                     mcf_conf, axis=1)
-                # 'Conformity + Segregation'
-                prop_catl_dict[gm][prop]['mcf_seg'] = array_insert(
-                    prop_catl_dict[gm][prop]['mcf_seg'],
-                    mcf_conf_seg, axis=1)
     ##
     ## Statistics of `prop_catl_dict`
     prop_keys_tot_stats = dict(zip(param_dict['prop_keys'],
@@ -1009,8 +1006,6 @@ def mocks_data_extraction(param_dict, proj_dict, pickle_ext='.p'):
             ## Deleting 1st row of zeros
             mcf_mocks     = num.delete(prop_catl_dict[gm][prop]['mcf'],
                                 0, axis=1)
-            mcf_seg_mocks = num.delete(prop_catl_dict[gm][prop]['mcf_seg'],
-                                0,axis=1)
             ##
             ## Statistics: Sigmas, Means, and St. Dev.
             ## Errors, mean and St. Dev.
@@ -1020,28 +1015,17 @@ def mocks_data_extraction(param_dict, proj_dict, pickle_ext='.p'):
                 conf_std       ) = sigma_calcs(mcf_mocks,
                                         type_sigma=param_dict['type_sigma'],
                                         return_mean_std=True)
-            # 'Conf + Seg'
-            (   sigma_conf_seg_dict,
-                conf_seg_mean      ,
-                conf_seg_std       ) = sigma_calcs(mcf_seg_mocks,
-                                        type_sigma=param_dict['type_sigma'],
-                                        return_mean_std=True)
             ##
             ## Defining `mcf` from `data`
             mcf_conf_data     = prop_catl_data_dict[gm][prop]['mcf_conf']
-            mcf_conf_seg_data = prop_catl_data_dict[gm][prop]['mcf_conf_seg']
             ##
             ## Fractional Differences
             # 'Conf Only'
             mcf_conf_frac     = (mcf_conf_data - conf_mean)/conf_std
-            # 'Conf + Seg'
-            mcf_conf_seg_frac = (mcf_conf_seg_data - conf_seg_mean)/conf_seg_std
             ## Saving to `prop_catl_dict_stats`
             prop_catl_dict_stats[gm][prop]['mcf_conf'    ] = mcf_conf_data
-            prop_catl_dict_stats[gm][prop]['mcf_conf_seg'] = mcf_conf_seg_data
             prop_catl_dict_stats[gm][prop]['mcf_conf_sig'] = sigma_conf_dict
             prop_catl_dict_stats[gm][prop]['conf_res'    ] = mcf_conf_frac
-            prop_catl_dict_stats[gm][prop]['conf_seg_res'] = mcf_conf_seg_frac
 
     return prop_catl_dict_stats
 
@@ -1210,7 +1194,7 @@ def MCF_one_halo_plotting(prop_catl_dict, param_dict, proj_dict, fig_fmt='pdf',
                     marker='o',
                     linestyle='-',
                     zorder=4,
-                    label = 'SDSS - Conf. Only')
+                    label = 'SDSS')
             else:
                 ax_data.plot(
                     param_dict['rpbins_cens_unlog'][mcf_lim],
@@ -1219,66 +1203,16 @@ def MCF_one_halo_plotting(prop_catl_dict, param_dict, proj_dict, fig_fmt='pdf',
                     marker='o',
                     linestyle='-',
                     zorder=4)
-            #
-            # MCF - Conformity + Segregation
-            if (ii==0):
-                ax_data.plot(
-                    param_dict['rpbins_cens_unlog'][mcf_lim],
-                    prop_catl_dict[gm][prop]['mcf_conf_seg'][mcf_lim],
-                    color=color_prop_seg,
-                    marker='o',
-                    linestyle='--',
-                    zorder=4,
-                    label = 'SDSS - Conf + Seg',
-                    dashes=dashes)
-            else:
-                ax_data.plot(
-                    param_dict['rpbins_cens_unlog'][mcf_lim],
-                    prop_catl_dict[gm][prop]['mcf_conf_seg'][mcf_lim],
-                    color=color_prop_seg,
-                    marker='o',
-                    linestyle='--',
-                    zorder=4,
-                    dashes=dashes)
             ##
             ## Plotting in `ax_sigma`
             ## MCF - Residuals - Conformity Only
-            if (ii==0):
-                ax_sigma.plot(
-                    param_dict['rpbins_cens_unlog'][mcf_lim],
-                    prop_catl_dict[gm][prop]['conf_res'][mcf_lim],
-                    color=color_prop,
-                    marker='o',
-                    linestyle='-',
-                    zorder=4,
-                    label = 'SDSS - Conf. Only')
-            else:
-                ax_sigma.plot(
-                    param_dict['rpbins_cens_unlog'][mcf_lim],
-                    prop_catl_dict[gm][prop]['conf_res'][mcf_lim],
-                    color=color_prop,
-                    marker='o',
-                    linestyle='-',
-                    zorder=4)
-            ##
-            ## MCF - Residuals - Conformity + Segregation
-            if (ii==0):
-                ax_sigma.plot(
-                    param_dict['rpbins_cens_unlog'][mcf_lim],
-                    prop_catl_dict[gm][prop]['conf_seg_res'][mcf_lim],
-                    color=color_prop_seg,
-                    marker='o',
-                    linestyle='--',
-                    zorder=4,
-                    label = 'SDSS - Conf + Seg')
-            else:
-                ax_sigma.plot(
-                    param_dict['rpbins_cens_unlog'][mcf_lim],
-                    prop_catl_dict[gm][prop]['conf_seg_res'][mcf_lim],
-                    color=color_prop_seg,
-                    marker='o',
-                    linestyle='--',
-                    zorder=4)
+            ax_sigma.plot(
+                param_dict['rpbins_cens_unlog'][mcf_lim],
+                prop_catl_dict[gm][prop]['conf_res'][mcf_lim],
+                color=color_prop,
+                marker='o',
+                linestyle='-',
+                zorder=4)
             ##
             ## Sigma Lines in `ax_sigma`
             for zz in reversed(range(3)):
@@ -1374,8 +1308,8 @@ def MCF_one_halo_plotting(prop_catl_dict, param_dict, proj_dict, fig_fmt='pdf',
             if param_dict['catl_kind']=='data':
                 ##
                 ## y-axis limits
-                ylim_data      = [0.8, 1.25]
-                ylim_sigma     = [-10, 9.8]
+                ylim_data      = [0.8, 1.1]
+                ylim_sigma     = [-5, 9.8]
                 ##
                 ## Tickmarks
                 ax_data_major  = 0.1
@@ -1440,16 +1374,17 @@ def MCF_one_halo_plotting(prop_catl_dict, param_dict, proj_dict, fig_fmt='pdf',
     ##
     ## Copying figure to `fig_paper_dir` path and renaming file
     if param_dict['catl_kind']=='data':
-        fname_new = 'Fig3_1_halo_mcf_data.{0}'.format(fig_fmt)
+        fname_new = 'Fig7_2_halo_mcf_data.{0}'.format(fig_fmt)
     elif param_dict['catl_kind']=='mocks':
-        fname_new = 'Fig4_1_halo_mcf_mocks.{0}'.format(fig_fmt)
+        fname_new = 'Fig8_2_halo_mcf_mocks.{0}'.format(fig_fmt)
     ## Executing commands
     cmd  = '\ncp {0} {1} ; '.format(fname, proj_dict['fig_paper_dir'])
     cmd += '\n\nmv {0}/{1} {2}/{3};'.format( proj_dict['fig_paper_dir'],
                                         fname_prefix,
                                         proj_dict['fig_paper_dir'],
                                         fname_new)
-    print(cmd)
+    if param_dict['verbose']:
+        print(cmd)
     subprocess.call(cmd, shell=True)
 
 ## --------- Main Function ------------##
@@ -1468,8 +1403,8 @@ def main():
     Prog_msg = param_dict['Prog_msg']
     ##
     ## Creating Folder Structure
-    proj_dict  = directory_skeleton(param_dict, cu.cookiecutter_paths(__file__))
-    # proj_dict  = directory_skeleton(param_dict, cu.cookiecutter_paths('./'))
+    # proj_dict  = directory_skeleton(param_dict, cu.cookiecutter_paths(__file__))
+    proj_dict  = directory_skeleton(param_dict, cu.cookiecutter_paths('./'))
     ##
     ## Printing out project variables
     if param_dict['verbose']:
