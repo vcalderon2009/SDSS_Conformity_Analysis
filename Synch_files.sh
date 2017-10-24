@@ -21,10 +21,8 @@ if [[ ${file_opt} == 'figures' ]]; then
     rsync -chavzP --stats --delete "${DIR_B}/reports/figures" "${DIR}/reports"
 fi
 if [[ ${file_opt} == 'catalogues' ]]; then
-    echo "rsync -chavzP --stats "${DIR_B}/data/interim/SDSS/data/mr/Mr19/conformity_output/catl_pickle_files" "${DIR}/data/interim/SDSS/data/mr/Mr19/conformity_output/""
-    rsync -chavzP --stats "${DIR_B}/data/interim/SDSS/data/mr/Mr19/conformity_output/catl_pickle_files" "${DIR}/data/interim/SDSS/data/mr/Mr19/conformity_output/"
-    echo "rsync -chavzP --stats "${DIR_B}/data/interim/SDSS/mocks/mr/Mr19/conformity_output/catl_pickle_files" "${DIR}/data/interim/SDSS/mocks/mr/Mr19/conformity_output/""
-    rsync -chavzP --stats "${DIR_B}/data/interim/SDSS/mocks/mr/Mr19/conformity_output/catl_pickle_files" "${DIR}/data/interim/SDSS/mocks/mr/Mr19/conformity_output/"
+    echo "rsync -chavzP --stats "${DIR_B}/data/processed/SDSS" "${DIR}/data/processed/""
+    rsync -chavzP --stats "${DIR_B}/data/processed/SDSS/" "${DIR}/data/processed/"
 fi
 
 
