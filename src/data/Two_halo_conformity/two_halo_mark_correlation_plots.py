@@ -211,12 +211,6 @@ def get_parser():
                         help='Option for using a `Perfect` catalogue',
                         type=_str2bool,
                         default=False)
-    ## Option for removing file
-    parser.add_argument('-remove',
-                        dest='remove_files',
-                        help='Delete pickle file containing pair counts',
-                        type=_str2bool,
-                        default=False)
     ## Type of correlation funciton to perform
     parser.add_argument('-corrtype',
                         dest='corr_type',
@@ -231,12 +225,6 @@ def get_parser():
                         type=str,
                         choices=['std','perc'],
                         default='std')
-    ## CPU Counts
-    parser.add_argument('-cpu',
-                        dest='cpu_frac',
-                        help='Fraction of total number of CPUs to use',
-                        type=float,
-                        default=0.75)
     ## Show Progbar
     parser.add_argument('-prog',
                         dest='prog_bar',
@@ -265,7 +253,8 @@ def get_parser():
     parser.add_argument('-v','--verbose',
                         dest='verbose',
                         help='Option to print out project parameters',
-                        action="store_true")
+                        type=_str2bool,
+                        default=False)
     ## Maximum mass bin to show
     ## Parsing Objects
     args = parser.parse_args()
@@ -406,15 +395,6 @@ def param_vals_test(param_dict):
         msg = '{0} `ngals_min` ({1}) must be larger than `1`'.format(
             param_dict['Prog_msg'],
             param_dict['ngals_min'])
-        raise ValueError(msg)
-    ##
-    ## Checking `cpu_frac` range
-    if (param_dict['cpu_frac'] > 0) and (param_dict['cpu_frac'] <= 1):
-        pass
-    else:
-        msg = '{0} `cpu_frac` ({1}) must be between (0,1]'.format(
-            param_dict['Prog_msg'],
-            param_dict['cpu_frac'])
         raise ValueError(msg)
     ##
     ## Number of bins

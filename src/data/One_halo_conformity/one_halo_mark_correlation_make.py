@@ -117,42 +117,76 @@ def get_parser():
                         help='Fraction of CPUs to use',
                         type=float,
                         default=0.7)
+    ## Verbose
+    parser.add_argument('-v','--verbose',
+                        dest='verbose',
+                        help='Option to print out project parameters',
+                        action="store_true")
     ## Parsing Objects
     args = parser.parse_args()
 
     return args
 
-def get_analysis_params():
+def get_analysis_params(param_dict):
     """
     Parameters for the 1-halo conformity analysis
 
+    Parameters
+    -----------
+    param_dict: python dictionary
+        dictionary with project variables
+
     Returns
-    --------
+    -----------
     params_pd: pandas DataFrame
         DataFrame with necessary parameters to run 1-halo conformity analysis
     """
     ##
     ## Array of values used for the analysis.
     ## Format: (name of variable, flag, value)
-    params_arr = num.array([('sample'         ,'-sample'     ,19),
-                            ('catl_type'      ,'-abopt'      ,'mr'),
-                            ('corr_pair_type' ,'-pairtype'   ,'cen_sat'),
-                            ('shuffle_marks'  ,'-shuffle'    ,'censat_sh'),
-                            ('rpmin'          ,'-rpmin'      ,0.01),
-                            ('rpmax'          ,'-rpmax'      ,10.),
-                            ('nrpbins'        ,'-nrp'        ,10),
-                            ('itern_tot'      ,'-itern'      ,1000),
-                            ('ngals_min'      ,'-nmin'       ,2),
-                            ('Mg_bin'         ,'-mg'         ,0.4),
-                            ('prop_log'       ,'-log'        ,'log'),
-                            ('catl_start'     ,'-catl_start' ,0),
-                            ('catl_finish'    ,'-catl_finish',100),
-                            ('perf_opt'       ,'-perf'       ,'False'),
-                            ('cosmo_choice'   ,'-cosmo'      ,'LasDamas'),
-                            ('cpu_frac'       ,'-cpu'        ,0.7),
-                            ('remove_files'   ,'-remove'     ,'False'),
-                            ('remove_wp_files','-remove-wp'  ,'False'),
-                            ('type_sigma'     ,'-sigma'      ,'std')])
+    #
+    # For Calculations
+    if param_dict['analysis_type'] == 'calc':
+        params_arr = num.array([('sample'         ,'-sample'     ,19),
+                                ('catl_type'      ,'-abopt'      ,'mr'),
+                                ('corr_pair_type' ,'-pairtype'   ,'cen_sat'),
+                                ('shuffle_marks'  ,'-shuffle'    ,'censat_sh'),
+                                ('rpmin'          ,'-rpmin'      ,0.01),
+                                ('rpmax'          ,'-rpmax'      ,10.),
+                                ('nrpbins'        ,'-nrp'        ,10),
+                                ('itern_tot'      ,'-itern'      ,1000),
+                                ('ngals_min'      ,'-nmin'       ,2),
+                                ('Mg_bin'         ,'-mg'         ,0.4),
+                                ('prop_log'       ,'-log'        ,'log'),
+                                ('catl_start'     ,'-catl_start' ,0),
+                                ('catl_finish'    ,'-catl_finish',100),
+                                ('perf_opt'       ,'-perf'       ,'False'),
+                                ('cosmo_choice'   ,'-cosmo'      ,'LasDamas'),
+                                ('cpu_frac'       ,'-cpu'        ,0.7),
+                                ('remove_files'   ,'-remove'     ,'False'),
+                                ('remove_wp_files','-remove-wp'  ,'False'),
+                                ('type_sigma'     ,'-sigma'      ,'std')])
+    #
+    # Variables for plotting
+    if param_dict['analysis_type']=='plots':
+        params_arr = num.array([('sample'         ,'-sample'     ,19),
+                                ('catl_type'      ,'-abopt'      ,'mr'),
+                                ('corr_pair_type' ,'-pairtype'   ,'cen_sat'),
+                                ('shuffle_marks'  ,'-shuffle'    ,'censat_sh'),
+                                ('rpmin'          ,'-rpmin'      ,0.01),
+                                ('rpmax'          ,'-rpmax'      ,10.),
+                                ('nrpbins'        ,'-nrp'        ,10),
+                                ('itern_tot'      ,'-itern'      ,1000),
+                                ('ngals_min'      ,'-nmin'       ,2),
+                                ('Mg_bin'         ,'-mg'         ,0.4),
+                                ('prop_log'       ,'-log'        ,'log'),
+                                ('catl_start'     ,'-catl_start' ,0),
+                                ('catl_finish'    ,'-catl_finish',100),
+                                ('perf_opt'       ,'-perf'       ,'False'),
+                                ('type_sigma'     ,'-sigma'      ,'std'),
+                                ('mg_min'         ,'-mg_min'     ,12.41),
+                                ('mg_max'         ,'-mg_max'     ,14.),
+                                ('verbose'        ,'-v'          ,'False')])
     ##
     ## Converting to pandas DataFrame
     colnames = ['Name','Flag','Value']
@@ -160,7 +194,30 @@ def get_analysis_params():
     ##
     ## Sorting out DataFrame by `name`
     params_pd = params_pd.sort_values(by='Name').reset_index(drop=True)
-
+    ##
+    ## Options for `Calculations`
+    if (param_dict['analysis_type'] == 'calc'):
+        ##
+        ## Choosing if to delete files -- DDrp
+        if param_dict['remove_wp_files']:
+            ## Overwriting `remove_files` from `params_pd`
+            params_pd.loc[params_pd['Name']=='remove_wp_files','Value'] = 'True'
+        ##
+        ## Choosing if to delete files -- Final result of MCF
+        if param_dict['remove_files']:
+            ## Overwriting `remove_files` from `params_pd`
+            params_pd.loc[params_pd['Name']=='remove_files','Value'] = 'True'
+        ##
+        ## Choosing the amount of CPUs
+        params_pd.loc[params_pd['Name']=='cpu_frac','Value'] = param_dict['cpu_frac']
+    ##
+    ## Options for `Plotting`
+    if (param_dict['analysis_type'] == 'plots'):
+        ##
+        ## Option for verbose output
+        if param_dict['verbose']:
+            ## Overwriting `verbose` from `params_pd`
+            params_pd.loc[params_pd['Name']=='verbose','Value'] = 'True'
 
     return params_pd
 
@@ -308,18 +365,7 @@ def main():
     param_dict = vars(args)
     ##
     ## Parameters for the analysis
-    params_pd = get_analysis_params()
-    ##
-    ## Choosing if to delete files
-    if param_dict['remove_files']:
-        ## Overwriting `remove_files` from `params_pd`
-        params_pd.loc[params_pd['Name']=='remove_files','Value'] = 'True'
-    ## Choosing amount of CPUs
-    params_pd.loc[params_pd['Name']=='cpu_frac','Value'] = param_dict['cpu_frac']
-    ## Choosing if to delete files -- DDrp
-    if param_dict['remove_wp_files']:
-        ## Overwriting `remove_files` from `params_pd`
-        params_pd.loc[params_pd['Name']=='remove_wp_files','Value'] = 'True'
+    params_pd = get_analysis_params(param_dict)
     ##
     ## Running analysis
     file_construction_and_execution(params_pd, param_dict)
