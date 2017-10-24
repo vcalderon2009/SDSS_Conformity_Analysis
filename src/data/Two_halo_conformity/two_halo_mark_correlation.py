@@ -354,7 +354,7 @@ def get_parser():
                         dest='pimax',
                         help='Value for `pimax` for the proj. corr. function',
                         type=_check_pos_val,
-                        default=20)
+                        default=20.)
     ## Logarithm of the galaxy property
     parser.add_argument('-log',
                         dest='prop_log',
