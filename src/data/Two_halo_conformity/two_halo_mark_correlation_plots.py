@@ -871,8 +871,7 @@ def mocks_data_extraction(param_dict, proj_dict, pickle_ext='.p'):
         for prop in param_dict_data['prop_keys_data']:
             ## Extracting the data from main dictionary
             mcf_dict_data_conf,\
-            n_groups_data,\
-            aa = GM_prop_dict_data[gm][prop]
+            n_groups_data     = GM_prop_dict_data[gm][prop]
             ## Saving data to restructured dictionary `prop_catl_data_dict`
             prop_catl_data_dict[gm][prop]['mcf_conf'] = mcf_dict_data_conf['mcf']
     ## --------------- ##
@@ -943,8 +942,7 @@ def mocks_data_extraction(param_dict, proj_dict, pickle_ext='.p'):
             for prop in param_dict['prop_keys']:
                 ## Extracting the data from main dictionary
                 (   mcf_dict_conf    ,
-                    ngroups          ,
-                    aa ) = gm_prop_ii[gm][prop]
+                    ngroups          ) = gm_prop_ii[gm][prop]
                 ##
                 ## MCF for 'Conf Only' and 'Conf + Seg'
                 mcf_conf     = mcf_dict_conf    ['mcf']
