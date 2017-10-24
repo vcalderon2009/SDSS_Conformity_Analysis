@@ -457,25 +457,31 @@ def directory_skeleton(param_dict, proj_dict):
     proj_dict: python dictionary
         Dictionary with current and new paths to project directories
     """
-    ## Pickle directory (result from 1-halo MCF analysis results)
-    pickle_res  = '{0}/interim/SDSS/{1}/{2}/Mr{3}/conformity_output/'
-    pickle_res += 'catl_pickle_files/{4}/{5}'
-    pickle_res  = pickle_res.format(*[  proj_dict['data_dir'],
-                                        param_dict['catl_kind'],
-                                        param_dict['catl_type'],
-                                        param_dict['sample'],
-                                        param_dict['corr_type'],
-                                        param_dict['param_str'] ])
-    ## Pickle directory (results for `data`)
-    pickle_data  = '{0}/interim/SDSS/{1}/{2}/Mr{3}/conformity_output/'
-    pickle_data += 'catl_pickle_files/{4}/{5}'
-    pickle_data  = pickle_data.format(*[    proj_dict['data_dir'],
-                                            'data',
-                                            param_dict['catl_type'],
-                                            param_dict['sample'],
-                                            param_dict['corr_type'],
-                                            param_dict['param_str'] ])
-    ## Figure out directory
+    ### MCF Folder prefix
+    path_prefix = 'SDSS/{0}/{1}/Mr{2}/MCF_results/'.format(
+                        param_dict['catl_kind'],
+                        param_dict['catl_type'],
+                        param_dict['sample'   ])
+    ### ## Pickle directory (result from 1-halo MCF analysis results)
+    pickle_res = '{0}/processed/{1}/catl_pickle_files/{2}/{3}/'.format(
+                    proj_dict['data_dir']  ,
+                    path_prefix            ,
+                    param_dict['corr_type'],
+                    param_dict['param_str'])
+    ###
+    ### MCF Folder prefix -- Data
+    path_prefix_data = 'SDSS/{0}/{1}/Mr{2}/MCF_results/'.format(
+                        'data',
+                        param_dict['catl_type'],
+                        param_dict['sample'   ])
+    ### Pickle directory (results for `data`)
+    pickle_data = '{0}/processed/{1}/catl_pickle_files/{2}/{3}/'.format(
+                    proj_dict['data_dir']  ,
+                    path_prefix_data       ,
+                    param_dict['corr_type'],
+                    param_dict['param_str'])
+    ###
+    ### Figure out directory
     figure_dir  = '{0}/SDSS/{1}/{2}/Mr{3}/conformity_output/'
     figure_dir += 'MCF_figures/{4}/{5}'
     figure_dir  = figure_dir.format(*[  proj_dict['plot_dir'],
