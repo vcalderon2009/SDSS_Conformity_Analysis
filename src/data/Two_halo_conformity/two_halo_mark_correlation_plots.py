@@ -1270,8 +1270,8 @@ def MCF_one_halo_plotting(prop_catl_dict, param_dict, proj_dict, fig_fmt='pdf',
             if param_dict['catl_kind']=='data':
                 ##
                 ## y-axis limits
-                ylim_data      = [0.8, 1.1]
-                ylim_sigma     = [-5, 9.8]
+                ylim_data      = [0.8, 1.25]
+                ylim_sigma     = [-5, 14.8]
                 ##
                 ## Tickmarks
                 ax_data_major  = 0.1
