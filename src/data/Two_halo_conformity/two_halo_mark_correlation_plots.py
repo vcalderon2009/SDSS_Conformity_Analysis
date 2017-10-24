@@ -181,7 +181,7 @@ def get_parser():
                         dest='pimax',
                         help='Value for `pimax` for the proj. corr. function',
                         type=_check_pos_val,
-                        default=20)
+                        default=20.)
     ## Logarithm of the galaxy property
     parser.add_argument('-log',
                         dest='prop_log',
@@ -578,21 +578,6 @@ def sigma_calcs(data_arr, type_sigma='std', perc_arr = [68., 95., 99.7],
     sigma_dict = {}
     for ii in range(len(perc_arr)):
         sigma_dict[ii] = []
-    ### --- Temporary
-    try:
-        temp = data_arr.shape[1]
-    except IndexError:
-        data_new     = num.zeros((data_arr.shape[0],1000))
-        sigma_arr    = num.zeros(2*data_arr.shape[0]).reshape(2, data_arr.shape[0])
-        sigma_arr[:] = num.nan
-        sigma_dict   = {}
-        for jj in range(3):
-            sigma_dict[jj] = sigma_arr.copy()
-        ## Returning new elements
-        if return_mean_std:
-            return sigma_dict, data_arr.copy(), data_arr.copy()
-        else:
-            return sigma_dict
     ### -------------------
     ## Using Percentiles to estimate errors
     if type_sigma=='perc':
@@ -776,8 +761,7 @@ def data_shuffles_extraction(param_dict, proj_dict, pickle_ext='.p'):
         for prop in param_dict['prop_keys']:
             ## Extracting the data from main dictionary
             mcf_dict_conf,\
-            ngroups      ,\
-            aa           = GM_prop_dict[gm][prop]
+            ngroups      = GM_prop_dict[gm][prop]
             ##
             ## Extracting MCFs
             # 'Conf Only'
