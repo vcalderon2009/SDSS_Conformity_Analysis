@@ -7,7 +7,7 @@
 # type_file: string
 #     Options:
 #         - figures
-#         - Catalogues
+#         - catalogues
 
 # Defining Directory
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
