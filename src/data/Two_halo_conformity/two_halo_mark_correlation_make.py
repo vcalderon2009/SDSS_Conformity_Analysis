@@ -105,6 +105,12 @@ def get_parser():
                         help='Delete pickle files containing pair counts',
                         type=_str2bool,
                         default=False)
+    ## Option for removing file from DDrp
+    parser.add_argument('-remove-wp',
+                        dest='remove_wp_files',
+                        help='Delete pickle file containing pair counts from wp',
+                        type=_str2bool,
+                        default=False)
     ## CPU to use
     parser.add_argument('-cpu_frac',
                         dest='cpu_frac',
