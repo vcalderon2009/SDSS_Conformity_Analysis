@@ -1250,19 +1250,22 @@ def prop_sh_one_halo(df_bin_org, prop, GM_str, param_dict, proj_dict,
                 pickle.dump([group_idx_arr, rpbins_npairs_tot],
                     open(catl_idx_file,'wb'))
             else:
-                corrfunc     = num.zeros(param_dict['nrpbins'])
-                corrfunc [:] = num.nan
-                corrfunc_seg = corrfunc.copy()
-                npairs_tot   = num.sum(rpbins_npairs_tot)
-                corrfunc_sh_tot = corrfunc.copy()
-                mark_nanmean    = corrfunc.copy()
-                mark_nanstd  = corrfunc.copy()
-                sigma_arr       = num.zeros(2*param_dict['nrpbins']).reshape(
-                    2, param_dict['nrpbins'])
-                sigma_arr[:]    = num.nan
-                sigma1_arr      = sigma_arr.copy()
-                sigma2_arr      = sigma_arr.copy()
-                sigma3_arr      = sigma_arr.copy()
+                itern_tot          = param_dict['itern_tot']
+                nrpbins            = param_dict['nrpbins'  ]
+                corrfunc           = num.zeros(param_dict['nrpbins'])
+                corrfunc [:]       = num.nan
+                corrfunc_seg       = corrfunc.copy()
+                npairs_tot         = num.sum(rpbins_npairs_tot)
+                corrfunc_sh_tot    = num.zeros((nrpbins, itern_tot))
+                corrfunc_sh_tot[:] = num.nan
+                mark_nanmean       = corrfunc.copy()
+                mark_nanstd        = corrfunc.copy()
+                sigma_arr          = num.zeros(2*param_dict['nrpbins']).reshape(
+                                    2, param_dict['nrpbins'])
+                sigma_arr[:]       = num.nan
+                sigma1_arr         = sigma_arr.copy()
+                sigma2_arr         = sigma_arr.copy()
+                sigma3_arr         = sigma_arr.copy()
                 # Converting sigma's to dictionary
                 sigma_dict = {}
                 for jj in range(3):
@@ -1326,19 +1329,22 @@ def prop_sh_one_halo(df_bin_org, prop, GM_str, param_dict, proj_dict,
             pickle.dump([group_idx_arr, rpbins_npairs_tot],
                 open(catl_idx_file,'wb'))
         else:
-            corrfunc     = num.zeros(param_dict['nrpbins'])
-            corrfunc [:] = num.nan
-            corrfunc_seg = corrfunc.copy()
-            npairs_tot   = num.sum(rpbins_npairs_tot)
-            corrfunc_sh_tot = corrfunc.copy()
-            mark_nanmean    = corrfunc.copy()
-            mark_nanstd  = corrfunc.copy()
-            sigma_arr       = num.zeros(2*param_dict['nrpbins']).reshape(
-                2, param_dict['nrpbins'])
-            sigma_arr[:]    = num.nan
-            sigma1_arr      = sigma_arr.copy()
-            sigma2_arr      = sigma_arr.copy()
-            sigma3_arr      = sigma_arr.copy()
+            itern_tot          = param_dict['itern_tot']
+            nrpbins            = param_dict['nrpbins'  ]
+            corrfunc           = num.zeros(param_dict['nrpbins'])
+            corrfunc [:]       = num.nan
+            corrfunc_seg       = corrfunc.copy()
+            npairs_tot         = num.sum(rpbins_npairs_tot)
+            corrfunc_sh_tot    = num.zeros((nrpbins, itern_tot))
+            corrfunc_sh_tot[:] = num.nan
+            mark_nanmean       = corrfunc.copy()
+            mark_nanstd        = corrfunc.copy()
+            sigma_arr          = num.zeros(2*param_dict['nrpbins']).reshape(
+                                2, param_dict['nrpbins'])
+            sigma_arr[:]       = num.nan
+            sigma1_arr         = sigma_arr.copy()
+            sigma2_arr         = sigma_arr.copy()
+            sigma3_arr         = sigma_arr.copy()
             # Converting sigma's to dictionary
             sigma_dict = {}
             for jj in range(3):
