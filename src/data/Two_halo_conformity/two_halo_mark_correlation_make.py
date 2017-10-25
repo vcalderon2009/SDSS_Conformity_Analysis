@@ -117,6 +117,12 @@ def get_parser():
                         help='Fraction of CPUs to use',
                         type=float,
                         default=0.7)
+    ## CPU to use
+    parser.add_argument('-pimax',
+                        dest='pimax',
+                        help='Maximum parallel distance to find galaxy pairs',
+                        type=float,
+                        default=20.)
     ## Verbose
     parser.add_argument('-v','--verbose',
                         dest='verbose',
@@ -210,6 +216,9 @@ def get_analysis_params(param_dict):
             ## Overwriting `remove_files` from `params_pd`
             params_pd.loc[params_pd['Name']=='remove_files','Value'] = 'True'
         ##
+        ## Changing `pimax` value
+        params_pd.loc[params_pd['Name']=='pimax','Value'] = param_dict['pimax']
+        ##
         ## Choosing the amount of CPUs
         params_pd.loc[params_pd['Name']=='cpu_frac','Value'] = param_dict['cpu_frac']
     ##
@@ -220,6 +229,9 @@ def get_analysis_params(param_dict):
         if param_dict['verbose']:
             ## Overwriting `verbose` from `params_pd`
             params_pd.loc[params_pd['Name']=='verbose','Value'] = 'True'
+        ##
+        ## Chaning `pimax` value
+        params_pd.loc[params_pd['Name']=='pimax','Value'] = param_dict['pimax']
 
     return params_pd
 
