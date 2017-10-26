@@ -418,7 +418,46 @@ def sigma_calcs(data_arr, type_sigma='std', perc_arr = [68., 95., 99.7],
     else:
         return sigma_dict
 
-## --------- DATA EXTRACTION ------------##
+## --------- Analysis functions ------------##
+
+def gm_fractions_calc(catl_pd, catl_name, param_dict, proj_dict):
+    """
+    """
+## --------- Multiprocessing ------------##
+
+def multiprocessing_catls(catl_arr, param_dict, proj_dict, memb_tuples_ii):
+    """
+    Distributes the analysis of the catalogues into more than 1 processor
+
+    Parameters:
+    -----------
+    catl_arr: numpy.ndarray, shape(n_catls,)
+        array of paths to the catalogues to analyze
+
+    param_dict: python dictionary
+        dictionary with `project` variables
+
+    proj_dict: python dictionary
+        Dictionary with current and new paths to project directories
+
+    memb_tuples_ii: tuple
+        tuple of catalogue indices to be analyzed
+    """
+    ## Program Message
+    Prog_msg = param_dict['Prog_msg']
+    ## Reading in Catalogue IDs
+    start_ii, end_ii = memb_tuples_ii
+    ##
+    ## Looping the desired catalogues
+    for ii, catl_ii in enumerate(catl_arr[start_ii : end_ii]):
+        ## Choosing 1st catalogue
+        print('{0} Analyzing `{1}`\n'.format(Prog_msg, catl_ii))
+        ## Extracting `name` of the catalogue
+        catl_name = os.path.splitext(os.path.split(catl_ii)[1])[0]
+        ## Converting to pandas DataFrame
+        catl_pd   = cu.read_hdf5_file_to_pandas_DF(catl_ii)
+        ## Quenched Fraction calculations
+        gm_fractions_calc(catl_pd, catl_name, param_dict, proj_dict)
 
 ## --------- Main Function ------------##
 
@@ -445,6 +484,70 @@ def main():
         if key !='Prog_msg':
             print('{0} `{1}`: {2}'.format(Prog_msg, key, key_val))
     print('\n'+50*'='+'\n')
+    ###
+    ### ---- Analysis ---- ###
+    ## Reading catalogues
+    catl_arr_all = cu.extract_catls(catl_kind=param_dict['catl_kind'],
+                                    catl_type=param_dict['catl_type'],
+                                    sample_s =param_dict['sample_s'],
+                                    perf_opt =param_dict['perf_opt'],
+                                    catl_info='members',
+                                    print_filedir=False)
+    ##
+    ## Only reading desired number of catalogues
+    catl_arr = catl_arr_all[param_dict['catl_start']:param_dict['catl_finish']]
+    ##
+    ## Number of catalogues to analyze
+    ncatls = len(catl_arr)
+    ##
+    ## Choosing whether or not to use multiprocessing for the analysis
+    if ncatls == 1:
+        ## Choosing 1st catalogue
+        catl_ii = catl_arr[0]
+        print('{0} Analyzing `{1}`\n'.format(Prog_msg, catl_ii))
+        ## Extracting `name` of the catalogue
+        catl_name = os.path.splitext(os.path.split(catl_ii)[1])[0]
+        ## Converting to pandas DataFrame
+        catl_pd   = cu.read_hdf5_file_to_pandas_DF(catl_ii)
+        ## Quenched Fraction calculations
+        gm_fractions_calc(catl_pd, catl_name, param_dict, proj_dict)
+    else:
+        ###
+        ## Changing `prog_bar` to 'False'
+        param_dict['prog_bar'] = False
+        ### Using multiprocessing to analyze catalogues
+        ## Number of CPUs to use
+        cpu_number = int(cpu_count() * param_dict['cpu_frac'])
+        ## Defining step-size for each CPU
+        if cpu_number <= ncatls:
+            catl_step  = int(ncatls / cpu_number)
+        else:
+            catl_step  = int((ncatls / cpu_number)**-1)
+        ## Array with designanted catalogue numbers for each CPU
+        memb_arr     = num.arange(0, ncatls+1, catl_step)
+        memb_arr[-1] = ncatls
+        ## Tuples of the ID of each catalogue
+        memb_tuples  = num.asarray([(memb_arr[xx], memb_arr[xx+1])
+                                for xx in range(memb_arr.size-1)])
+        ## Assigning `memb_tuples` to function `multiprocessing_catls`
+        procs = []
+        for ii in range(len(memb_tuples)):
+            # Defining `proc` element
+            proc = Process(target=multiprocessing_catls, 
+                            args=(catl_arr, param_dict, proj_dict, 
+                                    memb_tuples[ii]))
+            # Appending to main `procs` list
+            procs.append(proc)
+            proc.start()
+        ##
+        ## Joining `procs`
+        for proc in procs:
+            proc.join()
+    ##
+    ## End time for running the catalogues
+    end_time   = datetime.now()
+    total_time = end_time - start_time
+    print('{0} Total Time taken (Create): {1}'.format(Prog_msg, total_time))
 
 
 # Main function
@@ -453,3 +556,16 @@ if __name__=='__main__':
     args = get_parser()
     # Main Function
     main()
+
+
+
+
+
+
+
+
+
+
+
+
+
