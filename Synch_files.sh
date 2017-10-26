@@ -22,7 +22,7 @@ if [[ ${file_opt} == 'figures' ]]; then
 fi
 if [[ ${file_opt} == 'catalogues' ]]; then
     echo "rsync -chavzP --stats "${DIR_B}/data/processed/SDSS" "${DIR}/data/processed/""
-    rsync -chavzP --stats "${DIR_B}/data/processed/SDSS/" "${DIR}/data/processed/"
+    rsync -chavzP --stats "${DIR_B}/data/processed/SDSS" "${DIR}/data/processed/"
 fi
 
 
