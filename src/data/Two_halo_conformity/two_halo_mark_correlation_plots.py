@@ -1277,7 +1277,7 @@ def MCF_one_halo_plotting(prop_catl_dict, param_dict, proj_dict, fig_fmt='pdf',
                 ##
                 ## y-axis limits
                 ylim_data      = [0.8, 1.25]
-                ylim_sigma     = [-5, 9.8]
+                ylim_sigma     = [-10, 9.8]
                 ##
                 ## Tickmarks
                 ax_data_major  = 0.1
@@ -1286,8 +1286,8 @@ def MCF_one_halo_plotting(prop_catl_dict, param_dict, proj_dict, fig_fmt='pdf',
                 ax_sigma_minor = 1.
             elif param_dict['catl_kind']=='mocks':
                 ## y-axis limits
-                ylim_data      = [0.9, 1.1]
-                ylim_sigma     = [-5, 7.8]
+                ylim_data      = [0.8, 1.25]
+                ylim_sigma     = [-10, 9.8]
                 ## Tickmarks
                 ax_data_major  = 0.05
                 ax_data_minor  = 0.01
