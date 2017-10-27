@@ -331,15 +331,6 @@ def param_vals_test(param_dict):
             param_dict['ngals_min'])
         raise ValueError(msg)
     ##
-    ## Number of bins
-    if (param_dict['nrpbins'] > 0):
-        pass
-    else:
-        msg = '{0} `nrpbins` ({1}) must be larger than 0'.format(
-            param_dict['Prog_msg'],
-            param_dict['nrpbins'])
-        raise ValueError(msg)
-    ##
     ## Checking that `catl_start` < `catl_finish`
     if param_dict['catl_start'] < param_dict['catl_finish']:
         pass
@@ -349,28 +340,6 @@ def param_vals_test(param_dict):
             param_dict['Prog_msg'],
             param_dict['catl_start'],
             param_dict['catl_finish'])
-        raise ValueError(msg)
-    ##
-    ## Checking that `rpmin` < `rpmax`
-    if param_dict['rpmin'] < param_dict['rpmax']:
-        pass
-    else:
-        msg = '{0} `rpmin` ({1}) must smaller than `rpmax` ({2})'\
-            .format(
-            param_dict['Prog_msg'],
-            param_dict['rpmin'],
-            param_dict['rpmax'])
-        raise ValueError(msg)
-    ##
-    ## Checking that `mg_min` < `mg_max`
-    if param_dict['mg_min'] < param_dict['mg_max']:
-        pass
-    else:
-        msg = '{0} `mg_min` ({1}) must smaller than `mg_max` ({2})'\
-            .format(
-            param_dict['Prog_msg'],
-            param_dict['mg_min'],
-            param_dict['mg_max'])
         raise ValueError(msg)
 
 def directory_skeleton(param_dict, proj_dict):
