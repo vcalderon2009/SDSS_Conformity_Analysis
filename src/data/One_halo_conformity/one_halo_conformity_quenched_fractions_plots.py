@@ -251,15 +251,7 @@ def add_to_dict(param_dict):
         perf_str = ''
     ###
     ### Figure
-    fig_idx = 21
-    ###
-    ### Projected distance `rp` bins
-    logrpmin          = num.log10(param_dict['rpmin'])
-    logrpmax          = num.log10(param_dict['rpmax'])
-    dlogrp            = (logrpmax - logrpmin)/float(param_dict['nrpbins'])
-    rpbin_arr         = num.linspace(logrpmin, logrpmax, param_dict['nrpbins']+1)
-    rpbins_cens       = rpbin_arr[:-1]+0.5*(rpbin_arr[1:]-rpbin_arr[:-1])
-    rpbins_cens_unlog = 10**rpbins_cens
+    fig_idx = 22
     ###
     ### Survey Details
     sample_title = r'\boldmath$M_{r}< -%d$' %(param_dict['sample'])
@@ -267,35 +259,19 @@ def add_to_dict(param_dict):
     ###
     ### Project Details
     # String for Main directories
-    param_str_arr = [   param_dict['rpmin']         , param_dict['rpmax']    ,
-                        param_dict['nrpbins']       , param_dict['Mg_bin']   ,
-                        param_dict['pimax' ]        , param_dict['itern_tot'],
-                        param_dict['corr_pair_type'], param_dict['prop_log'] ,
-                        param_dict['shuffle_marks'] , param_dict['ngals_min'],
-                        perf_str ]
-    param_str  = 'rpmin_{0}_rpmax_{1}_nrpbins_{2}_Mgbin_{3}_pimax_{4}_'
-    param_str += 'itern_{5}_corrpair_type_{6}_proplog_{7}_shuffle_{8}_'
-    param_str += 'nmin_{9}'
-    if param_dict['perf_opt']:
-        param_str += '_perf_opt_str_{10}/'
-    else:
-        param_str += '{10}/'
-    param_str  = param_str.format(*param_str_arr)
-    # String for Main Figures
-    param_str_pic_arr = [param_dict['rpmin']  , param_dict['rpmax'] ,
-                         param_dict['nrpbins'], param_dict['Mg_bin'],
-                         param_dict['pimax']  , param_dict['ngals_min'],
-                         perf_str ]
-    param_str_pic  = 'rpmin_{0}_rpmax_{1}_nrpbins_{2}_Mgbin_{3}_pimax_{4}_'
-    param_str_pic += 'nmin_{5}'
-    if param_dict['perf_opt']:
-        param_str_pic += '_perf_opt_str_{6}'
-    else:
-        param_str_pic += '{6}'
-    param_str_pic = param_str_pic.format(*param_str_pic_arr)
+    param_str_arr = [   param_dict['catl_kind'] , param_dict['catl_type']    ,
+                        param_dict['sample']    , param_dict['prop_log']     ,
+                        param_dict['Mg_bin']    , param_dict['itern_tot']    ,
+                        param_dict['ngals_min' ], param_dict['shuffle_marks'],
+                        param_dict['type_sigma'], param_dict['frac_stat']    ,
+                        perf_str  ]
+    param_str_p  = 'kind_{0}_type_{1}_sample_{2}_proplog_{3}_Mgbin_{4}_'
+    param_str_p += 'itern_{5}_nmin_{6}_sh_marks_{7}_type_sigma_{8}_'
+    param_str_p += 'fracstat_{9}_perf_str_{10}'
+    param_str    = param_str_p.format(*param_str_arr)
     #
     # Figure Prefix
-    fig_prefix = '{0}_{1}'.format(fig_idx, param_str_pic)
+    fig_prefix = '{0}_{1}'.format(fig_idx, param_str)
     ###
     ### Sigma Dictionary
     perc_arr = [68.,95., 99.7]
@@ -309,15 +285,8 @@ def add_to_dict(param_dict):
     param_dict['sample_s'         ] = sample_s
     param_dict['perf_str'         ] = perf_str
     param_dict['fig_idx'          ] = fig_idx
-    param_dict['logrpmin'         ] = logrpmin
-    param_dict['logrpmax'         ] = logrpmax
-    param_dict['dlogrp'           ] = dlogrp
-    param_dict['rpbin_arr'        ] = rpbin_arr
-    param_dict['rpbins_cens'      ] = rpbins_cens
-    param_dict['rpbins_cens_unlog'] = rpbins_cens_unlog
     param_dict['sample_title'     ] = sample_title
     param_dict['param_str'        ] = param_str
-    param_dict['param_str_pic'    ] = param_str_pic
     # Extras
     param_dict['sample_name'      ] = sample_name
     param_dict['sigma_dict'       ] = sigma_dict
