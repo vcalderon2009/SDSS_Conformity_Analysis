@@ -488,7 +488,7 @@ def frac_prop_calc(df_bin_org, prop, param_dict, catl_keys_dict):
     sat_quenched_frac = sat_quenched_frac
     ##
     ## Calculation fractions for Shuffles
-    sat_quenched_frac_sh = num.zeros((param_dict['itern_tot'], 1))
+    sat_quenched_frac_sh = num.zeros((param_dict['itern_tot'],))
     # ProgressBar properties
     if param_dict['prog_bar']:
         widgets   = [Bar('>'), ' ', ETA(), ' ', ReverseBar('<')]
