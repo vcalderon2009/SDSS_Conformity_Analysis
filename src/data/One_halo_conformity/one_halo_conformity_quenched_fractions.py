@@ -168,7 +168,7 @@ def get_parser():
                         help='Option for using a `Perfect` catalogue',
                         type=_str2bool,
                         default=False)
-    ## Type of correlation funciton to perform
+    ## Type of correlation function to perform
     parser.add_argument('-corrtype',
                         dest='corr_type',
                         help='Type of correlation function to perform',
@@ -187,6 +187,20 @@ def get_parser():
                         help='Delete pickle file containing pair counts',
                         type=_str2bool,
                         default=False)
+    ## Type of error estimation
+    parser.add_argument('-sigma',
+                        dest='type_sigma',
+                        help='Type of error to use. Percentiles or St. Dev.',
+                        type=str,
+                        choices=['std','perc'],
+                        default='std')
+    ## Statistics for evaluating conformity
+    parser.add_argument('-frac_stat',
+                        dest='frac_stat',
+                        help='Statistics to use to evaluate the conformity signal',
+                        type=str,
+                        choices=['diff', 'ratio'],
+                        default='diff')
     ## CPU Counts
     parser.add_argument('-cpu',
                         dest='cpu_frac',
@@ -205,20 +219,6 @@ def get_parser():
                         help='Program message to use throught the script',
                         type=str,
                         default=cu.Program_Msg(__file__))
-    ## Type of error estimation
-    parser.add_argument('-sigma',
-                        dest='type_sigma',
-                        help='Type of error to use. Percentiles or St. Dev.',
-                        type=str,
-                        choices=['std','perc'],
-                        default='std')
-    ## Statistics for evaluating conformity
-    parser.add_argument('-frac_stat',
-                        dest='frac_stat',
-                        help='Statistics to use to evaluate the conformity signal',
-                        type=str,
-                        choices=['diff', 'ratio'],
-                        default='diff')
     ## Parsing Objects
     args = parser.parse_args()
 
