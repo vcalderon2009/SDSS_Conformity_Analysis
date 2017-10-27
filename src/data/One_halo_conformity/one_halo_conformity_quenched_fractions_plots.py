@@ -361,32 +361,32 @@ def directory_skeleton(param_dict, proj_dict):
         Dictionary with current and new paths to project directories
     """
     ### MCF Folder prefix
-    path_prefix = 'SDSS/{0}/{1}/Mr{2}/MCF_results/'.format(
+    path_prefix = 'SDSS/{0}/{1}/Mr{2}/Frac_results'.format(
                         param_dict['catl_kind'],
                         param_dict['catl_type'],
                         param_dict['sample'   ])
     ### ## Pickle directory (result from 1-halo MCF analysis results)
-    pickle_res = '{0}/processed/{1}/catl_pickle_files/{2}/{3}/'.format(
-                    proj_dict['data_dir']  ,
-                    path_prefix            ,
+    pickle_res = '{0}/processed/{1}/{2}/catl_pickle_files/{3}/'.format(
+                    proj_dict['data_dir'],
+                    path_prefix          ,
                     param_dict['corr_type'],
                     param_dict['param_str'])
     ###
     ### MCF Folder prefix -- Data
-    path_prefix_data = 'SDSS/{0}/{1}/Mr{2}/MCF_results/'.format(
+    path_prefix_data = 'SDSS/{0}/{1}/Mr{2}/Frac_results'.format(
                         'data',
                         param_dict['catl_type'],
                         param_dict['sample'   ])
     ### Pickle directory (results for `data`)
-    pickle_data = '{0}/processed/{1}/catl_pickle_files/{2}/{3}/'.format(
-                    proj_dict['data_dir']  ,
-                    path_prefix_data       ,
+    pickle_data = '{0}/processed/{1}/{2}/catl_pickle_files/{3}/'.format(
+                    proj_dict['data_dir'],
+                    path_prefix_data          ,
                     param_dict['corr_type'],
                     param_dict['param_str'])
     ###
     ### Figure out directory
     figure_dir  = '{0}/SDSS/{1}/{2}/Mr{3}/conformity_output/'
-    figure_dir += 'MCF_figures/{4}/{5}'
+    figure_dir += 'Frac_figures/{4}/{5}'
     figure_dir  = figure_dir.format(*[  proj_dict['plot_dir'],
                                         param_dict['catl_kind'],
                                         param_dict['catl_type'],
@@ -1358,8 +1358,8 @@ def main():
     Prog_msg = param_dict['Prog_msg']
     ##
     ## Creating Folder Structure
-    proj_dict  = directory_skeleton(param_dict, cu.cookiecutter_paths(__file__))
-    # proj_dict  = directory_skeleton(param_dict, cu.cookiecutter_paths('./'))
+    # proj_dict  = directory_skeleton(param_dict, cu.cookiecutter_paths(__file__))
+    proj_dict  = directory_skeleton(param_dict, cu.cookiecutter_paths('./'))
     ##
     ## Printing out project variables
     if param_dict['verbose']:
