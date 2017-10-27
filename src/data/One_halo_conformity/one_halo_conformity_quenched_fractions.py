@@ -30,6 +30,7 @@ from argparse import ArgumentParser
 from argparse import HelpFormatter
 from operator import attrgetter
 import copy
+from datetime import datetime
 
 ## Functions
 
@@ -429,7 +430,7 @@ def sigma_calcs(data_arr, type_sigma='std', perc_arr = [68., 95., 99.7],
 
 ## --------- Analysis functions ------------##
 
-def frac_prop_calc(df_bin_org, prop, GM_str, param_dict, catl_keys_dict):
+def frac_prop_calc(df_bin_org, prop, param_dict, catl_keys_dict):
     """
     Computes the quenched fractions of satellites in a given mass bin.
 
@@ -440,10 +441,7 @@ def frac_prop_calc(df_bin_org, prop, GM_str, param_dict, catl_keys_dict):
 
     prop: string
         galaxy property being evaluated
-
-    GM_str: string
-        string for the corresponding group/halo mass bin limits
-
+    
     param_dict: python dictionary
         dictionary with input parameters and values
 
@@ -733,18 +731,19 @@ def gm_fractions_calc(catl_pd, catl_name, param_dict, proj_dict):
                 (   sat_quenched_frac,
                     sat_quenched_frac_sh) = frac_prop_calc( df_bin_org    ,
                                                             prop          ,
-                                                            GM_str        ,
                                                             param_dict    ,
                                                             catl_keys_dict)
                 ##
                 ## Saving results to dictionary
-                prop_dict[prop][0][ii]     = sat_quenched_frac
-                prop_dict[prop][1][GM_key] = sat_quenched_frac_sh
+                GM_prop_dict[prop][0][ii]     = sat_quenched_frac
+                GM_prop_dict[prop][1][GM_key] = sat_quenched_frac_sh
+        ##
+        ## Saving `GM_prop_dict` to Pickle file
+        print('{0} Saving data to Pickle: \n\t{1}\n'.format(Prog_msg, p_fname))
+        p_data = [param_dict, GM_prop_dict, GM_arr, GM_bins, GM_keys]
+        pickle.dump(p_data, open(p_fname,'wb'))
     ##
-    ## Saving `prop_dict` to Pickle file
-    print('{0} Saving data to Pickle: \n\t{1}\n'.format(Prog_msg, p_fname))
-    p_data = [param_dict, prop_dict, GM_arr, GM_bins, GM_keys]
-    pickle.dump(p_data, open(p_fname,'wb'))
+    ## Showing path to file
     print('{0} Data saved to Pickle: \n\t{1}\n'.format(Prog_msg, p_fname))
 
 ## --------- Multiprocessing ------------##
@@ -789,6 +788,8 @@ def main():
     """
 
     """
+    ## Starting time
+    start_time = datetime.now()
     ## Reading all elements and converting to python dictionary
     param_dict = vars(args)
     ## Checking for correct input
