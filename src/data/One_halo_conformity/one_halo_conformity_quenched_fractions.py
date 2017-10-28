@@ -709,7 +709,8 @@ def gm_fractions_calc(catl_pd, catl_name, param_dict, proj_dict):
     ## Dictionary for storing results for each GM bin and galaxy property
     frac_gm_dict = dict(zip(GM_keys, [[] for x in range(len(GM_keys))]))
     stat_vals    = [num.zeros((len(GM_keys))), copy.deepcopy(frac_gm_dict)]
-    GM_prop_dict = dict(zip(pd_keys,[list(stat_vals) for x in range(len(pd_keys))]))
+    GM_prop_dict = dict(zip(pd_keys,[list(copy.deepcopy(stat_vals)) \
+                        for x in range(len(pd_keys))]))
     ## Looping ovr each GM bin (if file does not exist for the given catalogue)
     if not (os.path.isfile(p_fname)):
         ## Looping over mass bins
