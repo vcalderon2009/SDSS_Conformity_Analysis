@@ -842,7 +842,7 @@ def mocks_data_extraction(param_dict, proj_dict, pickle_ext='.p'):
     ##
     ## Statistic of `prop_keys_tot`
     prop_keys_tot_stats = dict(zip(param_dict['prop_keys'],
-                    [copy.deepcopy(zero_arr) for x in range(n_prop)]))
+                    [copy.deepcopy({}) for x in range(n_prop)]))
     ##
     ## Looping over galaxy property
     for prop in param_dict['prop_keys']:
@@ -1181,7 +1181,7 @@ def fractions_one_halo_plotting(prop_catl_dict, param_dict,
     if param_dict['catl_kind']=='data':
         fname_new = 'Fig1_1_halo_fracs_data.{0}'.format(fig_fmt)
     elif param_dict['catl_kind']=='mocks':
-        fname_new = 'Fig4_1_halo_mcf_mocks.{0}'.format(fig_fmt)
+        fname_new = 'Fig2_1_halo_fracs_mocks.{0}'.format(fig_fmt)
     ## Executing commands
     cmd  = '\ncp {0} {1} ; '.format(fname, proj_dict['fig_paper_dir'])
     cmd += '\n\nmv {0}/{1} {2}/{3};'.format( proj_dict['fig_paper_dir'],
