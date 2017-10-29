@@ -385,7 +385,7 @@ def directory_skeleton(param_dict, proj_dict):
                     proj_dict['data_dir'],
                     path_prefix_data          ,
                     param_dict['corr_type'],
-                    param_dict['param_str'])
+                    param_dict['param_str'].replace('mocks','data'))
     ###
     ### Figure out directory
     figure_dir  = '{0}/SDSS/{1}/{2}/Mr{3}/conformity_output/'
@@ -679,7 +679,7 @@ def data_shuffles_extraction(param_dict, proj_dict, pickle_ext='.p'):
         frac_stat = GM_prop_dict_kk[prop][0]
         ##
         ## Errors, mean, and Standard deviation
-        (   sigma_frac_sh_dict,
+        (   frac_sh_sig,
             frac_sh_mean      ,
             frac_sh_std       ) = sigma_calcs( gm_sh,
                                             type_sigma=param_dict['type_sigma'],
@@ -692,7 +692,7 @@ def data_shuffles_extraction(param_dict, proj_dict, pickle_ext='.p'):
         prop_keys_tot[prop]['frac_stat'   ] = frac_stat
         prop_keys_tot[prop]['frac_sh_mean'] = frac_sh_mean
         prop_keys_tot[prop]['frac_sh_std' ] = frac_sh_std
-        prop_keys_tot[prop]['frac_sh_sig' ] = sigma_frac_sh_dict
+        prop_keys_tot[prop]['frac_sh_sig' ] = frac_sh_sig
         prop_keys_tot[prop]['frac_res'    ] = frac_res
 
     return prop_keys_tot
@@ -739,16 +739,16 @@ def mocks_data_extraction(param_dict, proj_dict, pickle_ext='.p'):
         raise ValueError(msg)
     ##
     ## Opening `data` pickle file
-    (   param_dict_kk_data,
-        proj_dict_kk_data ,
-        GM_prop_dict_data ,
-        catl_name_data    ,
-        GM_arr_data       ) = pickle.load(open(catl_data_path,'rb'))
+    (   param_dict_kk_data  ,
+        GM_prop_dict_kk_data,
+        GM_arr_kk_data      ,
+        GM_bins_kk_data     ,
+        GM_keys_kk_data     ) = pickle.load(open(catl_data_path,'rb'))
     ##
     ## Reading array of masses
     mgroup_lims_data = [[[],[]] for x in range(ncatls_data)]
     for ii in range(ncatls_data):
-        mgroup_lims_data[ii] = mgroup_keys_lim(GM_prop_dict_data.keys())
+        mgroup_lims_data[ii] = mgroup_keys_lim(GM_keys_kk_data)
     mgroup_lims_data = num.array(mgroup_lims_data)
     ##
     ## Creating mass bins
@@ -759,8 +759,7 @@ def mocks_data_extraction(param_dict, proj_dict, pickle_ext='.p'):
     param_dict_data['n_mgroup'] = len(param_dict_data['mgroup_keys'])
     ##
     ## Determining `gaalxy properties` list
-    prop_keys_data = num.sort(
-        list(GM_prop_dict_data[param_dict_data['mgroup_keys'][0]].keys()))
+    prop_keys_data = num.sort(list(GM_prop_dict_kk_data.keys()))
     n_prop_data = len(prop_keys_data)
     ##
     ## Saving to `param_dict_data`
@@ -769,24 +768,12 @@ def mocks_data_extraction(param_dict, proj_dict, pickle_ext='.p'):
     ##
     ## Parsing the data into dictionaries - `data`
     prop_keys_data_tot = dict(zip(param_dict_data['prop_keys_data'],
-        [{} for xx in range(n_prop_data)]))
-    mgroup_keys_data_dict = dict(zip(param_dict_data['mgroup_keys'],
-                                [copy.deepcopy(prop_keys_data_tot) \
-                                for xx in range(param_dict_data['n_mgroup'])]))
-    prop_catl_data_dict = copy.deepcopy(mgroup_keys_data_dict)
+                            [{} for xx in range(n_prop_data)]))
     ##
-    ## Restructuring the data for `data`
-    ## Looping over group mass bins and galaxy properties
-    for gm in param_dict_data['mgroup_keys']:
-        ## Looping over `galaxy properties`
-        for prop in param_dict_data['prop_keys_data']:
-            ## Extracting the data from main dictionary
-            mcf_dict_data_conf,\
-            mcf_dict_data_conf_seg,\
-            n_groups_data = GM_prop_dict_data[gm][prop]
-            ## Saving data to restructured dictionary `prop_catl_data_dict`
-            prop_catl_data_dict[gm][prop]['mcf_conf'    ] = mcf_dict_data_conf    ['mcf']
-            prop_catl_data_dict[gm][prop]['mcf_conf_seg'] = mcf_dict_data_conf_seg['mcf']
+    ## Looping over galaxy property
+    for prop in param_dict_data['prop_keys_data']:
+        ## Extracting `frac_stat`
+        prop_keys_data_tot[prop]['frac_stat'] = GM_prop_dict_kk_data[prop][0]
     ## --------------- ##
     ## ---- MOCKS ---- ##
     ## --------------- ##
@@ -801,12 +788,12 @@ def mocks_data_extraction(param_dict, proj_dict, pickle_ext='.p'):
     for ii, mock_ii in enumerate(catl_arr_mocks):
         ## Opening up pickle file
         (   param_dict_kk  ,
-            proj_dict_kk   ,
             GM_prop_dict_kk,
-            catl_name_kk   ,
-            GM_arr_kk      ) = pickle.load(open(mock_ii,'rb'))
+            GM_arr_kk      ,
+            GM_bins_kk     ,
+            GM_keys_kk     ) = pickle.load(open(mock_ii,'rb'))
         ## Mass limits for `mock_ii`
-        mgroup_lims_mocks[ii] = mgroup_keys_lim(GM_prop_dict_kk.keys())
+        mgroup_lims_mocks[ii] = mgroup_keys_lim(GM_keys_kk)
         ## Saving MCF results from pickle file
         GM_prop_dict_arr[ii] = GM_prop_dict_kk
     ##
@@ -825,8 +812,7 @@ def mocks_data_extraction(param_dict, proj_dict, pickle_ext='.p'):
     param_dict['n_mgroup'] = len(param_dict['mgroup_keys'])
     ##
     ## Determining `galaxy properties` list
-    prop_keys = num.sort(
-        list(GM_prop_dict_arr[0][param_dict['mgroup_keys'][0]].keys()))
+    prop_keys = num.sort(list(GM_prop_dict_arr[0].keys()))
     ##
     ## Common keys for the `galaxy property`
     prop_keys_intersect = num.intersect1d(prop_keys, prop_keys_data)
@@ -837,91 +823,52 @@ def mocks_data_extraction(param_dict, proj_dict, pickle_ext='.p'):
     param_dict['n_prop'   ] = n_prop
     ##
     ## Parsing the data into dictionaries
-    zero_arr      = num.zeros((param_dict['nrpbins'],1))
-    mcf_dicts     = {'mcf':zero_arr.copy(), 'mcf_seg':zero_arr.copy()}
+    zero_arr = num.zeros((param_dict['n_mgroup'],1))
     prop_keys_tot = dict(zip(param_dict['prop_keys'],
-                        [copy.deepcopy(mcf_dicts) for xx in range(n_prop)]))
-    mgroup_keys_dict = dict(zip(param_dict['mgroup_keys'],
-                                [copy.deepcopy(prop_keys_tot) \
-                                for xx in range(param_dict['n_mgroup' ])]))
-    prop_catl_dict = copy.deepcopy(mgroup_keys_dict)
+                    [copy.deepcopy(zero_arr) for x in range(n_prop)]))
     ##
     ## Restructuring the data
-    ## Looping over mock catalogues
-    for ii, gm_prop_ii in enumerate(GM_prop_dict_arr):
-        ## Looping over group mass bins
-        for gm in param_dict['mgroup_keys']:
-            ## Looping over `galaxy properties`
-            for prop in param_dict['prop_keys']:
-                ## Extracting the data from main dictionary
-                (   mcf_dict_conf    ,
-                    mcf_dict_conf_seg,
-                    ngroups          ) = gm_prop_ii[gm][prop]
-                ##
-                ## MCF for 'Conf Only' and 'Conf + Seg'
-                mcf_conf     = mcf_dict_conf    ['mcf']
-                mcf_conf_seg = mcf_dict_conf_seg['mcf']
-                ##
-                ## Appending to `prop_catl_dict`
-                # 'Conformity Only'
-                prop_catl_dict[gm][prop]['mcf'] = array_insert(
-                    prop_catl_dict[gm][prop]['mcf'],
-                    mcf_conf, axis=1)
-                # 'Conformity + Segregation'
-                prop_catl_dict[gm][prop]['mcf_seg'] = array_insert(
-                    prop_catl_dict[gm][prop]['mcf_seg'],
-                    mcf_conf_seg, axis=1)
+    ## Looping over galaxy properties
+    for prop in param_dict['prop_keys']:
+        ## Looping over mock catalogues
+        for jj in range(len(GM_prop_dict_arr)):
+            ## Extracting `frac_stat`
+            frac_stat_jj = GM_prop_dict_arr[jj][prop][0]
+            ##
+            ## Appending `frac_stat_jj` to `prop_keys_tot`
+            prop_keys_tot[prop] = array_insert(
+                prop_keys_tot[prop],
+                frac_stat_jj)
     ##
-    ## Statistics of `prop_catl_dict`
+    ## Statistic of `prop_keys_tot`
     prop_keys_tot_stats = dict(zip(param_dict['prop_keys'],
-                                [{} for xx in range(n_prop)]))
-    mgroup_keys_dict_stats = dict(zip(param_dict['mgroup_keys'],
-                                [copy.deepcopy(prop_keys_tot_stats) \
-                                for xx in range(param_dict['n_mgroup' ])]))
-    prop_catl_dict_stats = copy.deepcopy(mgroup_keys_dict_stats)
+                    [copy.deepcopy(zero_arr) for x in range(n_prop)]))
     ##
-    ## Looping over group mass bins
-    for gm in param_dict['mgroup_keys']:
-        ## Looping over `galaxy properties`
-        for prop in param_dict['prop_keys']:
-            ## Deleting 1st row of zeros
-            mcf_mocks     = num.delete(prop_catl_dict[gm][prop]['mcf'],
-                                0, axis=1)
-            mcf_seg_mocks = num.delete(prop_catl_dict[gm][prop]['mcf_seg'],
-                                0,axis=1)
-            ##
-            ## Statistics: Sigmas, Means, and St. Dev.
-            ## Errors, mean and St. Dev.
-            # 'Conf Only'
-            (   sigma_conf_dict,
-                conf_mean      ,
-                conf_std       ) = sigma_calcs(mcf_mocks,
-                                        type_sigma=param_dict['type_sigma'],
-                                        return_mean_std=True)
-            # 'Conf + Seg'
-            (   sigma_conf_seg_dict,
-                conf_seg_mean      ,
-                conf_seg_std       ) = sigma_calcs(mcf_seg_mocks,
-                                        type_sigma=param_dict['type_sigma'],
-                                        return_mean_std=True)
-            ##
-            ## Defining `mcf` from `data`
-            mcf_conf_data     = prop_catl_data_dict[gm][prop]['mcf_conf']
-            mcf_conf_seg_data = prop_catl_data_dict[gm][prop]['mcf_conf_seg']
-            ##
-            ## Fractional Differences
-            # 'Conf Only'
-            mcf_conf_frac     = (mcf_conf_data - conf_mean)/conf_std
-            # 'Conf + Seg'
-            mcf_conf_seg_frac = (mcf_conf_seg_data - conf_seg_mean)/conf_seg_std
-            ## Saving to `prop_catl_dict_stats`
-            prop_catl_dict_stats[gm][prop]['mcf_conf'    ] = mcf_conf_data
-            prop_catl_dict_stats[gm][prop]['mcf_conf_seg'] = mcf_conf_seg_data
-            prop_catl_dict_stats[gm][prop]['mcf_conf_sig'] = sigma_conf_dict
-            prop_catl_dict_stats[gm][prop]['conf_res'    ] = mcf_conf_frac
-            prop_catl_dict_stats[gm][prop]['conf_seg_res'] = mcf_conf_seg_frac
+    ## Looping over galaxy property
+    for prop in param_dict['prop_keys']:
+        ## Frac from `data`
+        frac_stat_data = prop_keys_data_tot[prop]['frac_stat']
+        ## Deleting 1st row of zeros
+        gm_sh = num.delete( prop_keys_tot[prop],
+                            0, axis=1)
+        ## Errors, mean, and Standard Deviation
+        (   frac_sh_sig,
+            frac_sh_mean      ,
+            frac_sh_std       ) = sigma_calcs( gm_sh,
+                                            type_sigma=param_dict['type_sigma'],
+                                            return_mean_std=True)
+        ##
+        ## Fractional Difference
+        frac_res = (frac_stat_data - frac_sh_mean) / frac_sh_std
+        ##
+        ## Saving to dictionary
+        prop_keys_tot_stats[prop]['frac_stat'   ] = frac_stat_data
+        prop_keys_tot_stats[prop]['frac_sh_mean'] = frac_sh_mean
+        prop_keys_tot_stats[prop]['frac_sh_std' ] = frac_sh_std
+        prop_keys_tot_stats[prop]['frac_sh_sig' ] = frac_sh_sig
+        prop_keys_tot_stats[prop]['frac_res'    ] = frac_res
 
-    return prop_catl_dict_stats
+    return prop_keys_tot_stats
 
 ## --------- Plotting ------------##
 
