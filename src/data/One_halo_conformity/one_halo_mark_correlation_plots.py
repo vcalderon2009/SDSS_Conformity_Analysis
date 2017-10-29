@@ -1431,9 +1431,8 @@ def MCF_one_halo_plotting(prop_catl_dict, param_dict, proj_dict, fig_fmt='pdf',
         fname_new = 'Fig4_1_halo_mcf_mocks.{0}'.format(fig_fmt)
     ## Executing commands
     cmd  = '\ncp {0} {1} ; '.format(fname, proj_dict['fig_paper_dir'])
-    cmd += '\n\nmv {0}/{1} {2}/{3};'.format( proj_dict['fig_paper_dir'],
+    cmd += '\n\nmv {0}/{1} {0}/{2};'.format( proj_dict['fig_paper_dir'],
                                         fname_prefix,
-                                        proj_dict['fig_paper_dir'],
                                         fname_new)
     if param_dict['verbose']:
         print(cmd)
