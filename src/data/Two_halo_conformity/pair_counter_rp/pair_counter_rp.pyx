@@ -96,7 +96,6 @@ def pairwise_distance_rp(coord_1, coord_2, rpmin=0.01, rpmax=10,
     cdef cnp.float64_t[:] z2 = coord_2.astype(float).T[2]
     ## Determining if to double count or not
     if double_count:
-        print('Double Counting')
         ## Looping over points in `coord_1`
         for i in range(0,Ni):
             ## Looping over points in `coord_2`
