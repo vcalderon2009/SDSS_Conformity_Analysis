@@ -1008,7 +1008,7 @@ def mocks_data_extraction(param_dict, proj_dict, pickle_ext='.p'):
 ## --------- Plotting ------------##
 
 def fractions_two_halo_plotting(prop_catl_dict, param_dict, proj_dict, 
-    fig_fmt='pdf', figsize_1=(3.5,15.5), figsize_2=(10,15.5)):
+    fig_fmt='pdf', figsize_1=(3.5,15.5), figsize_2=(12,15.5)):
     """
     Funtion to plot the MCF for `data` for the given group mass bins
 
@@ -1102,13 +1102,13 @@ def fractions_two_halo_plotting(prop_catl_dict, param_dict, proj_dict,
     if ncols == 1:
         figsize     = figsize_1
         size_label  = 17
-        size_legend = 11
-        size_text   = 14
+        size_legend = 12
+        size_text   = 15
     else:
         figsize     = figsize_2
         size_label  = 20
-        size_legend = 10
-        size_text   = 14
+        size_legend = 12
+        size_text   = 15
     # Dashes formatting
     dashes      = (5,5)
     # Initializing figure
@@ -1231,7 +1231,7 @@ def fractions_two_halo_plotting(prop_catl_dict, param_dict, proj_dict,
             ##
             ## Adding text labels
             if (gs_ii == 0):
-                ax_data.text(0.05, 0.30, corr_pair_str, 
+                ax_data.text(0.05, 0.80, corr_pair_str, 
                     transform=ax_data.transAxes,
                     verticalalignment='top', color='black',
                     bbox=propssfr, weight='bold', fontsize=size_text)
@@ -1245,7 +1245,7 @@ def fractions_two_halo_plotting(prop_catl_dict, param_dict, proj_dict,
             ##
             ## Group mass - label
             if (jj == 0):
-                ax_data.text(0.05, 0.15, gm_str,
+                ax_data.text(0.45, 0.15, gm_str,
                     transform=ax_data.transAxes,
                     verticalalignment='top', color='#BE0081',
                     bbox=propssfr, weight='bold', fontsize=size_text)
@@ -1258,7 +1258,7 @@ def fractions_two_halo_plotting(prop_catl_dict, param_dict, proj_dict,
             med_line_color = 'black'
             med_linewidth  = 1
             med_linestyle  = '--'
-            med_yline      = 1
+            med_yline      = 0
             ax_data.axhline(
                 y=med_yline, 
                 linestyle=med_linestyle, 
@@ -1277,7 +1277,7 @@ def fractions_two_halo_plotting(prop_catl_dict, param_dict, proj_dict,
             ##
             ## Sigma Lines - `ax_sigma` axis
             shade_color     = 'grey'
-            sigma_lines_arr = num.arange(5, 10.1, 5)
+            sigma_lines_arr = num.arange(2, 10.1, 2)
             for sig in sigma_lines_arr:
                 ax_sigma.axhline(y = sig, linestyle='--', color=shade_color,
                     zorder=0, dashes=dashes, linewidth=med_linewidth)
@@ -1288,17 +1288,17 @@ def fractions_two_halo_plotting(prop_catl_dict, param_dict, proj_dict,
             if param_dict['catl_kind']=='data':
                 ##
                 ## y-axis limits
-                ylim_data      = [0.8, 1.25]
-                ylim_sigma     = [-10, 9.8]
+                ylim_data      = [-0.2, 0.3]
+                ylim_sigma     = [-5.0, 3.9]
                 ##
                 ## Tickmarks
                 ax_data_major  = 0.1
                 ax_data_minor  = 0.05
-                ax_sigma_major = 5.
-                ax_sigma_minor = 1.
+                ax_sigma_major = 2.
+                ax_sigma_minor = 0.5
             elif param_dict['catl_kind']=='mocks':
                 ## y-axis limits
-                ylim_data      = [0.8, 1.25]
+                ylim_data      = [-0.2, 0.3]
                 ylim_sigma     = [-10, 9.8]
                 ## Tickmarks
                 ax_data_major  = 0.05
@@ -1331,7 +1331,7 @@ def fractions_two_halo_plotting(prop_catl_dict, param_dict, proj_dict,
             ##
             ## Legend
             if (gs_ii==0):
-                leg = ax_data.legend(loc='lower right',
+                leg = ax_data.legend(loc='upper right',
                     prop={'size':size_legend}) 
                 leg_frame = leg.get_frame()
                 leg_frame.set_facecolor('white')
@@ -1403,7 +1403,7 @@ def main():
         prop_catl_dict = mocks_data_extraction(param_dict, proj_dict)
     ##
     ## Plotting 1-halo MCF
-    fractions_one_halo_plotting(prop_catl_dict, param_dict, proj_dict)
+    fractions_two_halo_plotting(prop_catl_dict, param_dict, proj_dict)
 
 # Main function
 if __name__=='__main__':
