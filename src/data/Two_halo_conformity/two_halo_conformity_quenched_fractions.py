@@ -834,56 +834,61 @@ def Quenched_Fracs_rp(prop, df_bin_org_cen, group_idx_arr, rpbins_npairs_tot,
     ##
     ## Looping over iterations to estimate the spread of the shuffles
     # ProgressBar properties
-    if param_dict['prog_bar']:
-        widgets   = [Bar('>'), 'Q.Frac. 2-halo Itern: ', ETA(), ' ', ReverseBar('<')]
-        pbar_mock = ProgressBar( widgets=widgets, maxval= 10 * itern).start()
-    for ii in range(param_dict['itern_tot']):
-        ##
-        ## Copying default `prop` array and shuffling it
-        mark_sh_cen = copy.deepcopy(prop_orig_arr)
-        num.random.shuffle(mark_sh_cen)
-        ##
-        ## Assigning new `shuffled` marks to `rp_ith_pd_sh`
-        prop_pairs_sh_i = [mark_sh_cen[xx] for xx in rp_ith_pd_sh['i']]
-        prop_pairs_sh_j = [mark_sh_cen[xx] for xx in rp_ith_pd_sh['j']]
-        rp_ith_pd_sh.loc[:,'prop_i'] = prop_pairs_sh_i
-        rp_ith_pd_sh.loc[:,'prop_j'] = prop_pairs_sh_j
-        ##
-        ## Populating array for quenched fractions
-        rp_ith_pd_sh.loc[:,'frac_q'] = num.zeros(rp_ith_pd_sh.shape[0])
-        #
-        # Determining Quenched galaxies
-        rp_ith_pd_sh.loc[(rp_ith_pd_sh['prop_j'] > 1),'frac_q'] = 1.
-        ##
-        ## Separating fractions for Centrals: `Active` and `Passive`
-        cens_sh_act = rp_ith_pd_sh.loc[rp_ith_pd_sh['prop_i'] <= 1]
-        cens_sh_pas = rp_ith_pd_sh.loc[rp_ith_pd_sh['prop_i'] >  1]
-        ##
-        ## Grouping by `rp`-bin
-        cens_act_sh_group_rp = cens_sh_act.groupby('rp', sort=True)
-        cens_pas_sh_group_rp = cens_sh_pas.groupby('rp', sort=True)
-        ##
-        ## Quenched Fractions Calculations
-        cens_act_sh_rp_fracs = ((cens_act_sh_group_rp.sum()/
-                                cens_act_sh_group_rp.count())['frac_q'])
-        cens_pas_sh_rp_fracs = ((cens_pas_sh_group_rp.sum()/
-                                cens_pas_sh_group_rp.count())['frac_q'])
-        ##
-        ## Taking the difference of Quenched Fractions - Shuffle
-        if param_dict['frac_stat'] == 'diff':
-            frac_stat_sh = cens_pas_sh_rp_fracs - cens_act_sh_rp_fracs
-        elif param_dict['frac_stat'] == 'ratio':
-            frac_stat_sh = (cens_pas_sh_rp_fracs / cens_act_sh_rp_fracs)
-        ##
-        ## Appending to main `Quenched-Shuffles` array
-        frac_stat_sh_tot = num.insert(  frac_stat_sh_tot,
-                                        len(frac_stat_sh_tot.T),
-                                        frac_stat_sh,
-                                        1)
+    if param_dict['catl_kind'] == 'data':
         if param_dict['prog_bar']:
-            pbar_mock.update(10*ii)
-    if param_dict['prog_bar']:
-        pbar_mock.finish()
+            widgets   = [Bar('>'), 'Q.Frac. 2-halo Itern: ', ETA(), ' ', ReverseBar('<')]
+            pbar_mock = ProgressBar( widgets=widgets, maxval= 10 * itern).start()
+        for ii in range(param_dict['itern_tot']):
+            ##
+            ## Copying default `prop` array and shuffling it
+            mark_sh_cen = copy.deepcopy(prop_orig_arr)
+            num.random.shuffle(mark_sh_cen)
+            ##
+            ## Assigning new `shuffled` marks to `rp_ith_pd_sh`
+            prop_pairs_sh_i = [mark_sh_cen[xx] for xx in rp_ith_pd_sh['i']]
+            prop_pairs_sh_j = [mark_sh_cen[xx] for xx in rp_ith_pd_sh['j']]
+            rp_ith_pd_sh.loc[:,'prop_i'] = prop_pairs_sh_i
+            rp_ith_pd_sh.loc[:,'prop_j'] = prop_pairs_sh_j
+            ##
+            ## Populating array for quenched fractions
+            rp_ith_pd_sh.loc[:,'frac_q'] = num.zeros(rp_ith_pd_sh.shape[0])
+            #
+            # Determining Quenched galaxies
+            rp_ith_pd_sh.loc[(rp_ith_pd_sh['prop_j'] > 1),'frac_q'] = 1.
+            ##
+            ## Separating fractions for Centrals: `Active` and `Passive`
+            cens_sh_act = rp_ith_pd_sh.loc[rp_ith_pd_sh['prop_i'] <= 1]
+            cens_sh_pas = rp_ith_pd_sh.loc[rp_ith_pd_sh['prop_i'] >  1]
+            ##
+            ## Grouping by `rp`-bin
+            cens_act_sh_group_rp = cens_sh_act.groupby('rp', sort=True)
+            cens_pas_sh_group_rp = cens_sh_pas.groupby('rp', sort=True)
+            ##
+            ## Quenched Fractions Calculations
+            cens_act_sh_rp_fracs = ((cens_act_sh_group_rp.sum()/
+                                    cens_act_sh_group_rp.count())['frac_q'])
+            cens_pas_sh_rp_fracs = ((cens_pas_sh_group_rp.sum()/
+                                    cens_pas_sh_group_rp.count())['frac_q'])
+            ##
+            ## Taking the difference of Quenched Fractions - Shuffle
+            if param_dict['frac_stat'] == 'diff':
+                frac_stat_sh = cens_pas_sh_rp_fracs - cens_act_sh_rp_fracs
+            elif param_dict['frac_stat'] == 'ratio':
+                frac_stat_sh = (cens_pas_sh_rp_fracs / cens_act_sh_rp_fracs)
+            ##
+            ## Appending to main `Quenched-Shuffles` array
+            frac_stat_sh_tot = num.insert(  frac_stat_sh_tot,
+                                            len(frac_stat_sh_tot.T),
+                                            frac_stat_sh,
+                                            1)
+            if param_dict['prog_bar']:
+                pbar_mock.update(10*ii)
+        if param_dict['prog_bar']:
+            pbar_mock.finish()
+    else:
+        ## Populating `fake` arrays for mocks
+        frac_stat_sh_tot    = num.zeros((param_dict['nrpbins'], itern+1))
+        frac_stat_sh_tot[:] = num.nan
     ###
     ### ---| Statistics |--- ###
     ###
@@ -1064,9 +1069,6 @@ def prop_sh_two_halo(df_bin_org, prop, GM_str, param_dict, proj_dict,
             sigma_arr          = num.zeros(2*param_dict['nrpbins']).reshape(
                                     2, param_dict['nrpbins'])
             sigma_arr[:]       = num.nan
-            sigma1_arr         = sigma_arr.copy()
-            sigma2_arr         = sigma_arr.copy()
-            sigma3_arr         = sigma_arr.copy()
             # Converting sigma's to dictionary
             sigma_dict = {}
             for jj in range(3):
