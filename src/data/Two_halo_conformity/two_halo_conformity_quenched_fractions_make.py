@@ -203,7 +203,8 @@ def get_analysis_params(param_dict):
                                 ('mg_min'         ,'-mg_min'       ,11.61),
                                 ('mg_max'         ,'-mg_max'       ,13.2),
                                 ('verbose'        ,'-v'            ,'False'),
-                                ('pimax'          ,'-pimax'        ,20.  )])
+                                ('pimax'          ,'-pimax'        ,20.  ),
+                                ('frac_stat'      ,'-frac_stat'    ,'diff')])
     ##
     ## Converting to pandas DataFrame
     colnames = ['Name','Flag','Value']
