@@ -809,10 +809,14 @@ def Quenched_Fracs_rp(prop, df_bin_org_cen, group_idx_arr, rpbins_npairs_tot,
     # Quenched fraction for galaxies with `active` centrals
     frac_g_pas_c_act = num.array([( len(gals_pas_c_act[kk]))/
                                     len(prop_pairs_rp_c_act[kk]) \
+                                    if len(prop_pairs_rp_c_act[kk]) != 0 \
+                                    else num.nan \
                                     for kk in range(len(group_idx_arr))])
     # Quenched fraction for galaxies with `passive` centrals
     frac_g_pas_c_pas = num.array([( len(gals_pas_c_pas[kk]))/
                                     len(prop_pairs_rp_c_pas[kk]) \
+                                    if len(prop_pairs_rp_c_pas[kk]) != 0 \
+                                    else num.nan \
                                     for kk in range(len(group_idx_arr))])
     ##
     ## Taking the difference of Quenched Fractions
