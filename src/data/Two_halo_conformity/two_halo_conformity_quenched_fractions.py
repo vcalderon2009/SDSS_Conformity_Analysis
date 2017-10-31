@@ -281,6 +281,12 @@ def get_parser():
                         type=str,
                         choices=['std','perc'],
                         default='std')
+    ## Verbose
+    parser.add_argument('-v','--verbose',
+                        dest='verbose',
+                        help='Option to print out project parameters',
+                        type=_str2bool,
+                        default=False)
     ## Parsing Objects
     args = parser.parse_args()
 
@@ -995,18 +1001,21 @@ def prop_sh_two_halo(df_bin_org, prop, GM_str, param_dict, proj_dict,
     # Removing file if needed
     if (os.path.isfile(catl_idx_file)) and (param_dict['remove_wp_files']):
         os.remove(catl_idx_file)
-        print('{0} Removing `catl_idx_file`: {1}'.format(
-            Prog_msg, catl_idx_file))
+        if param_dict['verbose']:
+            print('{0} Removing `catl_idx_file`: {1}'.format(
+                Prog_msg, catl_idx_file))
     if (os.path.isfile(catl_idx_file)):
         try:
             ## Reading in Pickle file
             catl_idx_pickle = pickle.load(open(catl_idx_file,'rb'))
-            print('catl_idx_file: `{0}`'.format(catl_idx_file))
+            if param_dict['verbose']:
+                print('catl_idx_file: `{0}`'.format(catl_idx_file))
             group_idx_arr, rpbins_npairs_tot = catl_idx_pickle
         except ValueError:
             os.remove(catl_idx_file)
-            print('{0} Removing `catl_idx_file`:{1}'.format(
-                Prog_msg, catl_idx_file))
+            if param_dict['verbose']:
+                print('{0} Removing `catl_idx_file`:{1}'.format(
+                    Prog_msg, catl_idx_file))
             ##
             ## Running `DDrppi(rp)` for pair counting on `Central-Central`
             (   group_idx_arr       ,
@@ -1170,8 +1179,9 @@ def halo_corr(catl_pd, catl_name, param_dict, proj_dict):
     ## Checking if file exists
     if (os.path.isfile(p_fname)) and (param_dict['remove_files']):
         os.remove(p_fname)
-        print('{0} `p_fname` ({1}) removed! Calculating MCF statistics!'.format(
-            Prog_msg, p_fname))
+        if param_dict['verbose']:
+            print('{0} `p_fname` ({1}) removed! Calculating MCF statistics!'.format(
+                Prog_msg, p_fname))
     ## Dictionary for storing results for each GM bin
     GM_prop_dict = {}
     # Looping over each GM bin (if file doesn't exist)
@@ -1182,10 +1192,11 @@ def halo_corr(catl_pd, catl_name, param_dict, proj_dict):
             # GM string
             GMbin_min, GMbin_max = GM_ii
             GM_str = '{0:.2f}_{1:.2f}'.format(GMbin_min, GMbin_max)
-            if param_dict['perf_opt']:
-                print('\n{0} Halo Mass range: {1}'.format(Prog_msg, GM_str))
-            else:
-                print('\n{0} Group Mass range: {1}'.format(Prog_msg, GM_str))
+            if param_dict['verbose']:
+                if param_dict['perf_opt']:
+                    print('\n{0} Halo Mass range: {1}'.format(Prog_msg, GM_str))
+                else:
+                    print('\n{0} Group Mass range: {1}'.format(Prog_msg, GM_str))
             ## Galaxies in Group-mass bin
             df_bin_org = catl_pd_clean.loc[ (catl_pd_clean[gm_key] >= GMbin_min) &\
                                         (catl_pd_clean[gm_key] <  GMbin_max)].copy()
@@ -1196,7 +1207,9 @@ def halo_corr(catl_pd, catl_name, param_dict, proj_dict):
             prop_dict = dict(zip(pd_keys,[list(stat_vals) for x in range(len(pd_keys))]))
             ## Looping over galaxy properties
             for jj, prop in enumerate(pd_keys):
-                print('{0} >> Galaxy Prop: {1}'.format(Prog_msg, prop))
+                if param_dict['verbose']:
+                    print('{0} >> Galaxy Prop: {1}'.format(Prog_msg, prop))
+                ## Running analysis for given galaxy property
                 (   frac_stat_dict,
                     ngroups       ) = prop_sh_two_halo( df_bin_org,
                                                         prop,
@@ -1214,10 +1227,12 @@ def halo_corr(catl_pd, catl_name, param_dict, proj_dict):
             GM_prop_dict[GM_str] = prop_dict
     ##
     ## saving data to Pickle file
-    print('{0} Saving data to Pickle: \n\t{1}\n'.format(Prog_msg, p_fname))
+    if param_dict['verbose']:
+        print('{0} Saving data to Pickle: \n\t{1}\n'.format(Prog_msg, p_fname))
     p_data = [param_dict, proj_dict, GM_prop_dict, catl_name, GM_arr]
     pickle.dump(p_data, open(p_fname,'wb'))
-    print('{0} Data saved to Pickle: \n\t{1}\n'.format(Prog_msg, p_fname))
+    if param_dict['verbose']:
+        print('{0} Data saved to Pickle: \n\t{1}\n'.format(Prog_msg, p_fname))
 
 ## --------- Multiprocessing ------------##
 
@@ -1246,7 +1261,8 @@ def multiprocessing_catls(catl_arr, param_dict, proj_dict, memb_tuples_ii):
     ##
     ## Looping the desired catalogues
     for ii, catl_ii in enumerate(catl_arr[start_ii : end_ii]):
-        print('{0} Analyzing `{1}`\n'.format(Prog_msg, catl_ii))
+        if param_dict['verbose']:
+            print('{0} Analyzing `{1}`\n'.format(Prog_msg, catl_ii))
         catl_name = os.path.splitext(os.path.split(catl_ii)[1])[0]
         catl_pd   = cu.read_hdf5_file_to_pandas_DF(catl_ii)
         ## Computing cartesian coordinates
@@ -1314,8 +1330,9 @@ def main(args):
     ## Choosing whether or not to use multiprocessing for the analysis
     if ncatls==1:
         # Looping over catalogues
-        catl_ii = catl_arr[0]     
-        print('{0} Analyzing `{1}`\n'.format(Prog_msg, catl_ii))
+        catl_ii = catl_arr[0]
+        if param_dict['verbose']:
+            print('{0} Analyzing `{1}`\n'.format(Prog_msg, catl_ii))
         ## Extracting `name` of the catalogue
         catl_name = os.path.splitext(os.path.split(catl_ii)[1])[0]
         ## Converting to pandas DataFrame

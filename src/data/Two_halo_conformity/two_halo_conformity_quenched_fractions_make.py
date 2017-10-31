@@ -180,7 +180,8 @@ def get_analysis_params(param_dict):
                                 ('remove_wp_files','-remove-wp'    ,'False'),
                                 ('type_sigma'     ,'-sigma'        ,'std'),
                                 ('pimax'          ,'-pimax'        ,20.  ),
-                                ('frac_stat'      ,'-frac_stat'    ,'diff')])
+                                ('frac_stat'      ,'-frac_stat'    ,'diff'),
+                                ('verbose'        ,'-v'            ,'False')])
     #
     # Variables for Plotting
     if param_dict['analysis_type'] == 'plots':
