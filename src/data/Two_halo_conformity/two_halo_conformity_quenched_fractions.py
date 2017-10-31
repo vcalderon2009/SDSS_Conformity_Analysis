@@ -324,26 +324,28 @@ def add_to_dict(param_dict):
                         param_dict['pimax' ]        , param_dict['itern_tot'],
                         param_dict['corr_pair_type'], param_dict['prop_log'] ,
                         param_dict['shuffle_marks'] , param_dict['frac_stat'],
-                        param_dict['ngals_min']     , perf_str ]
+                        param_dict['ngals_min']     , param_dict['type_sigma'],
+                        perf_str ]
     param_str  = 'rpmin_{0}_rpmax_{1}_nrpbins_{2}_Mgbin_{3}_pimax_{4}_'
     param_str += 'itern_{5}_corrpair_type_{6}_proplog_{7}_shuffle_{8}_'
-    param_str += 'fracstat_{9}_nmin_{10}'
+    param_str += 'fracstat_{9}_nmin_{10}_type_sigma_{11}'
     if param_dict['perf_opt']:
-        param_str += '_perf_opt_str_{11}/'
+        param_str += '_perf_opt_str_{12}/'
     else:
-        param_str += '{11}/'
+        param_str += '{12}/'
     param_str  = param_str.format(*param_str_arr)
     # String for Main Figures
     param_str_pic_arr = [param_dict['rpmin']   , param_dict['rpmax'] ,
                          param_dict['nrpbins'] , param_dict['Mg_bin'],
                          param_dict['pimax']   , param_dict['frac_stat'],
-                         param_dict['ngals_min'], perf_str ]
+                         param_dict['ngals_min'], param_dict['type_sigma'],
+                         perf_str ]
     param_str_pic  = 'rpmin_{0}_rpmax_{1}_nrpbins_{2}_Mgbin_{3}_pimax_{4}_'
-    param_str_pic += 'fracstat_{5}_nmin_{6}'
+    param_str_pic += 'fracstat_{5}_nmin_{6}_type_sigma_{7}'
     if param_dict['perf_opt']:
-        param_str_pic += '_perf_opt_str_{6}/'
+        param_str_pic += '_perf_opt_str_{8}/'
     else:
-        param_str_pic += '{6}/'
+        param_str_pic += '{8}/'
     param_str_pic = param_str_pic.format(*param_str_pic_arr)
     # Limits for each galaxy property
     prop_lim = {'logssfr':-11,
