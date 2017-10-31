@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 
 # Victor Calderon
-# Created      : DATE
-# Last Modified: DATE
+# Created      : 10/31/2017
+# Last Modified: 10/31/2017
 # Vanderbilt University
 from __future__ import print_function, division, absolute_import
 __author__     =['Victor Calderon']
@@ -11,7 +11,7 @@ __copyright__  =["Copyright 2017 Victor Calderon, 1-halo MCF Make"]
 __email__      =['victor.calderon@vanderbilt.edu']
 __maintainer__ =['Victor Calderon']
 """
-Script that runs the 1-halo conformity results and plots.
+Script that runs the 2-halo conformity results and plots.
 """
 # Importing Modules
 import custom_utilities_python as cu
