@@ -875,9 +875,11 @@ def Quenched_Fracs_rp(prop, df_bin_org_cen, group_idx_arr, rpbins_npairs_tot,
             ##
             ## Taking the difference of Quenched Fractions - Shuffle
             if param_dict['frac_stat'] == 'diff':
-                frac_stat_sh = cens_pas_sh_rp_fracs - cens_act_sh_rp_fracs
+                frac_stat_sh_pd = cens_pas_sh_rp_fracs - cens_act_sh_rp_fracs
             elif param_dict['frac_stat'] == 'ratio':
-                frac_stat_sh = (cens_pas_sh_rp_fracs / cens_act_sh_rp_fracs)
+                frac_stat_sh_pd = (cens_pas_sh_rp_fracs / cens_act_sh_rp_fracs)
+            ## Turning `frac_stat` to numpy array
+            frac_stat_sh = frac_stat_sh_pd.values
             ##
             ## Appending to main `Quenched-Shuffles` array
             frac_stat_sh_tot = num.insert(  frac_stat_sh_tot,
