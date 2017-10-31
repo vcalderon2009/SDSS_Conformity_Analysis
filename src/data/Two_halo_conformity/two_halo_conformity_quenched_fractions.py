@@ -810,15 +810,18 @@ def Quenched_Fracs_rp(prop, df_bin_org_cen, group_idx_arr, rpbins_npairs_tot,
     ##
     ## Quenched Fractions Calculations
     cens_act_rp_fracs = ((cens_act_group_rp.sum()/
-                            cens_act_group_rp.count())['frac_q']).values
+                            cens_act_group_rp.count())['frac_q'])
     cens_pas_rp_fracs = ((cens_pas_group_rp.sum()/
-                            cens_pas_group_rp.count())['frac_q']).values
+                            cens_pas_group_rp.count())['frac_q'])
     ##
     ## Taking the difference of Quenched Fractions
     if param_dict['frac_stat'] == 'diff':
-        frac_stat = cens_pas_rp_fracs - cens_act_rp_fracs
+        frac_stat_pd = cens_pas_rp_fracs - cens_act_rp_fracs
     elif param_dict['frac_stat'] == 'ratio':
-        frac_stat = cens_pas_rp_fracs / cens_act_rp_fracs
+        frac_stat_pd = cens_pas_rp_fracs / cens_act_rp_fracs
+    ##
+    ## Turning `frac_stat` to numpy array
+    frac_stat = frac_stat_pd.values
     ###
     ###
     ### --------| Shuffles |-------- ###
