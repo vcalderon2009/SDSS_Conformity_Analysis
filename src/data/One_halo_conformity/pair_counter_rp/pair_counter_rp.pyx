@@ -1,5 +1,5 @@
 # Victor Calderon
-# October 9th, 2017
+# October 31st, 2017
 # Vanderbilt University
 
 from __future__ import print_function, division, absolute_import
@@ -23,8 +23,10 @@ from libc.math cimport sqrt, log10, fabs
 @cython.nonecheck(False)
 
 ## Functions
+
+## Pair Counter - MCF
 def pairwise_distance_rp(coord_1, coord_2, rpmin=0.01, rpmax=10, 
-    nrpbins=10, pimax=20.):
+    nrpbins=10, pimax=20., double_count=False):
     """
     Cython engine for returning pairs of points separated in 
     projected radial bins with an observer at (0,0,0)
@@ -49,6 +51,10 @@ def pairwise_distance_rp(coord_1, coord_2, rpmin=0.01, rpmax=10,
 
     pimax: float, optional (default = 20.)
         maximum parallel separation distance to serach for and return pairs
+
+    double_count: boolean, optional (default = False)
+        option to decide whether or not to double count each galaxy pairs.
+        Useful for the `2-halo Quenched Fractions` calculations
 
     Returns
     ----------
@@ -81,37 +87,64 @@ def pairwise_distance_rp(coord_1, coord_2, rpmin=0.01, rpmax=10,
     cdef cnp.float64_t dlogrp   = (logrpmax-logrpmin)/nrpbins
     ## -- Cartesian Coordinates --
     # Sample 1
-    cdef cnp.float64_t[:] x1 = coord_1.T[0]
-    cdef cnp.float64_t[:] y1 = coord_1.T[1]
-    cdef cnp.float64_t[:] z1 = coord_1.T[2]
+    cdef cnp.float64_t[:] x1 = coord_1.astype(float).T[0]
+    cdef cnp.float64_t[:] y1 = coord_1.astype(float).T[1]
+    cdef cnp.float64_t[:] z1 = coord_1.astype(float).T[2]
     # Sample 2
-    cdef cnp.float64_t[:] x2 = coord_2.T[0]
-    cdef cnp.float64_t[:] y2 = coord_2.T[1]
-    cdef cnp.float64_t[:] z2 = coord_2.T[2]
-    ## Looping over points in `coord_1`
-    for i in range(Ni):
-        ## Looping over points in `coord_2`
-        for j in range(i+1,Nj):
-            # Calculate the square distances
-            sx    = x1[i] - x2[j]
-            sy    = y1[i] - y2[j]
-            sz    = z1[i] - z2[j]
-            lx    = 0.5*(x1[i] + x2[j])
-            ly    = 0.5*(y1[i] + y2[j])
-            lz    = 0.5*(z1[i] + z2[j])
-            l2    = (lx * lx) + (ly * ly) + (lz * lz)
-            ll    = sqrt(l2)
-            spar  = abs(((sx * lx) + (sy * ly) + (sz * lz)) / ll)
-            s2    = (sx * sx) + (sy * sy) + (sz * sz)
-            sperp = sqrt(s2 - spar * spar)
-            ## Criteria for `projected separation`
-            if (spar <= pi_max_p) & (sperp > rp_min_p) & (sperp < rp_max_p):
-                # `rp` bin of pair
-                rpbin = (log10(sperp) - logrpmin)/dlogrp
-                # Appending to lists
-                rp_arr.append(rpbin)
-                ith_arr.append(i)
-                jth_arr.append(j)
+    cdef cnp.float64_t[:] x2 = coord_2.astype(float).T[0]
+    cdef cnp.float64_t[:] y2 = coord_2.astype(float).T[1]
+    cdef cnp.float64_t[:] z2 = coord_2.astype(float).T[2]
+    ## Determining if to double count or not
+    if double_count:
+        ## Looping over points in `coord_1`
+        for i in range(0,Ni):
+            ## Looping over points in `coord_2`
+            for j in range(0,Nj):
+                # Calculate the square distances
+                sx    = x1[i] - x2[j]
+                sy    = y1[i] - y2[j]
+                sz    = z1[i] - z2[j]
+                lx    = 0.5*(x1[i] + x2[j])
+                ly    = 0.5*(y1[i] + y2[j])
+                lz    = 0.5*(z1[i] + z2[j])
+                l2    = (lx * lx) + (ly * ly) + (lz * lz)
+                ll    = sqrt(l2)
+                spar  = abs(((sx * lx) + (sy * ly) + (sz * lz)) / ll)
+                s2    = (sx * sx) + (sy * sy) + (sz * sz)
+                sperp = sqrt(s2 - spar * spar)
+                ## Criteria for `projected separation`
+                if (spar <= pi_max_p) & (sperp > rp_min_p) & (sperp < rp_max_p):
+                    # `rp` bin of pair
+                    rpbin = (log10(sperp) - logrpmin)/dlogrp
+                    # Appending to lists
+                    rp_arr.append(rpbin)
+                    ith_arr.append(i)
+                    jth_arr.append(j)
+    else:
+        ## Looping over points in `coord_1`
+        for i in range(Ni):
+            ## Looping over points in `coord_2`
+            for j in range(i+1,Nj):
+                # Calculate the square distances
+                sx    = x1[i] - x2[j]
+                sy    = y1[i] - y2[j]
+                sz    = z1[i] - z2[j]
+                lx    = 0.5*(x1[i] + x2[j])
+                ly    = 0.5*(y1[i] + y2[j])
+                lz    = 0.5*(z1[i] + z2[j])
+                l2    = (lx * lx) + (ly * ly) + (lz * lz)
+                ll    = sqrt(l2)
+                spar  = abs(((sx * lx) + (sy * ly) + (sz * lz)) / ll)
+                s2    = (sx * sx) + (sy * sy) + (sz * sz)
+                sperp = sqrt(s2 - spar * spar)
+                ## Criteria for `projected separation`
+                if (spar <= pi_max_p) & (sperp > rp_min_p) & (sperp < rp_max_p):
+                    # `rp` bin of pair
+                    rpbin = (log10(sperp) - logrpmin)/dlogrp
+                    # Appending to lists
+                    rp_arr.append(rpbin)
+                    ith_arr.append(i)
+                    jth_arr.append(j)
     ## Converting to Numpy arrays
     rp_arr     = np.array(rp_arr).astype(int)
     ith_arr    = np.array(ith_arr).astype(int)
