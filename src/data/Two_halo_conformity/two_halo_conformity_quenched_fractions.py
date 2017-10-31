@@ -764,6 +764,7 @@ def Quenched_Fracs_rp(prop, df_bin_org_cen, group_idx_arr, rpbins_npairs_tot,
     Cens         = int(1)
     Sats         = int(0)
     itern        = param_dict['itern_tot']
+    npairs_tot   = num.sum(rpbins_npairs_tot)
     ## Galaxy Property Labels
     prop_orig    = prop + '_orig'
     ## Catalogue Variables for galaxy properties
@@ -902,6 +903,7 @@ def Quenched_Fracs_rp(prop, df_bin_org_cen, group_idx_arr, rpbins_npairs_tot,
     frac_stat_dict['frac_stat_sh_std' ] = frac_stat_sh_std
     frac_stat_dict['sigma'            ] = sigma_dict
     frac_stat_dict['frac_stat_sh'     ] = frac_stat_sh_tot
+    frac_stat_dict['npairs_tot'       ] = npairs_tot
 
     return frac_stat_dict
 
@@ -1186,14 +1188,14 @@ def halo_corr(catl_pd, catl_name, param_dict, proj_dict):
             ## Looping over galaxy properties
             for jj, prop in enumerate(pd_keys):
                 print('{0} >> Galaxy Prop: {1}'.format(Prog_msg, prop))
-                frac_stat_dict, \
-                ngroups = prop_sh_two_halo(df_bin_org,
-                                prop,
-                                GM_str,
-                                param_dict,
-                                proj_dict,
-                                catl_name,
-                                catl_keys_dict)
+                (   frac_stat_dict,
+                    ngroups       ) = prop_sh_two_halo( df_bin_org,
+                                                        prop,
+                                                        GM_str,
+                                                        param_dict,
+                                                        proj_dict,
+                                                        catl_name,
+                                                        catl_keys_dict)
                 ##
                 ## Saving results to dictionary
                 prop_dict[prop][0] = frac_stat_dict
@@ -1313,7 +1315,7 @@ def main(args):
         catl_pd = spherical_to_cart(catl_pd,
                                     param_dict['cosmo_model'],
                                     method=param_dict['cart_method'])
-        # MCF Calculations
+        # Quenched Fractions - Calculations
         halo_corr(catl_pd, catl_name, param_dict, proj_dict)
     else:
         ###
