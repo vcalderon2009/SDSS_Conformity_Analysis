@@ -774,29 +774,29 @@ def data_shuffles_extraction(param_dict, proj_dict, pickle_ext='.p'):
         ## Looping over `galaxy properties`
         for prop in param_dict['prop_keys']:
             ## Extracting the data from main dictionary
-            mcf_dict_conf,\
+            frac_stat_dict,\
             ngroups      = GM_prop_dict[gm][prop]
             ##
             ## Extracting MCFs
             # 'Conf Only'
-            mcf_conf        = mcf_dict_conf['mcf'   ]
-            mcf_conf_sh     = mcf_dict_conf['mcf_sh']
+            frac_stat        = frac_stat_dict['frac_stat'   ]
+            frac_stat_sh     = frac_stat_dict['frac_stat_sh']
             ##
             ## Errors, mean, and St. Dev.
             # 'Conf Only'
-            (   sigma_conf_dict,
-                conf_mean      ,
-                conf_std       ) = sigma_calcs(mcf_conf_sh,
+            (   sigma_frac_stat_dict,
+                frac_stat_sh_mean,
+                frac_stat_sh_std ) = sigma_calcs(frac_stat_sh,
                                         type_sigma=param_dict['type_sigma'],
                                         return_mean_std=True)
             ##
             ## Fractional Difference
             # 'Conf. Only'
-            mcf_conf_frac = (mcf_conf - conf_mean)/conf_std
+            frac_stat_res = (frac_stat - frac_stat_sh_mean)/frac_stat_sh_std
             ## Saving data to restructured dictionary `prop_catl_dict`
-            prop_catl_dict[gm][prop]['mcf_conf'    ] = mcf_conf
-            prop_catl_dict[gm][prop]['mcf_conf_sig'] = sigma_conf_dict
-            prop_catl_dict[gm][prop]['conf_res'    ] = mcf_conf_frac
+            prop_catl_dict[gm][prop]['frac_stat'    ] = frac_stat
+            prop_catl_dict[gm][prop]['frac_stat_sig'] = sigma_frac_stat_dict
+            prop_catl_dict[gm][prop]['frac_stat_res'] = frac_stat_res
 
     return prop_catl_dict
 
@@ -887,7 +887,7 @@ def mocks_data_extraction(param_dict, proj_dict, pickle_ext='.p'):
             mcf_dict_data_conf,\
             n_groups_data     = GM_prop_dict_data[gm][prop]
             ## Saving data to restructured dictionary `prop_catl_data_dict`
-            prop_catl_data_dict[gm][prop]['mcf_conf'] = mcf_dict_data_conf['mcf']
+            prop_catl_data_dict[gm][prop]['frac_stat'] = mcf_dict_data_conf['mcf']
     ## --------------- ##
     ## ---- MOCKS ---- ##
     ## --------------- ##
@@ -959,13 +959,13 @@ def mocks_data_extraction(param_dict, proj_dict, pickle_ext='.p'):
                     ngroups          ) = gm_prop_ii[gm][prop]
                 ##
                 ## MCF for 'Conf Only' and 'Conf + Seg'
-                mcf_conf     = mcf_dict_conf    ['mcf']
+                frac_stat     = mcf_dict_conf    ['mcf']
                 ##
                 ## Appending to `prop_catl_dict`
                 # 'Conformity Only'
                 prop_catl_dict[gm][prop]['mcf'] = array_insert(
                     prop_catl_dict[gm][prop]['mcf'],
-                    mcf_conf, axis=1)
+                    frac_stat, axis=1)
     ##
     ## Statistics of `prop_catl_dict`
     prop_keys_tot_stats = dict(zip(param_dict['prop_keys'],
@@ -993,22 +993,22 @@ def mocks_data_extraction(param_dict, proj_dict, pickle_ext='.p'):
                                         return_mean_std=True)
             ##
             ## Defining `mcf` from `data`
-            mcf_conf_data     = prop_catl_data_dict[gm][prop]['mcf_conf']
+            mcf_conf_data     = prop_catl_data_dict[gm][prop]['frac_stat']
             ##
             ## Fractional Differences
             # 'Conf Only'
             mcf_conf_frac     = (mcf_conf_data - conf_mean)/conf_std
             ## Saving to `prop_catl_dict_stats`
-            prop_catl_dict_stats[gm][prop]['mcf_conf'    ] = mcf_conf_data
-            prop_catl_dict_stats[gm][prop]['mcf_conf_sig'] = sigma_conf_dict
-            prop_catl_dict_stats[gm][prop]['conf_res'    ] = mcf_conf_frac
+            prop_catl_dict_stats[gm][prop]['frac_stat'    ] = mcf_conf_data
+            prop_catl_dict_stats[gm][prop]['frac_stat_sig'] = sigma_conf_dict
+            prop_catl_dict_stats[gm][prop]['frac_stat_res'    ] = mcf_conf_frac
 
     return prop_catl_dict_stats
 
 ## --------- Plotting ------------##
 
-def MCF_one_halo_plotting(prop_catl_dict, param_dict, proj_dict, fig_fmt='pdf',
-    figsize_1=(3.5,15.5), figsize_2=(10,15.5)):
+def fractions_two_halo_plotting(prop_catl_dict, param_dict, proj_dict, 
+    fig_fmt='pdf', figsize_1=(3.5,15.5), figsize_2=(10,15.5)):
     """
     Funtion to plot the MCF for `data` for the given group mass bins
 
@@ -1037,7 +1037,11 @@ def MCF_one_halo_plotting(prop_catl_dict, param_dict, proj_dict, fig_fmt='pdf',
     ##
     ## Labels
     xlabel       = r'\boldmath $r_{p}\ \left[h^{-1}\ \textrm{Mpc} \right]$'
-    ylabel       = r'\boldmath $\mathcal{M}(r_{p})$'
+    # Y-label
+    if param_dict['frac_stat'] == 'diff':
+        ylabel = r'\boldmath$\Delta f_{q}$'
+    elif param_diff['frac_stat'] == 'ratio':
+        ylabel = r'\boldmath$f_{q,\mathrm{ratio}}$'
     sigma_ylabel = 'Res.'
     ## Text properties
     alpha_arr      = [0.7, 0.5, 0.3]
@@ -1045,7 +1049,7 @@ def MCF_one_halo_plotting(prop_catl_dict, param_dict, proj_dict, fig_fmt='pdf',
     color_prop     = 'black'
     color_prop_seg = 'dimgrey'
     ## Figure name
-    fname_prefix = ('MCF_{0}_{1}'.format(   param_dict['catl_kind'],
+    fname_prefix = ('Frac_{0}_{1}'.format(  param_dict['catl_kind'],
                                             param_dict['fig_prefix'])
                                             ).replace('.', 'p')+'.'+fig_fmt
     fname = proj_dict['figure_dir']+fname_prefix
@@ -1137,8 +1141,8 @@ def MCF_one_halo_plotting(prop_catl_dict, param_dict, proj_dict, fig_fmt='pdf',
             color_sh = cm_dict[prop]
             ##
             ## Determining `rp` axes limits
-            mcf_lim = num.isfinite(prop_catl_dict[gm][prop]['mcf_conf'])
-            rp_idx  = param_dict['rpbins_cens_unlog'][mcf_lim]
+            frac_lim = num.isfinite(prop_catl_dict[gm][prop]['frac_stat'])
+            rp_idx  = param_dict['rpbins_cens_unlog'][frac_lim]
             rp_lim  = [rp_idx.min(),rp_idx.max()]
             ##
             ## Plotting in `ax-data`
@@ -1146,26 +1150,26 @@ def MCF_one_halo_plotting(prop_catl_dict, param_dict, proj_dict, fig_fmt='pdf',
             for zz in range(3):
                 if zz == 0:
                     ax_data.fill_between(
-                        param_dict['rpbins_cens_unlog'][mcf_lim],
-                        prop_catl_dict[gm][prop]['mcf_conf_sig'][zz][0][mcf_lim],
-                        prop_catl_dict[gm][prop]['mcf_conf_sig'][zz][1][mcf_lim],
+                        param_dict['rpbins_cens_unlog'][frac_lim],
+                        prop_catl_dict[gm][prop]['frac_stat_sig'][zz][0][frac_lim],
+                        prop_catl_dict[gm][prop]['frac_stat_sig'][zz][1][frac_lim],
                         facecolor=color_sh,
                         alpha=alpha_arr[zz],
                         zorder=zz+1,
                         label=shaded_str)
                 else:
                     ax_data.fill_between(
-                        param_dict['rpbins_cens_unlog'][mcf_lim],
-                        prop_catl_dict[gm][prop]['mcf_conf_sig'][zz][0][mcf_lim],
-                        prop_catl_dict[gm][prop]['mcf_conf_sig'][zz][1][mcf_lim],
+                        param_dict['rpbins_cens_unlog'][frac_lim],
+                        prop_catl_dict[gm][prop]['frac_stat_sig'][zz][0][frac_lim],
+                        prop_catl_dict[gm][prop]['frac_stat_sig'][zz][1][frac_lim],
                         facecolor=color_sh,
                         alpha=alpha_arr[zz],
                         zorder=zz+1)
             # MCF - Conformity Only
             if (ii==0):
                 ax_data.plot(
-                    param_dict['rpbins_cens_unlog'][mcf_lim],
-                    prop_catl_dict[gm][prop]['mcf_conf'][mcf_lim],
+                    param_dict['rpbins_cens_unlog'][frac_lim],
+                    prop_catl_dict[gm][prop]['frac_stat'][frac_lim],
                     color=color_prop,
                     marker='o',
                     linestyle='-',
@@ -1173,8 +1177,8 @@ def MCF_one_halo_plotting(prop_catl_dict, param_dict, proj_dict, fig_fmt='pdf',
                     label = 'SDSS')
             else:
                 ax_data.plot(
-                    param_dict['rpbins_cens_unlog'][mcf_lim],
-                    prop_catl_dict[gm][prop]['mcf_conf'][mcf_lim],
+                    param_dict['rpbins_cens_unlog'][frac_lim],
+                    prop_catl_dict[gm][prop]['frac_stat'][frac_lim],
                     color=color_prop,
                     marker='o',
                     linestyle='-',
@@ -1183,8 +1187,8 @@ def MCF_one_halo_plotting(prop_catl_dict, param_dict, proj_dict, fig_fmt='pdf',
             ## Plotting in `ax_sigma`
             ## MCF - Residuals - Conformity Only
             ax_sigma.plot(
-                param_dict['rpbins_cens_unlog'][mcf_lim],
-                prop_catl_dict[gm][prop]['conf_res'][mcf_lim],
+                param_dict['rpbins_cens_unlog'][frac_lim],
+                prop_catl_dict[gm][prop]['frac_stat_res'][frac_lim],
                 color=color_prop,
                 marker='o',
                 linestyle='-',
@@ -1327,7 +1331,7 @@ def MCF_one_halo_plotting(prop_catl_dict, param_dict, proj_dict, fig_fmt='pdf',
             ##
             ## Legend
             if (gs_ii==0):
-                leg = ax_data.legend(loc='upper right',
+                leg = ax_data.legend(loc='lower right',
                     prop={'size':size_legend}) 
                 leg_frame = leg.get_frame()
                 leg_frame.set_facecolor('white')
@@ -1350,9 +1354,9 @@ def MCF_one_halo_plotting(prop_catl_dict, param_dict, proj_dict, fig_fmt='pdf',
     ##
     ## Copying figure to `fig_paper_dir` path and renaming file
     if param_dict['catl_kind']=='data':
-        fname_new = 'Fig7_2_halo_mcf_data.{0}'.format(fig_fmt)
+        fname_new = 'Fig5_2_halo_fracs_data.{0}'.format(fig_fmt)
     elif param_dict['catl_kind']=='mocks':
-        fname_new = 'Fig8_2_halo_mcf_mocks.{0}'.format(fig_fmt)
+        fname_new = 'Fig6_2_halo_fracs_mocks.{0}'.format(fig_fmt)
     ## Executing commands
     cmd  = '\ncp {0} {1} ; '.format(fname, proj_dict['fig_paper_dir'])
     cmd += '\n\nmv {0}/{1} {2}/{3};'.format( proj_dict['fig_paper_dir'],
@@ -1399,7 +1403,7 @@ def main():
         prop_catl_dict = mocks_data_extraction(param_dict, proj_dict)
     ##
     ## Plotting 1-halo MCF
-    MCF_one_halo_plotting(prop_catl_dict, param_dict, proj_dict)
+    fractions_one_halo_plotting(prop_catl_dict, param_dict, proj_dict)
 
 # Main function
 if __name__=='__main__':
