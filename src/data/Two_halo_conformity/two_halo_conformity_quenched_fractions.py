@@ -765,6 +765,8 @@ def Quenched_Fracs_rp(prop, df_bin_org_cen, group_idx_arr, rpbins_npairs_tot,
     ## Constants
     Cens         = int(1)
     Sats         = int(0)
+    act_val      = int(0)
+    pas_val      = int(1)
     itern        = param_dict['itern_tot']
     npairs_tot   = num.sum(rpbins_npairs_tot)
     ## Galaxy Property Labels
@@ -788,49 +790,47 @@ def Quenched_Fracs_rp(prop, df_bin_org_cen, group_idx_arr, rpbins_npairs_tot,
     ## Assigning original `prop` to new column in `df_bin`
     df_bin.loc[:,prop_orig] = prop_orig_arr.copy()
     ##
-    ## Creating array of `galaxy property` for galaxy pairs
-    prop_pairs_i = num.array([prop_orig_arr[xx] for xx in rp_ith_pd_cp['i']])
-    prop_pairs_j = num.array([prop_orig_arr[xx] for xx in rp_ith_pd_cp['j']])
-    rp_ith_pd_cp.loc[:,'prop_i'] = prop_pairs_i
-    rp_ith_pd_cp.loc[:,'prop_j'] = prop_pairs_j
+    ## Populating array with galaxy properties
+    prop_pairs_rp = [num.array([    prop_orig_arr[group_idx_arr[kk].T[0]],
+                                    prop_orig_arr[group_idx_arr[kk].T[1]]])\
+                                    for kk in range(len(group_idx_arr))]
     ##
-    ## Populating array for quenched fraction
-    rp_ith_pd_cp.loc[:,'frac_q'] = num.zeros(rp_ith_pd_cp.shape[0])
+    ## Determining if galaxy is quenched or not
     #
-    # Determining Quenched galaxies
-    rp_ith_pd_cp.loc[(rp_ith_pd_cp['prop_j'] > 1),'frac_q'] = 1.
+    # Galaxies with `active` centrals
+    prop_pairs_rp_c_act = [prop_pairs_rp[kk].T[prop_pairs_rp[kk].T[:,0] <= 1]\
+                            for kk in range(len(group_idx_arr))]
+    # Galaxies with `passive` centrals
+    prop_pairs_rp_c_pas = [prop_pairs_rp[kk].T[prop_pairs_rp[kk].T[:,0] >  1]\
+                            for kk in range(len(group_idx_arr))]
     ##
-    ## Separating fractions for Centrals: `Active` and `Passive`
-    cens_act     = rp_ith_pd_cp.loc[rp_ith_pd_cp['prop_i'] <= 1]
-    cens_pas     = rp_ith_pd_cp.loc[rp_ith_pd_cp['prop_i'] >  1]
+    ## Statistics for galaxies with `active` and `passive` centrals
+    gals_pas_c_act = [prop_pairs_rp_c_act[kk][prop_pairs_rp_c_act[kk][:,1] > 1,:] \
+                        for kk in range(len(group_idx_arr))]
+    gals_pas_c_pas = [prop_pairs_rp_c_pas[kk][prop_pairs_rp_c_pas[kk][:,1] > 1,:]\
+                        for kk in range(len(group_idx_arr))]
     ##
-    ## Grouping by `rp`-bin
-    cens_act_group_rp = cens_act.groupby('rp', sort=True)
-    cens_pas_group_rp = cens_pas.groupby('rp', sort=True)
-    ##
-    ## Quenched Fractions Calculations
-    cens_act_rp_fracs = ((cens_act_group_rp.sum()/
-                            cens_act_group_rp.count())['frac_q'])
-    cens_pas_rp_fracs = ((cens_pas_group_rp.sum()/
-                            cens_pas_group_rp.count())['frac_q'])
+    ## Total fraction of Quenched Galaxies
+    # Quenched fraction for galaxies with `active` centrals
+    frac_g_pas_c_act = num.array([( len(gals_pas_c_act[kk]))/
+                                    len(prop_pairs_rp_c_act[kk]) \
+                                    for kk in range(len(group_idx_arr))])
+    # Quenched fraction for galaxies with `passive` centrals
+    frac_g_pas_c_pas = num.array([( len(gals_pas_c_pas[kk]))/
+                                    len(prop_pairs_rp_c_pas[kk]) \
+                                    for kk in range(len(group_idx_arr))])
     ##
     ## Taking the difference of Quenched Fractions
     if param_dict['frac_stat'] == 'diff':
-        frac_stat_pd = cens_pas_rp_fracs - cens_act_rp_fracs
+        frac_stat = frac_g_pas_c_pas - frac_g_pas_c_act
     elif param_dict['frac_stat'] == 'ratio':
-        frac_stat_pd = cens_pas_rp_fracs / cens_act_rp_fracs
-    ##
-    ## Turning `frac_stat` to numpy array
-    frac_stat = frac_stat_pd.values
+        frac_stat = frac_g_pas_c_pas / frac_g_pas_c_act
     ###
     ###
     ### --------| Shuffles |-------- ###
     ###
     ###
     ## We will now determine the statistics of the Shuffles
-    ##
-    ## Shuffled version of `rp_ith_pd`
-    rp_ith_pd_sh = rp_ith_pd.copy()
     ##
     ## Initializing array for the `shuffle` case
     frac_stat_sh_tot = num.zeros((param_dict['nrpbins'],1))
@@ -847,39 +847,41 @@ def Quenched_Fracs_rp(prop, df_bin_org_cen, group_idx_arr, rpbins_npairs_tot,
             mark_sh_cen = copy.deepcopy(prop_orig_arr)
             num.random.shuffle(mark_sh_cen)
             ##
-            ## Assigning new `shuffled` marks to `rp_ith_pd_sh`
-            prop_pairs_sh_i = [mark_sh_cen[xx] for xx in rp_ith_pd_sh['i']]
-            prop_pairs_sh_j = [mark_sh_cen[xx] for xx in rp_ith_pd_sh['j']]
-            rp_ith_pd_sh.loc[:,'prop_i'] = prop_pairs_sh_i
-            rp_ith_pd_sh.loc[:,'prop_j'] = prop_pairs_sh_j
+            ## Populating array with galaxy properties
+            prop_pairs_rp_sh = [num.array([ mark_sh_cen[group_idx_arr[kk].T[0]],
+                                            mark_sh_cen[group_idx_arr[kk].T[1]]])\
+                                        for kk in range(len(group_idx_arr))]
             ##
-            ## Populating array for quenched fractions
-            rp_ith_pd_sh.loc[:,'frac_q'] = num.zeros(rp_ith_pd_sh.shape[0])
+            ## Determining if galaxy is quenched or not
             #
-            # Determining Quenched galaxies
-            rp_ith_pd_sh.loc[(rp_ith_pd_sh['prop_j'] > 1),'frac_q'] = 1.
+            # Galaxies with `active` centrals
+            prop_pairs_rp_c_act_sh = [prop_pairs_rp_sh[kk].T[prop_pairs_rp_sh[kk].T[:,0] <= 1]\
+                                    for kk in range(len(group_idx_arr))]
+            # Galaxies with `passive` centrals
+            prop_pairs_rp_c_pas_sh = [prop_pairs_rp_sh[kk].T[prop_pairs_rp_sh[kk].T[:,0] >  1]\
+                                    for kk in range(len(group_idx_arr))]
             ##
-            ## Separating fractions for Centrals: `Active` and `Passive`
-            cens_sh_act = rp_ith_pd_sh.loc[rp_ith_pd_sh['prop_i'] <= 1]
-            cens_sh_pas = rp_ith_pd_sh.loc[rp_ith_pd_sh['prop_i'] >  1]
+            ## Statistics for galaxies with `active` and `passive` centrals
+            gals_pas_c_act_sh = [prop_pairs_rp_c_act_sh[kk][prop_pairs_rp_c_act_sh[kk][:,1] > 1,:] \
+                                for kk in range(len(group_idx_arr))]
+            gals_pas_c_pas_sh = [prop_pairs_rp_c_pas_sh[kk][prop_pairs_rp_c_pas_sh[kk][:,1] > 1,:]\
+                                for kk in range(len(group_idx_arr))]
             ##
-            ## Grouping by `rp`-bin
-            cens_act_sh_group_rp = cens_sh_act.groupby('rp', sort=True)
-            cens_pas_sh_group_rp = cens_sh_pas.groupby('rp', sort=True)
+            ## Total fraction of Quenched Galaxies
+            # Quenched fraction for galaxies with `active` centrals
+            frac_g_pas_c_act_sh = num.array([( len(gals_pas_c_act_sh[kk]))/
+                                            len(prop_pairs_rp_c_act_sh[kk]) \
+                                            for kk in range(len(group_idx_arr))])
+            # Quenched fraction for galaxies with `passive` centrals
+            frac_g_pas_c_pas_sh = num.array([( len(gals_pas_c_pas_sh[kk]))/
+                                            len(prop_pairs_rp_c_pas_sh[kk]) \
+                                            for kk in range(len(group_idx_arr))])
             ##
-            ## Quenched Fractions Calculations
-            cens_act_sh_rp_fracs = ((cens_act_sh_group_rp.sum()/
-                                    cens_act_sh_group_rp.count())['frac_q'])
-            cens_pas_sh_rp_fracs = ((cens_pas_sh_group_rp.sum()/
-                                    cens_pas_sh_group_rp.count())['frac_q'])
-            ##
-            ## Taking the difference of Quenched Fractions - Shuffle
+            ## Taking the difference of Quenched Fractions
             if param_dict['frac_stat'] == 'diff':
-                frac_stat_sh_pd = cens_pas_sh_rp_fracs - cens_act_sh_rp_fracs
+                frac_stat_sh = frac_g_pas_c_pas_sh - frac_g_pas_c_act_sh
             elif param_dict['frac_stat'] == 'ratio':
-                frac_stat_sh_pd = (cens_pas_sh_rp_fracs / cens_act_sh_rp_fracs)
-            ## Turning `frac_stat` to numpy array
-            frac_stat_sh = frac_stat_sh_pd.values
+                frac_stat_sh = frac_g_pas_c_pas_sh / frac_g_pas_c_act_sh
             ##
             ## Appending to main `Quenched-Shuffles` array
             frac_stat_sh_tot = num.insert(  frac_stat_sh_tot,
