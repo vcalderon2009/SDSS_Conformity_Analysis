@@ -884,10 +884,10 @@ def mocks_data_extraction(param_dict, proj_dict, pickle_ext='.p'):
         ## Looping over `galaxy properties`
         for prop in param_dict_data['prop_keys_data']:
             ## Extracting the data from main dictionary
-            mcf_dict_data_conf,\
+            frac_stat_data_dict,\
             n_groups_data     = GM_prop_dict_data[gm][prop]
             ## Saving data to restructured dictionary `prop_catl_data_dict`
-            prop_catl_data_dict[gm][prop]['frac_stat'] = mcf_dict_data_conf['mcf']
+            prop_catl_data_dict[gm][prop]['frac_stat'] = frac_stat_data_dict['frac_stat']
     ## --------------- ##
     ## ---- MOCKS ---- ##
     ## --------------- ##
@@ -939,7 +939,7 @@ def mocks_data_extraction(param_dict, proj_dict, pickle_ext='.p'):
     ##
     ## Parsing the data into dictionaries
     zero_arr      = num.zeros((param_dict['nrpbins'],1))
-    mcf_dicts     = {'mcf':zero_arr.copy()}
+    mcf_dicts     = {'frac_stat':zero_arr.copy()}
     prop_keys_tot = dict(zip(param_dict['prop_keys'],
                         [copy.deepcopy(mcf_dicts) for xx in range(n_prop)]))
     mgroup_keys_dict = dict(zip(param_dict['mgroup_keys'],
@@ -955,16 +955,16 @@ def mocks_data_extraction(param_dict, proj_dict, pickle_ext='.p'):
             ## Looping over `galaxy properties`
             for prop in param_dict['prop_keys']:
                 ## Extracting the data from main dictionary
-                (   mcf_dict_conf    ,
-                    ngroups          ) = gm_prop_ii[gm][prop]
+                (   frac_stat_dict ,
+                    ngroups        ) = gm_prop_ii[gm][prop]
                 ##
                 ## MCF for 'Conf Only' and 'Conf + Seg'
-                frac_stat     = mcf_dict_conf    ['mcf']
+                frac_stat = frac_stat_dict['frac_stat']
                 ##
                 ## Appending to `prop_catl_dict`
                 # 'Conformity Only'
-                prop_catl_dict[gm][prop]['mcf'] = array_insert(
-                    prop_catl_dict[gm][prop]['mcf'],
+                prop_catl_dict[gm][prop]['frac_stat'] = array_insert(
+                    prop_catl_dict[gm][prop]['frac_stat'],
                     frac_stat, axis=1)
     ##
     ## Statistics of `prop_catl_dict`
@@ -980,35 +980,35 @@ def mocks_data_extraction(param_dict, proj_dict, pickle_ext='.p'):
         ## Looping over `galaxy properties`
         for prop in param_dict['prop_keys']:
             ## Deleting 1st row of zeros
-            mcf_mocks     = num.delete(prop_catl_dict[gm][prop]['mcf'],
+            frac_stat_mocks = num.delete(prop_catl_dict[gm][prop]['frac_stat'],
                                 0, axis=1)
             ##
             ## Statistics: Sigmas, Means, and St. Dev.
             ## Errors, mean and St. Dev.
             # 'Conf Only'
-            (   sigma_conf_dict,
-                conf_mean      ,
-                conf_std       ) = sigma_calcs(mcf_mocks,
-                                        type_sigma=param_dict['type_sigma'],
-                                        return_mean_std=True)
+            (   sigma_frac_stat_dict,
+                frac_stat_sh_mean   ,
+                frac_stat_sh_std    ) = sigma_calcs(frac_stat_mocks,
+                                            type_sigma=param_dict['type_sigma'],
+                                            return_mean_std=True)
             ##
-            ## Defining `mcf` from `data`
-            mcf_conf_data     = prop_catl_data_dict[gm][prop]['frac_stat']
+            ## Defining `frac_stat` from `data`
+            frac_stat_data = prop_catl_data_dict[gm][prop]['frac_stat']
             ##
             ## Fractional Differences
             # 'Conf Only'
-            mcf_conf_frac     = (mcf_conf_data - conf_mean)/conf_std
+            frac_stat_res = (frac_stat_data - frac_stat_sh_mean)/frac_stat_sh_std
             ## Saving to `prop_catl_dict_stats`
-            prop_catl_dict_stats[gm][prop]['frac_stat'    ] = mcf_conf_data
-            prop_catl_dict_stats[gm][prop]['frac_stat_sig'] = sigma_conf_dict
-            prop_catl_dict_stats[gm][prop]['frac_stat_res'    ] = mcf_conf_frac
+            prop_catl_dict_stats[gm][prop]['frac_stat'    ] = frac_stat_data
+            prop_catl_dict_stats[gm][prop]['frac_stat_sig'] = sigma_frac_stat_dict
+            prop_catl_dict_stats[gm][prop]['frac_stat_res'] = frac_stat_res
 
     return prop_catl_dict_stats
 
 ## --------- Plotting ------------##
 
 def fractions_two_halo_plotting(prop_catl_dict, param_dict, proj_dict, 
-    fig_fmt='pdf', figsize_1=(3.5,15.5), figsize_2=(12,15.5)):
+    fig_fmt='pdf', figsize_1=(3.6,15.5), figsize_2=(12,15.5)):
     """
     Funtion to plot the MCF for `data` for the given group mass bins
 
@@ -1101,9 +1101,9 @@ def fractions_two_halo_plotting(prop_catl_dict, param_dict, proj_dict,
     # Choosing Figure size and fontsize
     if ncols == 1:
         figsize     = figsize_1
-        size_label  = 17
-        size_legend = 12
-        size_text   = 15
+        size_label  = 20
+        size_legend = 13
+        size_text   = 16
     else:
         figsize     = figsize_2
         size_label  = 20
@@ -1297,14 +1297,16 @@ def fractions_two_halo_plotting(prop_catl_dict, param_dict, proj_dict,
                 ax_sigma_major = 2.
                 ax_sigma_minor = 0.5
             elif param_dict['catl_kind']=='mocks':
+                ##
                 ## y-axis limits
                 ylim_data      = [-0.2, 0.3]
-                ylim_sigma     = [-10, 9.8]
+                ylim_sigma     = [-5.0, 3.9]
+                ##
                 ## Tickmarks
-                ax_data_major  = 0.05
-                ax_data_minor  = 0.01
-                ax_sigma_major = 5.
-                ax_sigma_minor = 1.
+                ax_data_major  = 0.1
+                ax_data_minor  = 0.05
+                ax_sigma_major = 2.
+                ax_sigma_minor = 0.5
             ##
             ## Axes limits and sigma lines
             xlim_data  = [0.9*param_dict['rpmin'], 1.1*param_dict['rpmax']]
