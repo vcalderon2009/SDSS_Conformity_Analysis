@@ -719,7 +719,7 @@ def wp_idx_calc(group_df, param_dict, double_count=False, return_pd=False):
         return rp_idx, rp_npairs
 
 def Quenched_Fracs_rp(prop, df_bin_org_cen, group_idx_arr, rpbins_npairs_tot, 
-    param_dict, catl_keys_dict, rp_ith_pd):
+    param_dict, catl_keys_dict):
     """
     Marked correlation function calculation for the case,
     where `Conformity + Segregation` is considered
@@ -742,10 +742,6 @@ def Quenched_Fracs_rp(prop, df_bin_org_cen, group_idx_arr, rpbins_npairs_tot,
 
     catl_keys_dict: python dictionary
 
-    rp_ith_pd: pandas DataFrame (optional)
-        pandas DataFrame `rp_ith_pd`, which contains the `< rp i j >` 
-        values for each galaxy pair.
-
     Returns
     -----------
     frac_stat_dict: python dictionary
@@ -761,7 +757,6 @@ def Quenched_Fracs_rp(prop, df_bin_org_cen, group_idx_arr, rpbins_npairs_tot,
     """
     ## Creating new DataFrame
     df_bin       = df_bin_org_cen.copy()
-    rp_ith_pd_cp = rp_ith_pd.copy()
     ## Constants
     Cens         = int(1)
     Sats         = int(0)
@@ -999,7 +994,7 @@ def prop_sh_two_halo(df_bin_org, prop, GM_str, param_dict, proj_dict,
             ## Reading in Pickle file
             catl_idx_pickle = pickle.load(open(catl_idx_file,'rb'))
             print('catl_idx_file: `{0}`'.format(catl_idx_file))
-            group_idx_arr, rpbins_npairs_tot, rp_ith_pd = catl_idx_pickle
+            group_idx_arr, rpbins_npairs_tot = catl_idx_pickle
         except ValueError:
             os.remove(catl_idx_file)
             print('{0} Removing `catl_idx_file`:{1}'.format(
@@ -1007,15 +1002,13 @@ def prop_sh_two_halo(df_bin_org, prop, GM_str, param_dict, proj_dict,
             ##
             ## Running `DDrppi(rp)` for pair counting on `Central-Central`
             (   group_idx_arr       ,
-                rpbins_npairs_tot   ,
-                rp_ith_pd           ) = wp_idx_calc(    df_bin_org_cen,
+                rpbins_npairs_tot   ) = wp_idx_calc(    df_bin_org_cen,
                                                         param_dict,
-                                                        double_count=True,
-                                                        return_pd=True)
+                                                        double_count=True)
             ##
             ## Savin indices into a Pickle file if file does not exist
             if num.sum(rpbins_npairs_tot) != 0:
-                pickle.dump([group_idx_arr, rpbins_npairs_tot, rp_ith_pd],
+                pickle.dump([group_idx_arr, rpbins_npairs_tot],
                     open(catl_idx_file,'wb'))
             else:
                 itern_tot          = param_dict['itern_tot']
@@ -1053,15 +1046,13 @@ def prop_sh_two_halo(df_bin_org, prop, GM_str, param_dict, proj_dict,
         ## Running complete analysis
         ## Running `DDrppi(rp)` for pair counting on `Central-Central`
         (   group_idx_arr       ,
-            rpbins_npairs_tot   ,
-            rp_ith_pd           ) = wp_idx_calc(    df_bin_org_cen,
+            rpbins_npairs_tot   ) = wp_idx_calc(    df_bin_org_cen,
                                                     param_dict,
-                                                    double_count=True,
-                                                    return_pd=True)
+                                                    double_count=True)
         ##
         ## Savin indices into a Pickle file if file does not exist
         if num.sum(rpbins_npairs_tot) != 0:
-            pickle.dump([group_idx_arr, rpbins_npairs_tot, rp_ith_pd],
+            pickle.dump([group_idx_arr, rpbins_npairs_tot],
                 open(catl_idx_file,'wb'))
         else:
             itern_tot          = param_dict['itern_tot']
@@ -1101,8 +1092,7 @@ def prop_sh_two_halo(df_bin_org, prop, GM_str, param_dict, proj_dict,
                                             group_idx_arr,
                                             rpbins_npairs_tot,
                                             param_dict,
-                                            catl_keys_dict,
-                                            rp_ith_pd)
+                                            catl_keys_dict)
     ##
     ## Saving to dictionaries to new variables
 
