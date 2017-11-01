@@ -219,6 +219,14 @@ def get_parser():
                         help='Program message to use throught the script',
                         type=str,
                         default=cu.Program_Msg(__file__))
+    ## Random Seed
+    parser.add_argument('-seed',
+                        dest='seed',
+                        help='Random seed to be used for the analysis',
+                        type=int,
+                        choices=range(0, 2**32 -1),
+                        metavar='[0-4294967295]',
+                        default=1)
     ## Parsing Objects
     args = parser.parse_args()
 
@@ -794,6 +802,8 @@ def main():
     start_time = datetime.now()
     ## Reading all elements and converting to python dictionary
     param_dict = vars(args)
+    ## Initializing random seed
+    num.random.seed(param_dict['seed'])
     ## Checking for correct input
     param_vals_test(param_dict)
     ## ---- Adding to `param_dict` ---- 

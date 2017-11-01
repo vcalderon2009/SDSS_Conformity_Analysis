@@ -116,6 +116,14 @@ def get_parser():
                         dest='verbose',
                         help='Option to print out project parameters',
                         action="store_true")
+    ## Random Seed
+    parser.add_argument('-seed',
+                        dest='seed',
+                        help='Random seed to be used for the analysis. Def: 1',
+                        type=int,
+                        choices=range(0, 2**32 -1),
+                        metavar='[0-4294967295]',
+                        default=1)
     ## Parsing Objects
     args = parser.parse_args()
 
@@ -154,7 +162,8 @@ def get_analysis_params(param_dict):
                                 ('cpu_frac'       ,'-cpu'        ,0.7),
                                 ('remove_files'   ,'-remove'     ,'False'),
                                 ('type_sigma'     ,'-sigma'      ,'std'),
-                                ('frac_stat'      ,'-frac_stat'  ,'diff'  )])
+                                ('frac_stat'      ,'-frac_stat'  ,'diff'  ),
+                                ('seed'           ,'-seed'       ,1     )])
     #
     # Variables for plotting
     if param_dict['analysis_type']=='plots':
@@ -188,6 +197,9 @@ def get_analysis_params(param_dict):
         ##
         ## Choosing the amount of CPUs
         params_pd.loc[params_pd['Name']=='cpu_frac','Value'] = param_dict['cpu_frac']
+        ##
+        ## Random seed
+        params_pd.loc[params_pd['Name']=='seed','Value'] = param_dict['seed']
     ##
     ## Options for `Plotting`
     if (param_dict['analysis_type'] == 'plots'):
