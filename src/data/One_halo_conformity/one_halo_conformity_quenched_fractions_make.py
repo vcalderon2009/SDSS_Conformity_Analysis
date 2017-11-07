@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 
 # Victor Calderon
-# Created      : DATE
-# Last Modified: DATE
+# Created      : 10/31/2017
+# Last Modified: 11/07/2017
 # Vanderbilt University
 from __future__ import print_function, division, absolute_import
 __author__     =['Victor Calderon']
@@ -13,8 +13,15 @@ __maintainer__ =['Victor Calderon']
 """
 Script that runs the 1-halo conformity results and plots.
 """
+# Path to Custom Utilities folder
+import os
+import sys
+import git
+from path_variables import git_root_dir
+sys.path.insert(0, os.path.realpath(git_root_dir(__file__)))
+
 # Importing Modules
-import custom_utilities_python as cu
+import src.data.utilities_python as cu
 import numpy as num
 import os
 import sys
