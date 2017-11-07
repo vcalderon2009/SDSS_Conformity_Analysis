@@ -13,12 +13,17 @@ __maintainer__ =['Victor Calderon']
 """
 Computes the 1-halo `Quenched` fractions for SDSS DR7
 """
-# Importing Modules
-import custom_utilities_python as cu
-import numpy as num
-import math
+# Path to Custom Utilities folder
 import os
 import sys
+import git
+from path_variables import git_root_dir
+sys.path.insert(0, os.path.realpath(git_root_dir(__file__)))
+
+# Importing Modules
+import src.data.utilities_python as cu
+import numpy as num
+import math
 import pandas as pd
 import pickle
 #sns.set()
