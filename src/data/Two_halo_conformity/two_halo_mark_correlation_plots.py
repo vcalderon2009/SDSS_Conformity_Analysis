@@ -1006,7 +1006,7 @@ def mocks_data_extraction(param_dict, proj_dict, pickle_ext='.p'):
 
 ## --------- Plotting ------------##
 
-def MCF_one_halo_plotting(prop_catl_dict, param_dict, proj_dict, fig_fmt='pdf',
+def MCF_two_halo_plotting(prop_catl_dict, param_dict, proj_dict, fig_fmt='pdf',
     figsize_1=(3.5,15.5), figsize_2=(10,15.5)):
     """
     Funtion to plot the MCF for `data` for the given group mass bins
@@ -1296,8 +1296,8 @@ def MCF_one_halo_plotting(prop_catl_dict, param_dict, proj_dict, fig_fmt='pdf',
                 ylim_data      = [0.8, 1.25]
                 ylim_sigma     = [-10, 9.8]
                 ## Tickmarks
-                ax_data_major  = 0.05
-                ax_data_minor  = 0.01
+                ax_data_major  = 0.1
+                ax_data_minor  = 0.05
                 ax_sigma_major = 5.
                 ax_sigma_minor = 1.
             ##
@@ -1398,7 +1398,7 @@ def main():
         prop_catl_dict = mocks_data_extraction(param_dict, proj_dict)
     ##
     ## Plotting 1-halo MCF
-    MCF_one_halo_plotting(prop_catl_dict, param_dict, proj_dict)
+    MCF_two_halo_plotting(prop_catl_dict, param_dict, proj_dict)
 
 # Main function
 if __name__=='__main__':
