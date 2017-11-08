@@ -126,7 +126,7 @@ plot_figures:
 ## 1-halo Marked Correlation Function - Calculations
 1_halo_mcf_calc:
 	# 1-halo
-	@python $(ONE_HALO_DIR)/one_halo_mark_correlation_make.py.py -a calc -cpu_frac $(CPU_FRAC) -remove $(REMOVE_FILES)
+	@python $(ONE_HALO_DIR)/one_halo_mark_correlation_make.py -a calc -cpu_frac $(CPU_FRAC) -remove $(REMOVE_FILES)
 
 ## 2-halo Quenched Fractions - Calculations
 2_halo_fracs_calc:
