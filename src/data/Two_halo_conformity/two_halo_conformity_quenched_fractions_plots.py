@@ -1284,7 +1284,7 @@ def fractions_two_halo_plotting(prop_catl_dict, param_dict, proj_dict,
             ##
             ## Sigma Lines - `ax_sigma` axis
             shade_color     = 'grey'
-            sigma_lines_arr = num.arange(2, 10.1, 2)
+            sigma_lines_arr = num.arange(5, 10.1, 5)
             for sig in sigma_lines_arr:
                 ax_sigma.axhline(y = sig, linestyle='--', color=shade_color,
                     zorder=0, dashes=dashes, linewidth=med_linewidth)
@@ -1296,24 +1296,24 @@ def fractions_two_halo_plotting(prop_catl_dict, param_dict, proj_dict,
                 ##
                 ## y-axis limits
                 ylim_data      = [-0.2, 0.3]
-                ylim_sigma     = [-5.0, 3.9]
+                ylim_sigma     = [-8.0, 7.9]
                 ##
                 ## Tickmarks
                 ax_data_major  = 0.1
                 ax_data_minor  = 0.05
-                ax_sigma_major = 2.
-                ax_sigma_minor = 0.5
+                ax_sigma_major = 5.
+                ax_sigma_minor = 1.
             elif param_dict['catl_kind']=='mocks':
                 ##
                 ## y-axis limits
                 ylim_data      = [-0.2, 0.3]
-                ylim_sigma     = [-5.0, 3.9]
+                ylim_sigma     = [-8.0, 7.9]
                 ##
                 ## Tickmarks
                 ax_data_major  = 0.1
                 ax_data_minor  = 0.05
-                ax_sigma_major = 2.
-                ax_sigma_minor = 0.5
+                ax_sigma_major = 5.
+                ax_sigma_minor = 1.
             ##
             ## Axes limits and sigma lines
             xlim_data  = [0.9*param_dict['rpmin'], 1.1*param_dict['rpmax']]
