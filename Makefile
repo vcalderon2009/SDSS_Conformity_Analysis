@@ -11,6 +11,10 @@ PROJECT_NAME = conformity
 PYTHON_INTERPRETER = python3
 ENVIRONMENT_FILE = environment.yml
 
+SRC_DIR = $(PROJECT_DIR)/src/data
+ONE_HALO_DIR = $(SRC_DIR)/One_halo_conformity
+TWO_HALO_DIR = $(SRC_DIR)/Two_halo_conformity
+
 ifeq (,$(shell which conda))
 HAS_CONDA=False
 else
@@ -90,7 +94,7 @@ ifeq (True,$(HAS_CONDA))
 		conda env update -f $(ENVIRONMENT_FILE)
 endif
 
-## Delte python interpreter environment
+## Delete python interpreter environment
 remove_environment:
 ifeq (True,$(HAS_CONDA))
 		@echo ">>> Detected conda, removing conda environment"
@@ -98,8 +102,17 @@ ifeq (True,$(HAS_CONDA))
 endif
 
 #################################################################################
-# PROJECT RULES                                                                 #
+# PROJECT FUNCTIONS                                                                 #
 #################################################################################
+
+## Figures
+plot_figures:
+	# 1-halo
+	@python $(ONE_HALO_DIR)/one_halo_conformity_quenched_fractions_make.py -a plots
+	@python $(ONE_HALO_DIR)/one_halo_mark_correlation_make.py -a plots
+	# 2-halo
+	@python $(TWO_HALO_DIR)/two_halo_conformity_quenched_fractions_make.py -a plots
+	@python $(TWO_HALO_DIR)/two_halo_mark_correlation_make.py -a plots
 
 
 
