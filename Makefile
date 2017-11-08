@@ -114,7 +114,25 @@ plot_figures:
 	@python $(TWO_HALO_DIR)/two_halo_conformity_quenched_fractions_make.py -a plots
 	@python $(TWO_HALO_DIR)/two_halo_mark_correlation_make.py -a plots
 
+## 1-halo Quenched Fractions - Calculations
+1_halo_fracs_calc:
+	# 1-halo
+	@python $(ONE_HALO_DIR)/one_halo_conformity_quenched_fractions_make.py -a calc
 
+## 1-halo Marked Correlation Function - Calculations
+1_halo_mcf_calc:
+	# 1-halo
+	@python $(ONE_HALO_DIR)/one_halo_mark_correlation_make.py.py -a calc
+
+## 2-halo Quenched Fractions - Calculations
+2_halo_fracs_calc:
+	# 2-halo
+	@python $(TWO_HALO_DIR)/two_halo_conformity_quenched_fractions_make.py -a calc
+
+## 2-halo Marked Correlation Function - Calculations
+2_halo_mcf_calc:
+	# 2-halo
+	@python $(TWO_HALO_DIR)/two_halo_mark_correlation_make.py -a calc
 
 #################################################################################
 # Self Documenting Commands                                                     #
