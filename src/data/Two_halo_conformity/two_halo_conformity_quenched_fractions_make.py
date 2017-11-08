@@ -142,6 +142,13 @@ def get_parser():
                         type=str,
                         choices=['diff', 'ratio'],
                         default='diff')
+    ## Type of Shuffling
+    parser.add_argument('-shuffle_type',
+                        dest='shuffle_type',
+                        help='Type of shuffling to do for the centrals',
+                        type=str,
+                        choices=['normal', 'unique', 'not_unique'],
+                        default='normal')
     ## Random Seed
     parser.add_argument('-seed',
                         dest='seed',
@@ -196,7 +203,8 @@ def get_analysis_params(param_dict):
                                 ('pimax'          ,'-pimax'        ,20.  ),
                                 ('frac_stat'      ,'-frac_stat'    ,'diff'),
                                 ('verbose'        ,'-v'            ,'False'),
-                                ('seed'           ,'-seed'         ,1     )])
+                                ('seed'           ,'-seed'         ,1     ),
+                                ('shuffle_type'   ,'-shuffle_type' ,'normal')])
     #
     # Variables for Plotting
     if param_dict['analysis_type'] == 'plots':
@@ -246,6 +254,9 @@ def get_analysis_params(param_dict):
         ##
         ## Choosing the amount of CPUs
         params_pd.loc[params_pd['Name']=='cpu_frac','Value'] = param_dict['cpu_frac']
+        ##
+        ## Choosing types of shuffles to do on Centrals
+        params_pd.loc[params_pd['Name']=='shuffle_type','Value'] = param_dict['shuffle_type']
         ##
         ## Random seed
         params_pd.loc[params_pd['Name']=='seed','Value'] = param_dict['seed']

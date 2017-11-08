@@ -285,6 +285,13 @@ def get_parser():
                         type=str,
                         choices=['std','perc'],
                         default='std')
+    ## Type of Shuffling
+    parser.add_argument('-shuffle_type',
+                        dest='shuffle_type',
+                        help='Type of shuffling to do for the centrals',
+                        type=str,
+                        choices=['normal', 'unique', 'not_unique'],
+                        default='normal')
     ## Verbose
     parser.add_argument('-v','--verbose',
                         dest='verbose',
@@ -736,7 +743,7 @@ def wp_idx_calc(group_df, param_dict, double_count=False, return_pd=False):
         return rp_idx, rp_npairs
 
 def Quenched_Fracs_rp(prop, df_bin_org_cen, group_idx_arr, rpbins_npairs_tot, 
-    param_dict, catl_keys_dict, shuffle_type='normal'):
+    param_dict, catl_keys_dict):
     """
     Marked correlation function calculation for the case,
     where `Conformity + Segregation` is considered
@@ -758,18 +765,7 @@ def Quenched_Fracs_rp(prop, df_bin_org_cen, group_idx_arr, rpbins_npairs_tot,
     param_dict: python dictionary
 
     catl_keys_dict: python dictionary
-
-    shuffle_type: string, optional (default = 'normal')
-        type of shuffling to do for the centrals
-        Options:
-            - 'normal': Shuffles among all galaxy properties in a given mgroup
-            - 'unique': Shuffles within mgroup and rp bin, always assigning 
-                        the same value to each galaxy property, as per 
-                        iteration
-            - 'not_unique': Shuffles within mgroup and rp bin, without 
-                            requiring that the same galaxy be assigned 
-                            the same value for `prop` at each iteration.
-
+    
     Returns
     -----------
     frac_stat_dict: python dictionary
@@ -874,7 +870,7 @@ def Quenched_Fracs_rp(prop, df_bin_org_cen, group_idx_arr, rpbins_npairs_tot,
             mark_sh_cen = copy.deepcopy(prop_orig_arr)
             ##
             ## Shuffling galaxy properties
-            if shuffle_type == 'normal':
+            if param_dict['shuffle_type'] == 'normal':
                 ## Shuffling `mark_sh_cen`
                 num.random.shuffle(mark_sh_cen)
                 ##
@@ -883,14 +879,18 @@ def Quenched_Fracs_rp(prop, df_bin_org_cen, group_idx_arr, rpbins_npairs_tot,
                                                 mark_sh_cen[group_idx_arr[kk].T[1]]])\
                                             for kk in range(len(group_idx_arr))]
             ##
-            elif shuffle_type == 'unique':
+            elif param_dict['shuffle_type'] == 'unique':
                 prop_pairs_rp_sh = [[] for x in range(len(group_idx_arr))]
                 ## Determining if galaxy is quenched or not
                 for kk in range(len(group_idx_arr)):
+                    ## Finding unique indices of 'i' and 'j'
                     i_j_unq = num.unique(num.concatenate((group_idx_arr[kk].T[0],
                                                         group_idx_arr[kk].T[1])))
+                    ## Galaxy properties for given unique indices
                     prop_ij_rp_arr = mark_sh_cen[i_j_unq]
+                    ## Shuffling galaxy property array
                     num.random.shuffle(prop_ij_rp_arr)
+                    ## Assigning gal. property value to each index
                     prop_ij_dict = {}
                     for hh, key_hh in enumerate(i_j_unq):
                         prop_ij_dict[key_hh] = prop_ij_rp_arr[hh]
@@ -899,7 +899,7 @@ def Quenched_Fracs_rp(prop, df_bin_org_cen, group_idx_arr, rpbins_npairs_tot,
                     j_prop_sh = [prop_ij_dict[xx] for xx in group_idx_arr[kk].T[1]]
                     prop_pairs_rp_sh[kk] = num.vstack((i_prop_sh, j_prop_sh))
             ##
-            elif shuffle_type == 'not_unique':
+            elif param_dict['shuffle_type'] == 'not_unique':
                 prop_pairs_rp_sh = [[] for x in range(len(group_idx_arr))]
                 #### --- Shuffling within `rp` bin
                 for kk in range(len(group_idx_arr)):
