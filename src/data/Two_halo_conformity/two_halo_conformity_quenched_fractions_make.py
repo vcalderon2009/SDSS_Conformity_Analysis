@@ -280,6 +280,8 @@ def get_exec_string(params_pd, param_dict):
     string_dict: python dictionary
         dictionary containing strings for `data` and `mocks`
     """
+    ## Current directory
+    working_dir = os.path.dirname(__file__)
     ## Choosing which file to run
     if param_dict['analysis_type']=='calc':
         FRAC_file = 'two_halo_conformity_quenched_fractions.py'
@@ -287,7 +289,7 @@ def get_exec_string(params_pd, param_dict):
         FRAC_file = 'two_halo_conformity_quenched_fractions_plots.py'
     ##
     ## Getting path to `FRAC_file`
-    file_path = os.path.abspath(FRAC_file)
+    file_path = os.path.join(working_dir, FRAC_file)
     ##
     ## Check if File exists
     if os.path.isfile(file_path):

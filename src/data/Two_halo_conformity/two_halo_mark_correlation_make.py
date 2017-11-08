@@ -270,6 +270,8 @@ def get_exec_string(params_pd, param_dict):
     string_dict: python dictionary
         dictionary containing strings for `data` and `mocks`
     """
+    ## Current directory
+    working_dir = os.path.dirname(__file__)
     ## Choosing which file to run
     if param_dict['analysis_type']=='calc':
         MCF_file = 'two_halo_mark_correlation.py'
@@ -277,7 +279,7 @@ def get_exec_string(params_pd, param_dict):
         MCF_file = 'two_halo_mark_correlation_plots.py'
     ##
     ## Getting path to `MCF_file`
-    file_path = os.path.abspath(MCF_file)
+    file_path = os.path.join(working_dir, MCF_file)
     ##
     ## Check if File exists
     if os.path.isfile(file_path):
