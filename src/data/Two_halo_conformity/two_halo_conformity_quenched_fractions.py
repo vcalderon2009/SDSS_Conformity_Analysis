@@ -299,7 +299,6 @@ def get_parser():
                         dest='seed',
                         help='Random seed to be used for the analysis',
                         type=int,
-                        choices=range(0, 2**32 -1),
                         metavar='[0-4294967295]',
                         default=1)
     ## Parsing Objects
