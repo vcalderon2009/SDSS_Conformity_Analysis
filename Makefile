@@ -18,6 +18,7 @@ TWO_HALO_DIR = $(SRC_DIR)/Two_halo_conformity
 # CPU-Fraction
 CPU_FRAC = 0.7
 REMOVE_FILES = "True"
+SHUFFLE_TYPE_CENS = "unique"
 
 ifeq (,$(shell which conda))
 HAS_CONDA=False
@@ -131,7 +132,7 @@ plot_figures:
 ## 2-halo Quenched Fractions - Calculations
 2_halo_fracs_calc:
 	# 2-halo
-	@python $(TWO_HALO_DIR)/two_halo_conformity_quenched_fractions_make.py -a calc -cpu_frac $(CPU_FRAC) -remove $(REMOVE_FILES)
+	@python $(TWO_HALO_DIR)/two_halo_conformity_quenched_fractions_make.py -a calc -cpu_frac $(CPU_FRAC) -remove $(REMOVE_FILES) -shuffle_type $(SHUFFLE_TYPE_CENS)
 
 ## 2-halo Marked Correlation Function - Calculations
 2_halo_mcf_calc:
