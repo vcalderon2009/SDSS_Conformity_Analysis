@@ -47,9 +47,6 @@ from astropy.coordinates import Distance
 import warnings
 from multiprocessing import Pool, Process, cpu_count
 
-## Cython modules
-from pair_counter_rp import pairwise_distance_rp
-
 # Ignoring certain warnings
 warnings.simplefilter("ignore", category=RuntimeWarning)
 
@@ -679,12 +676,12 @@ def wp_idx_calc(group_df, param_dict):
     ### Converting to cartesian coordinates
     coord_1 = group_df[['x','y','z']].values
     ### 
-    rp_ith_arr = pairwise_distance_rp(  coord_1,
-                                        coord_1,
-                                        rpmin=param_dict['rpmin'],
-                                        rpmax=param_dict['rpmax'],
-                                        nrpbins=param_dict['nrpbins'],
-                                        pimax=param_dict['pimax'])
+    rp_ith_arr = cu.pairwise_distance_rp(   coord_1,
+                                            coord_1,
+                                            rpmin=param_dict['rpmin'],
+                                            rpmax=param_dict['rpmax'],
+                                            nrpbins=param_dict['nrpbins'],
+                                            pimax=param_dict['pimax'])
     ### Converting to pandas DataFrame
     rp_ith_pd = pd.DataFrame(rp_ith_arr, columns=['rp','i','j'])
     ### Unique `rp` bins
