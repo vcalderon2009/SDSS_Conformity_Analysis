@@ -3,7 +3,7 @@
 
 # Victor Calderon
 # Oct 30, 2017
-# Last Modified: Oct 31, 2017
+# Last Modified: Nov 8th, 2017
 # Vanderbilt University
 from __future__ import print_function, division, absolute_import
 __author__     =['Victor Calderon']
@@ -765,7 +765,7 @@ def Quenched_Fracs_rp(prop, df_bin_org_cen, group_idx_arr, rpbins_npairs_tot,
     param_dict: python dictionary
 
     catl_keys_dict: python dictionary
-    
+
     Returns
     -----------
     frac_stat_dict: python dictionary
