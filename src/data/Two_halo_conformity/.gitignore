@@ -1,5 +1,5 @@
 ##
 ## Files that will be omitted in this folder
-*run.sh
+*_run.sh
 *.c
 *.html
