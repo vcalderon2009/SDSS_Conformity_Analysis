@@ -589,7 +589,8 @@ def mgroup_bins_create(mgroup_lims, param_dict):
                     for xx in range(len(mgroup_bins)-1)]
     ##
     ## Labels for Plotting for each mass bin
-    mgroup_labels = ['{0} - {1}'.format(*xx.split('_')) for xx in mgroup_keys]
+    mgroup_labels = ['{0:.1f} - {1:.1f}'.format(
+        *num.array(xx.split('_')).astype(float)) for xx in mgroup_keys]
     ##
     ## Indices for the DataFrame
     mgroup_idx    = [xx.replace('.','_') for xx in mgroup_keys]
