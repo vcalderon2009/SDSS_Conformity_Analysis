@@ -1253,7 +1253,7 @@ def fractions_two_halo_plotting(prop_catl_dict, param_dict, proj_dict,
             ##
             ## Group mass - label
             if (jj == 0):
-                ax_data.text(0.45, 0.15, gm_str,
+                ax_data.text(0.57, 0.15, gm_str,
                     transform=ax_data.transAxes,
                     verticalalignment='top', color='#BE0081',
                     bbox=propssfr, weight='bold', fontsize=size_text)
