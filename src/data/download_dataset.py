@@ -34,6 +34,7 @@ from argparse import ArgumentParser
 from argparse import HelpFormatter
 from operator import attrgetter
 import subprocess
+import requests
 
 ### ----| Common Functions |--- ###
 
@@ -81,6 +82,22 @@ def _check_pos_val(val, val_min=0):
         raise argparse.ArgumentTypeError(msg)
 
     return ival
+
+def url_checker(url_str):
+    """
+    Checks if the `url_str` is a valid URL
+
+    Parameters
+    ----------
+    url_str: string
+        url of the website to probe
+    """
+    request = requests.get(url_str)
+    if request.status_code != 200:
+        msg = '`url_str` ({0}) does not exist'.format(url_str)
+        raise ValueError(msg)
+    else:
+        pass
 
 def get_parser():
     """
@@ -158,7 +175,8 @@ def add_to_dict(param_dict):
     sample_s = str(param_dict['sample'])
     ###
     ### URL to download catalogues
-    url_catl = 'http://vpac00.phy.vanderbilt.edu/~caldervf/GIFs/'
+    # url_catl = 'http://vpac00.phy.vanderbilt.edu/~caldervf/GIFs/'
+    url_catl = 'http://vpac00.phy.vanderbilt.edu/~caldervf/Group_Catalogue_Websites/'
     ###
     ### To dictionary
     param_dict['sample_s'] = sample_s
@@ -202,7 +220,7 @@ def directory_skeleton(param_dict, proj_dict):
 
 ### ----| Downloading Data |--- ###
 
-def download_directory(param_dict, cut_dirs=100):
+def download_directory(param_dict, cut_dirs=1):
     """
     Downloads the necessary catalogues to perform the analysis
 
@@ -220,19 +238,21 @@ def download_directory(param_dict, cut_dirs=100):
     ## Creating command to execute download
     for catl_kind in ['data', 'mocks']:
         ## Downloading directories from 
-        calt_kind_url = '{0}/{1}/{2}/{3}'.format(param_dict['url_catl'],
-                                                 catl_kind,
-                                                 param_dict['catl_type'],
-                                                 'Mr'+param_dict['sample_s'])
+        # calt_kind_url = '{0}/{1}/{2}/{3}'.format(param_dict['url_catl'],
+        #                                          catl_kind,
+        #                                          param_dict['catl_type'],
+        #                                          'Mr'+param_dict['sample_s'])
+        calt_kind_url = param_dict['url_catl']
+        url_checker(calt_kind_url)
         ## String to be executed
-        cmd_dw = 'wget -r -nH --cut_dirs={0} -np -R "index.html*" {1}'
+        cmd_dw = 'wget -r -nH -x -np --cut-dirs={0} -R "index.html*" {1}'
         cmd_dw = cmd_dw.format(cut_dirs, calt_kind_url)
         ## Executing command
         print('{0} Downloading Dataset......'.format(param_dict['Prog_msg']))
         print(cmd_dw)
         subprocess.call(cmd_dw, shell=True, cwd=param_dict[catl_kind+'_out'])
         ## Deleting `robots.txt`
-        os.remove('{0}/robots.txt'.format(param_dict))
+        os.remove('{0}/robots.txt'.format(param_dict[catl_kind+'_out']))
 
 ### ----| Main Function |--- ###
 
