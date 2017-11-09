@@ -153,6 +153,11 @@ remove_calc_screens:
 	screen -S "Two_Halo_FRAC_STAT_conformity_calc" -X quit
 	screen -S "Two_Halo_MCF_conformity_calc" -X quit
 
+## Download required Dataset
+download_dataset:
+	# Downloading dataset
+	python $(SRC_DIR)/download_dataset.py
+
 #################################################################################
 # Self Documenting Commands                                                     #
 #################################################################################
