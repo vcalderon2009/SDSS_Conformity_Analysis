@@ -139,6 +139,20 @@ plot_figures:
 	# 2-halo
 	@python $(TWO_HALO_DIR)/two_halo_mark_correlation_make.py -a calc -cpu_frac $(CPU_FRAC) -remove $(REMOVE_FILES)
 
+## Remove Plot screen session
+remove_plot_screens:
+	screen -S "One_Halo_FRAC_STAT_conformity_plots" -X quit
+	screen -S "One_Halo_MCF_conformity_plots" -X quit
+	screen -S "Two_Halo_FRAC_STAT_conformity_plots" -X quit
+	screen -S "Two_Halo_MCF_conformity_plots" -X quit
+
+## Remove Calc. screen session
+remove_calc_screens:
+	screen -S "One_Halo_FRAC_STAT_conformity_calc" -X quit
+	screen -S "One_Halo_MCF_conformity_calc" -X quit
+	screen -S "Two_Halo_FRAC_STAT_conformity_calc" -X quit
+	screen -S "Two_Halo_MCF_conformity_calc" -X quit
+
 #################################################################################
 # Self Documenting Commands                                                     #
 #################################################################################
