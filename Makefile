@@ -18,7 +18,7 @@ TWO_HALO_DIR = $(SRC_DIR)/Two_halo_conformity
 # CPU-Fraction
 CPU_FRAC = 0.7
 REMOVE_FILES = "True"
-SHUFFLE_TYPE_CENS = "not_unique"
+SHUFFLE_TYPE_CENS = "normal"
 
 ifeq (,$(shell which conda))
 HAS_CONDA=False
