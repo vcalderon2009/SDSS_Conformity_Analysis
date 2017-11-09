@@ -73,3 +73,10 @@ target/
 /data/
 reports/figures/SDSS/
 reports/figures_pre_new_code/
+reports/figures_post_new_code_shuffle_non_unique_2_halo_fracs/
+reports/figures_post_new_code_shuffle_normal_2_halo_fracs/
+reports/figures_post_new_code_shuffle_unique_2_halo_fracs/
+one_halo_conformity_quenched_fractions_plots_run.sh
+one_halo_mark_correlation_plots_run.sh
+two_halo_conformity_quenched_fractions_plots_run.sh
+two_halo_mark_correlation_plots_run.sh
