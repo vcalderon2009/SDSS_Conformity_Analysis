@@ -99,6 +99,14 @@ def url_checker(url_str):
     else:
         pass
 
+def is_tool(name):
+    """Check whether `name` is on PATH and marked as executable."""
+
+    # from whichcraft import which
+    from shutil import which
+
+    return which(name) is not None
+
 def get_parser():
     """
     Get parser object for `eco_mocks_create.py` script.
@@ -134,6 +142,12 @@ def get_parser():
                         help='Program message to use throught the script',
                         type=str,
                         default=cu.Program_Msg(__file__))
+    ## `Perfect Catalogue` Option
+    parser.add_argument('-perf',
+                        dest='perf_opt',
+                        help='Option for downloading a `Perfect` catalogue for `mocks`',
+                        type=_str2bool,
+                        default=False)
     ## Parsing Objects
     args = parser.parse_args()
 
@@ -175,8 +189,8 @@ def add_to_dict(param_dict):
     sample_s = str(param_dict['sample'])
     ###
     ### URL to download catalogues
-    # url_catl = 'http://vpac00.phy.vanderbilt.edu/~caldervf/GIFs/'
-    url_catl = 'http://vpac00.phy.vanderbilt.edu/~caldervf/Group_Catalogue_Websites/'
+    url_catl = 'http://vpac00.phy.vanderbilt.edu/~caldervf/Group_Catalogue_Websites/data/SDSS_DR7/'
+    url_checker(url_catl)
     ###
     ### To dictionary
     param_dict['sample_s'] = sample_s
@@ -203,24 +217,30 @@ def directory_skeleton(param_dict, proj_dict):
         Dictionary with current and new paths to project directories
     """
     ## Directory for Catalogues
-    for kind_ii in ['data', 'mocks']:
+    for catl_kind in ['data', 'mocks']:
         catl_dir = os.path.join(proj_dict['data_dir'],
                                 'external',
                                 'SDSS',
-                                kind_ii,
+                                catl_kind,
                                 param_dict['catl_type'],
                                 'Mr{0}'.format(param_dict['sample']))
-        ## Making sure directory exists
-        cu.Path_Folder(catl_dir)
         ##
-        ## Saving path to `param_dict`
-        param_dict['{0}_out'.format(kind_ii)] = catl_dir
+        ## Extra Folders
+        # Member galaxy directory
+        member_dir = os.path.join(catl_dir, 'member_galaxy_catalogues')
+        cu.Path_Folder(member_dir)
+        proj_dict['{0}_out_memb'.format(catl_kind)] = member_dir
+        # Perfect galaxy directory
+        if (catl_kind == 'mocks') and (param_dict['perf_opt']):
+            perf_member_dir = os.path.join(catl_dir, 'perfect_member_galaxy_catalogues')
+            cu.Path_Folder(perf_member_dir)
+            proj_dict['{0}_out_perf_memb'.format(catl_kind)] = perf_member_dir
 
     return proj_dict
 
 ### ----| Downloading Data |--- ###
 
-def download_directory(param_dict, cut_dirs=1):
+def download_directory(param_dict, proj_dict, cut_dirs=8):
     """
     Downloads the necessary catalogues to perform the analysis
 
@@ -228,6 +248,10 @@ def download_directory(param_dict, cut_dirs=1):
     ----------
     param_dict: python dictionary
         dictionary with input parameters and values
+
+    proj_dict: python dictionary
+        dictionary with info of the project that uses the
+        `Data Science` Cookiecutter template.
 
     cut_dirs: int, optional (default = 100)
         number of directories to skip.
@@ -237,22 +261,42 @@ def download_directory(param_dict, cut_dirs=1):
     ###
     ## Creating command to execute download
     for catl_kind in ['data', 'mocks']:
-        ## Downloading directories from 
-        # calt_kind_url = '{0}/{1}/{2}/{3}'.format(param_dict['url_catl'],
-        #                                          catl_kind,
-        #                                          param_dict['catl_type'],
-        #                                          'Mr'+param_dict['sample_s'])
-        calt_kind_url = param_dict['url_catl']
+        ## Downloading directories from the web
+        calt_kind_url = os.path.join(param_dict['url_catl'],
+                                    catl_kind,
+                                    param_dict['catl_type'],
+                                    'Mr'+param_dict['sample_s'],
+                                    'member_galaxy_catalogues/')
         url_checker(calt_kind_url)
         ## String to be executed
-        cmd_dw = 'wget -r -nH -x -np --cut-dirs={0} -R "index.html*" {1}'
-        cmd_dw = cmd_dw.format(cut_dirs, calt_kind_url)
+        cmd_dw = 'wget -m -nH -x -np -r -c --accept=*.hdf5 --cut-dirs={1} --reject="index.html*" {2}'
+        cmd_dw = cmd_dw.format(param_dict['sample_s'], cut_dirs, calt_kind_url)
         ## Executing command
         print('{0} Downloading Dataset......'.format(param_dict['Prog_msg']))
         print(cmd_dw)
-        subprocess.call(cmd_dw, shell=True, cwd=param_dict[catl_kind+'_out'])
+        subprocess.call(cmd_dw, shell=True, cwd=proj_dict[catl_kind+'_out_memb'])
         ## Deleting `robots.txt`
-        os.remove('{0}/robots.txt'.format(param_dict[catl_kind+'_out']))
+        os.remove('{0}/robots.txt'.format(proj_dict[catl_kind+'_out_memb']))
+        ##
+        ## --- Perfect Catalogue -- Mocks
+        if (catl_kind == 'mocks') and (param_dict['perf_opt']):
+            ## Downloading directories from the web
+            calt_kind_url = os.path.join(param_dict['url_catl'],
+                                        catl_kind,
+                                        param_dict['catl_type'],
+                                        'Mr'+param_dict['sample_s'],
+                                        'perfect_member_galaxy_catalogues/')
+            url_checker(calt_kind_url)
+            ## String to be executed
+            cmd_dw = 'wget -r -nH -x -np -A *Mr{0}*.hdf5 --cut-dirs={1} -R "index.html*" {2}'
+            cmd_dw = cmd_dw.format(param_dict['sample_s'], cut_dirs, calt_kind_url)
+            ## Executing command
+            print('{0} Downloading Dataset......'.format(param_dict['Prog_msg']))
+            print(cmd_dw)
+            subprocess.call(cmd_dw, shell=True, cwd=proj_dict['mocks_out_perf_memb'])
+            ## Deleting `robots.txt`
+            os.remove('{0}/robots.txt'.format(proj_dict['mocks_out_perf_memb']))
+
 
 ### ----| Main Function |--- ###
 
