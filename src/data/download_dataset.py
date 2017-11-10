@@ -148,6 +148,11 @@ def get_parser():
                         help='Option for downloading a `Perfect` catalogue for `mocks`',
                         type=_str2bool,
                         default=False)
+    ## Verbose
+    parser.add_argument('-v','--verbose',
+                        dest='verbose',
+                        help='Option to print out project parameters',
+                        action="store_true")
     ## Parsing Objects
     args = parser.parse_args()
 
@@ -170,6 +175,16 @@ def param_vals_test(param_dict):
     """
     ##
     ## This is where the tests for `param_dict` input parameters go.
+    ##
+    ## Testing if `wget` exists in the system
+    if is_tool('wget'):
+        pass
+    else:
+        msg = '{0} You need to have `wget` installed in your system to run '
+        msg += 'this script. You can download the entire dataset at {1}.\n\t\t'
+        msg += 'Exiting....'
+        msg = msg.format(param_dict['Prog_msg'], param_dict['url_catl'])
+        raise ValueError(msg)
 
 def add_to_dict(param_dict):
     """
@@ -269,7 +284,10 @@ def download_directory(param_dict, proj_dict, cut_dirs=8):
                                     'member_galaxy_catalogues/')
         url_checker(calt_kind_url)
         ## String to be executed
-        cmd_dw = 'wget -m -nH -x -np -r -c --accept=*.hdf5 --cut-dirs={1} --reject="index.html*" {2}'
+        if param_dict['verbose']:
+            cmd_dw = 'wget -m -nH -x -np -r -c --accept=*.hdf5 --cut-dirs={1} --reject="index.html*" {2}'
+        else:
+            cmd_dw = 'wget -m -nH -x -np -r -c -nv --accept=*.hdf5 --cut-dirs={1} --reject="index.html*" {2}'
         cmd_dw = cmd_dw.format(param_dict['sample_s'], cut_dirs, calt_kind_url)
         ## Executing command
         print('{0} Downloading Dataset......'.format(param_dict['Prog_msg']))
@@ -277,6 +295,10 @@ def download_directory(param_dict, proj_dict, cut_dirs=8):
         subprocess.call(cmd_dw, shell=True, cwd=proj_dict[catl_kind+'_out_memb'])
         ## Deleting `robots.txt`
         os.remove('{0}/robots.txt'.format(proj_dict[catl_kind+'_out_memb']))
+        ##
+        ##
+        print('\n\n{0} Catalogues were saved at: {1}\n\n'.format(
+            param_dict['Prog_msg'], proj_dict[catl_kind+'_out_memb']))
         ##
         ## --- Perfect Catalogue -- Mocks
         if (catl_kind == 'mocks') and (param_dict['perf_opt']):
@@ -296,6 +318,10 @@ def download_directory(param_dict, proj_dict, cut_dirs=8):
             subprocess.call(cmd_dw, shell=True, cwd=proj_dict['mocks_out_perf_memb'])
             ## Deleting `robots.txt`
             os.remove('{0}/robots.txt'.format(proj_dict['mocks_out_perf_memb']))
+            ##
+            ##
+            print('\n\n{0} Catalogues were saved at: {1}\n\n'.format(
+                param_dict['Prog_msg'], proj_dict['mocks_out_perf_memb']))
 
 
 ### ----| Main Function |--- ###
@@ -307,10 +333,10 @@ def main():
     """
     ## Reading all elements and converting to python dictionary
     param_dict = vars(args)
-    ## Checking for correct input
-    param_vals_test(param_dict)
     ## ---- Adding to `param_dict` ---- 
     param_dict = add_to_dict(param_dict)
+    ## Checking for correct input
+    param_vals_test(param_dict)
     ## Program message
     Prog_msg = param_dict['Prog_msg']
     ##
@@ -326,7 +352,7 @@ def main():
     print('\n'+50*'='+'\n')
     ##
     ## Downloading necessary data
-    download_directory(param_dict)
+    download_directory(param_dict, proj_dict)
 
 # Main function
 if __name__=='__main__':
