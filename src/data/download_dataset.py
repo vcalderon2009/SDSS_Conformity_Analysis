@@ -323,7 +323,6 @@ def download_directory(param_dict, proj_dict, cut_dirs=8):
             print('\n\n{0} Catalogues were saved at: {1}\n\n'.format(
                 param_dict['Prog_msg'], proj_dict['mocks_out_perf_memb']))
 
-
 ### ----| Main Function |--- ###
 
 def main():
