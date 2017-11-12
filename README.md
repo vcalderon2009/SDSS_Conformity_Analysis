@@ -5,7 +5,7 @@ Repository for Analysis on Galactic Conformity in SDSS catalogues
 
 **Author**: Victor Calderon ([victor.calderon@vanderbilt.edu](mailto:victor.calderon@vanderbilt.edu))
 
-**Date**  : 2017-09-27
+**Date**  : 2017-11-11
 
 ## Installing Environment & Dependencies
 
@@ -22,15 +22,19 @@ $: 	make show-help
 	
 	Available rules:
 	
+	1_halo_fracs_calc   1-halo Quenched Fractions - Calculations
+	1_halo_mcf_calc     1-halo Marked Correlation Function - Calculations
+	2_halo_fracs_calc   2-halo Quenched Fractions - Calculations
+	2_halo_mcf_calc     2-halo Marked Correlation Function - Calculations
 	clean               Delete all compiled Python files
 	create_environment  Set up python interpreter environment
-	data                Make Dataset
+	download_dataset    Download required Dataset
 	environment         Set up python interpreter environment - Using environment.yml
 	lint                Lint using flake8
-	remove_environment  Delte python interpreter environment
-	requirements        Install Python Dependencies
-	sync_data_from_s3   Download Data from S3
-	sync_data_to_s3     Upload Data to S3
+	plot_figures        Figures
+	remove_calc_screens Remove Calc. screen session
+	remove_environment  Delete python interpreter environment
+	remove_plot_screens Remove Plot screen session
 	test_environment    Test python environment is setup correctly
 	update_environment  Update python interpreter environment
 ```
@@ -64,13 +68,56 @@ To make it easier to activate the necessary environment, one can check out [*con
 
 Usage
 ------
-This project analyzes **1-halo** and **2-halo** conformity on SDSS DR7 data.
+This project analyzes **1-halo** and **2-halo** conformity on SDSS DR7 data. This repository lets you analyze the SDSS samples used in Calderon et al. (2017).
+
+### Download Dataset
+In order to be able to run the scripts in this repository, one needs to first **download** the required datasets. One can do that by running the following command from the main directory and using the _Makefile_:
+
+```
+	make download_dataset
+```
+This command will download the required catalogues for the analysis to `data/external/`.
 
 ### 1-halo
+There are **2** types of analysis for the 1-halo conformity. These are 1) 1-halo Quenched Fractions calculations, and 2) 1-halo Marked Correlation Function (MCF). One can run these two analyses by running the following commands from the Makefile:
 
+```
+	make 1_halo_fracs_calc
+```
+
+```
+	make 1_halo_mcf_calc
+```
+
+These functions make use of most of a fraction of your CPU, so it is better to run them **one by one**. One can modify this fraction in the Makefile.
 
 ### 2-halo
+There are **2** types of analysis for the 2-halo conformity. These are 1) 2-halo Central Quenched Fractions calculations, and 2) 2-halo Marked Correlation Function (MCF). One can run these two analyses by running the following commands from the Makefile:
 
+```
+	make 2_halo_fracs_calc
+```
+
+```
+	make 2_halo_mcf_calc
+```
+
+These functions make use of most of a fraction of your CPU, so it is better to run them **one by one**. One can modify this fraction in the Makefile.
+
+
+### Plots 
+Once all of the analyses for 1-halo and 2-halo are done, i.e. after having run the **4 commands** above, one can plot all of the results 
+by running the following command
+
+```
+	make plot_figures
+```
+
+This will produce the plots for `data` and `mocks` for all of the 4 different analyses for 1- and 2-halo conformity.
+The figures will be saved at: `/reports/figures/SDSS/Paper_Figures/`.
+
+### Note
+The scripts have default values that were used in Calderon et al. (2017). If one wishes to perform the analyses using a different set of parameters, these can be changed in the files the end with *\*make.py* in the `src/data/One_halo_conformtiy` and `src/data/Two_halo_conformtiy`.
 
 
 Project Organization
