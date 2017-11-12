@@ -1222,8 +1222,8 @@ def main(args):
     ## Program message
     Prog_msg = param_dict['Prog_msg']
     ## Creating Folder Structure
-    # proj_dict  = directory_skeleton(param_dict, cu.cookiecutter_paths(__file__))
-    proj_dict  = directory_skeleton(param_dict, cu.cookiecutter_paths('./'))
+    proj_dict  = directory_skeleton(param_dict, cu.cookiecutter_paths(__file__))
+    # proj_dict  = directory_skeleton(param_dict, cu.cookiecutter_paths('./'))
     ## Choosing cosmological model
     cosmo_model = cosmo_create(cosmo_choice=param_dict['cosmo_choice'])
     # Assigning the cosmological model to `param_dict`

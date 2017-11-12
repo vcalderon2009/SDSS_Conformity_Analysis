@@ -1379,8 +1379,8 @@ def main():
     Prog_msg = param_dict['Prog_msg']
     ##
     ## Creating Folder Structure
-    # proj_dict  = directory_skeleton(param_dict, cu.cookiecutter_paths(__file__))
-    proj_dict  = directory_skeleton(param_dict, cu.cookiecutter_paths('./'))
+    proj_dict  = directory_skeleton(param_dict, cu.cookiecutter_paths(__file__))
+    # proj_dict  = directory_skeleton(param_dict, cu.cookiecutter_paths('./'))
     ##
     ## Printing out project variables
     if param_dict['verbose']:
