@@ -36,7 +36,7 @@ def get_output_path(path='./'):
     """
     proj_dict = cookiecutter_paths(path)
     ## Output Path
-    output_path = os.path.join(proj_dict['data_dir'], 'external')
+    output_path = os.path.join(proj_dict['data_dir'], 'external/')
 
     return output_path
 

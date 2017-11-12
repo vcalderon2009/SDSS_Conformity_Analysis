@@ -99,7 +99,7 @@ def catl_sdss_dir(catl_kind='data', catl_type='mr', sample_s='19',
     else:
         catl_info_str_mod = catl_info_str
     ## Extracting URL of the files
-    filedir  = gp.get_output_path(__file__)+'SDSS/'+catl_kind+'/'+catl_type+'/'
+    filedir  = gp.get_output_path(__file__)+'/SDSS/'+catl_kind+'/'+catl_type+'/'
     filedir += 'Mr'+sample_s+'/'+catl_info_str_mod
     fd.Path_Folder(filedir)
     if print_filedir:
