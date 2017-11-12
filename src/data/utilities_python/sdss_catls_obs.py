@@ -23,7 +23,6 @@ import pandas as pd
 # Extra-modules
 from . import file_dir_check as fd
 from . import get_path       as gp
-from . import pandas_hdf5    as phd
 
 from   collections import Counter
 
