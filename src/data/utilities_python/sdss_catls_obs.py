@@ -8,7 +8,7 @@ __author__     =['Victor Calderon']
 __copyright__  =["Copyright 2017 Victor Calderon, sdss_catls_obs"]
 __email__      =['victor.calderon@vanderbilt.edu']
 __maintainer__ =['Victor Calderon']
-__all__        =["catl_sdss_dir","extract_catls","output_sdss_dir",\
+__all__        =["catl_sdss_dir","extract_catls",\
                  "sdss_catl_clean","sdss_catl_clean_nmin","catl_keys",\
                  "catl_keys_prop","catl_sdss_merge"]
 """
@@ -21,9 +21,9 @@ import os
 import pandas as pd
 
 # Extra-modules
-import custom_utilities_python.file_dir_check as fd
-import custom_utilities_python.get_path       as gp
-import custom_utilities_python.pandas_hdf5    as phd
+from . import file_dir_check as fd
+from . import get_path       as gp
+from . import pandas_hdf5    as phd
 
 from   collections import Counter
 
@@ -99,7 +99,7 @@ def catl_sdss_dir(catl_kind='data', catl_type='mr', sample_s='19',
     else:
         catl_info_str_mod = catl_info_str
     ## Extracting URL of the files
-    filedir  = gp.get_output_path()+'SDSS/'+catl_kind+'/'+catl_type+'/'
+    filedir  = gp.get_output_path(__file__)+'SDSS/'+catl_kind+'/'+catl_type+'/'
     filedir += 'Mr'+sample_s+'/'+catl_info_str_mod
     fd.Path_Folder(filedir)
     if print_filedir:
@@ -183,45 +183,6 @@ def extract_catls(catl_kind='data', catl_type='mr', sample_s='19',
         return catl_arr, len(catl_arr)
     else:
         return catl_arr
-
-def output_sdss_dir(catl_kind='data', catl_type='mr', sample_s='19',
-    Program_Msg=fd.Program_Msg(__file__)):
-    """
-    Output for sdss directorry, either for `data` or `mocks`
-
-    Parameters
-    ----------
-    catl_kind: string, optional (default = 'data')
-        type of catalogue to use
-        Options:
-            - 'data': catalogues comes from SDSS 'real' catalog
-            - 'mocks': catalogue(s) come from SDSS 'mock' catalogues
-    
-    catl_type: string, optional (default = 'mr')
-        type of catalogue to use. It shows which abundance matching method 
-        was used for the CLF when assigning halo masses.
-        Options:
-            - 'mr'   : Uses r-band abs. luminosities
-            - 'mstar': Uses stellar masses
-
-    sample_s: string, optional (default = '19')
-        volume-limited sample to use.
-        Options:
-            - '19': Uses the -19 volume-limited 'Consuelo' sample
-            - '20': Uses the -20 volume-limited 'Esmeralda' sample
-            - '21': Uses the -21 volume-limited 'Carmen' sample
-
-    Returns
-    ----------
-    outdir: string
-        path to the output directory
-    """
-    outdir   = gp.get_plot_path()+'SDSS/'+catl_kind+'/'+catl_type+'/'
-    outdir  += 'Mr'+sample_s
-    fd.Path_Folder(outdir)
-    print('{0} `outdir`: {1}'.format(Program_Msg, outdir))
-
-    return outdir
 
 def sdss_catl_clean(catl_pd, catl_kind, catl_info='members', reindex=True):
     """

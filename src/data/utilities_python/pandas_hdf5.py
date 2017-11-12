@@ -20,7 +20,7 @@ __all__        =["read_pandas_hdf5","read_hdf5_file_to_pandas_DF",\
 import numpy as num
 import pandas as pd
 import h5py
-import custom_utilities_python.file_dir_check as fd
+from . import file_dir_check as fd
 import os
 
 def read_pandas_hdf5(hdf5_file, key=None, ret=False):

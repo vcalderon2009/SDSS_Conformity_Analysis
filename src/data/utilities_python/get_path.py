@@ -4,121 +4,41 @@ Description:
     Setup file paths for systems that I usually work on.
 '''
 
-#Duncan Campbell
-#September 2, 2012
-#Yale University
-#Setup file paths for common systems I work on.
+# Author: Victor Calderon
+# Created: 11/10/2017
+# Vanderbilt University
+# Setup file paths for common systems I work on.
 
 from __future__ import absolute_import
 __author__     =['Victor Calderon']
 __copyright__  =["Copyright 2017 Victor Calderon, get_path"]
 __email__      =['victor.calderon@vanderbilt.edu']
 __maintainer__ =['Victor Calderon']
-__all__        =["get_system", "get_base_path", "get_code_c", "get_data_path",\
-                 "get_output_path", "get_plot_path", "git_root_dir",
+__all__        =["get_base_path", "get_output_path", "git_root_dir",\
                  "cookiecutter_paths"]
 
 # Importing modules
 import git
 import os
-from custom_utilities_python.file_dir_check import Path_Folder as PF
+from .file_dir_check import Path_Folder as PF
 
-def known_systems():
-    return ['bender', 'Victors-MacBook-Pro-2']
-
-def get_system():
-    """
-    get the name of the system
-    """
-    import os, sys
-    path_to_home = os.getenv("HOME")
-    
-    host = os.popen('echo $HOSTNAME').read()
-    host = host.split('.')[0]
-    host = host.split('\n')[0]
-    
-    if host in known_systems(): return host
-    else:
-        host = None
-        if os.path.isfile(os.getenv("HOME")+'/.bender'): host = 'bender'
-        elif os.path.isfile(os.getenv("HOME")+'/.victor-mac-pro'): 
-            host = 'Victors-MacBook-Pro-2'
-        else: raise ValueError('unknown system.')
-        return host
-
-def get_base_path(node=None):
+def get_base_path(path='./'):
     """
     get the base path for the system
     """
-    if node==None: node = get_system()
+    base_path = git_root_dir(path) + '/'
 
-    if node=='bender':
-        path = '/fs1/caldervf/CODES/vandy_group_statistics2/'
-    elif node=='Victors-MacBook-Pro-2':
-        path = '/Users/victor2/Documents/REPOSITORIES/vandy_group_statistics2/'
-    else:
-        return 'error: unknown data directory for this enviorment!' 
+    return base_path
 
-    return path
-
-def get_code_c(node=None):
-    """
-    get the base path to codes in c for the system
-    """
-    if node==None: node = get_system()
-    if node=='bender': 
-        path='/home/caldervf/Codes2/custom_utilities_c/'
-    elif node=='Victors-MacBook-Pro-2':
-        path='/Users/victor2/Codes/custom_utilities_c/'
-    else:
-        raise ValueError ('error: unknown code directory for this environment')
-
-    return path
-
-def get_data_path(node=None):
-    """
-    get the base path to data storage for the system
-    """
-    if node==None: node = get_system()
-
-    if node=='bender':
-        path = get_base_path()+'datafiles/'
-    elif node=='Victors-MacBook-Pro-2':
-        path = get_base_path()+'datafiles/'
-    else:
-        return 'error: unknown data directory for this enviorment!'
-
-    return path
-
-def get_output_path(node=None):
+def get_output_path(path='./'):
     """
     get the base path to get_output_path storage for the system
     """
-    if node==None: node = get_system()
+    proj_dict = cookiecutter_paths(path)
+    ## Output Path
+    output_path = os.path.join(proj_dict['data_dir'], 'external')
 
-    if node=='bender':
-        path = get_base_path()+'processed_data/'
-    elif node=='Victors-MacBook-Pro-2':
-        path = get_base_path()+'processed_data/'
-    else:
-        return 'error: unknown data directory for this enviorment!'
-
-    return path
-
-def get_plot_path(node=None):
-    """
-    get the base path to plot storage for the system
-    """
-    if node==None: node = get_system()
-
-    if node=='bender':
-        path = get_base_path()+'plots/'
-    elif node=='Victors-MacBook-Pro-2':
-        path = get_base_path()+'plots/'
-    else:
-        return 'error: unknown data directory for this environment!'
-
-    return path
+    return output_path
 
 ## Based on the `Data Science` Cookiecutter Template
 def git_root_dir(path='./'):
@@ -155,7 +75,7 @@ def cookiecutter_paths(path='./'):
 
     Returns
     ------------
-    param_dict: python dictionary
+    proj_dict: python dictionary
         dictionary with info of the project that uses the
         `Data Science` Cookiecutter template.
     """
@@ -172,10 +92,10 @@ def cookiecutter_paths(path='./'):
     data_dir = base_dir + 'data/'
     PF(data_dir)
     # Saving into dictionary
-    param_dict = {}
-    param_dict['base_dir'] = base_dir
-    param_dict['plot_dir'] = plot_dir
-    param_dict['src_dir' ] = src_dir
-    param_dict['data_dir'] = data_dir
+    proj_dict = {}
+    proj_dict['base_dir'] = base_dir
+    proj_dict['plot_dir'] = plot_dir
+    proj_dict['src_dir' ] = src_dir
+    proj_dict['data_dir'] = data_dir
 
-    return param_dict
+    return proj_dict
