@@ -60,7 +60,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'SDSS_Conformity'
+project = u'Galactic Conformity in SDSS DR7'
 
 author = 'Victor Calderon <victor.calderon@vanderbilt.edu> '
 current_year = date.today().year
