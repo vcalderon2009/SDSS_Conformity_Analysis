@@ -11,13 +11,16 @@ Repository for Analysis on Galactic Conformity in SDSS catalogues
 
 ---
 
-__Analysis for the signature of galactic conformity in the Sloan Digital Sky Survey (SDSS) Data Release 7 (DR7).__
+### Analysis for the signature of galactic conformity in the Sloan Digital Sky Survey (SDSS) Data Release 7 (DR7).
 
 The documentation details the codes used in Calderon et al. (2017) for the analysis of 1- and 2-halo galactic conformity using a set of different statistics on SDSS DR7 and synthetic catalogues.
+
+### Documentation
 
 The documentation of the project can be found at 
 [https://sdss-conformity-analysis.readthedocs.io](https://sdss-conformity-analysis.readthedocs.io)
 
+### Questions?
 For any questions, please send an email to [victor.calderon@vanderbilt.edu](mailto:victor.calderon@vanderbilt.edu), or submit an _Issue_ on the repository.
 
 Victor C.
