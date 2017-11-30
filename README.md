@@ -18,37 +18,37 @@ The package counts with a __Makefile__ with useful functions. You must use this 
 * Show all available functions in the _Makefile_
 
 ```
-$: 	make show-help
-	
-	Available rules:
-	
-	1_halo_fracs_calc   1-halo Quenched Fractions - Calculations
-	1_halo_mcf_calc     1-halo Marked Correlation Function - Calculations
-	2_halo_fracs_calc   2-halo Quenched Fractions - Calculations
-	2_halo_mcf_calc     2-halo Marked Correlation Function - Calculations
-	clean               Delete all compiled Python files
-	create_environment  Set up python interpreter environment
-	download_dataset    Download required Dataset
-	environment         Set up python interpreter environment - Using environment.yml
-	lint                Lint using flake8
-	plot_figures        Figures
-	remove_calc_screens Remove Calc. screen session
-	remove_environment  Delete python interpreter environment
-	remove_plot_screens Remove Plot screen session
-	test_environment    Test python environment is setup correctly
-	update_environment  Update python interpreter environment
+$:  make show-help
+    
+Available rules:
+
+    1_halo_fracs_calc   1-halo Quenched Fractions - Calculations
+    1_halo_mcf_calc     1-halo Marked Correlation Function - Calculations
+    2_halo_fracs_calc   2-halo Quenched Fractions - Calculations
+    2_halo_mcf_calc     2-halo Marked Correlation Function - Calculations
+    clean               Delete all compiled Python files
+    create_environment  Set up python interpreter environment
+    download_dataset    Download required Dataset
+    environment         Set up python interpreter environment - Using environment.yml
+    lint                Lint using flake8
+    plot_figures        Figures
+    remove_calc_screens Remove Calc. screen session
+    remove_environment  Delete python interpreter environment
+    remove_plot_screens Remove Plot screen session
+    test_environment    Test python environment is setup correctly
+    update_environment  Update python interpreter environment
 ```
 
 * __Create__ the environment from the `environment.yml` file:
 
 ```
-	make environment
+    make environment
 ```
 
 * __Activate__ the new environment __conformity__.
 
 ```
-	source activate conformity
+    source activate conformity
 ```
 
 * To __update__ the `environment.yml` file (when the required packages have changed):
@@ -60,7 +60,7 @@ $: 	make show-help
 * __Deactivate__ the new environment:
 
 ```
-	source deactivate
+    source deactivate
 ```
 
 ### Auto-activate environment
@@ -74,7 +74,7 @@ This project analyzes **1-halo** and **2-halo** conformity on SDSS DR7 data. Thi
 In order to be able to run the scripts in this repository, one needs to first **download** the required datasets. One can do that by running the following command from the main directory and using the _Makefile_:
 
 ```
-	make download_dataset
+    make download_dataset
 ```
 This command will download the required catalogues for the analysis to `data/external/`.
 
@@ -82,11 +82,11 @@ This command will download the required catalogues for the analysis to `data/ext
 There are **2** types of analysis for the 1-halo conformity. These are 1) 1-halo Quenched Fractions calculations, and 2) 1-halo Marked Correlation Function (MCF). One can run these two analyses by running the following commands from the Makefile:
 
 ```
-	make 1_halo_fracs_calc
+    make 1_halo_fracs_calc
 ```
 
 ```
-	make 1_halo_mcf_calc
+    make 1_halo_mcf_calc
 ```
 
 These functions make use of most of a fraction of your CPU, so it is better to run them **one by one**. One can modify this fraction in the Makefile.
@@ -95,11 +95,11 @@ These functions make use of most of a fraction of your CPU, so it is better to r
 There are **2** types of analysis for the 2-halo conformity. These are 1) 2-halo Central Quenched Fractions calculations, and 2) 2-halo Marked Correlation Function (MCF). One can run these two analyses by running the following commands from the Makefile:
 
 ```
-	make 2_halo_fracs_calc
+    make 2_halo_fracs_calc
 ```
 
 ```
-	make 2_halo_mcf_calc
+    make 2_halo_mcf_calc
 ```
 
 These functions make use of most of a fraction of your CPU, so it is better to run them **one by one**. One can modify this fraction in the Makefile.
@@ -110,7 +110,7 @@ Once all of the analyses for 1-halo and 2-halo are done, i.e. after having run t
 by running the following command
 
 ```
-	make plot_figures
+    make plot_figures
 ```
 
 This will produce the plots for `data` and `mocks` for all of the 4 different analyses for 1- and 2-halo conformity.
