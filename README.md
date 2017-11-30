@@ -22,3 +22,50 @@ For any questions, please send an email to [victor.calderon@vanderbilt.edu](mail
 
 Victor C.
 
+---
+
+### Note
+The scripts have default values that were used in Calderon et al. (2017). If one wishes to perform the analyses using a different set of parameters, these can be changed in the files the end with *\*make.py* in the `src/data/One_halo_conformitiy` and `src/data/Two_halo_conformitiy`.
+
+
+Project Organization
+------------
+
+    ├── LICENSE
+    ├── Makefile           <- Makefile with commands like `make data` or `make train`
+    ├── README.md          <- The top-level README for developers using this project.
+    ├── data
+    │   ├── external       <- Data from third party sources.
+    │   ├── interim        <- Intermediate data that has been transformed.
+    │   ├── processed      <- The final, canonical data sets for modeling.
+    │   └── raw            <- The original, immutable data dump.
+    │
+    ├── docs               <- A default Sphinx project; see sphinx-doc.org for details
+    │
+    ├── notebooks          <- Jupyter notebooks. Naming convention is a number (for ordering),
+    │                         the creator's initials, and a short `-` delimited description, e.g.
+    │                         `1.0-jqp-initial-data-exploration`.
+    │
+    ├── reports            <- Generated analysis as HTML, PDF, LaTeX, etc.
+    │   └── figures        <- Generated graphics and figures to be used in reporting
+    │
+    ├── requirements.txt   <- The requirements file for reproducing the analysis environment, e.g.
+    │                         generated with `pip freeze > requirements.txt`
+    │
+    ├── src                <- Source code for use in this project.
+    │   ├── __init__.py    <- Makes src a Python module
+    │   │
+    │   └── data           <- Scripts to download or generate data
+    │       ├── make_dataset.py
+    │       │
+    │       ├── One_halo_conformity <- Scripts to analyze 1-halo conformity
+    │       │
+    │       ├── Two_halo_conformity <- Scripts to analyze 2-halo conformity
+    │       │
+    │       └── utilities_python    <- Scripts to analyze 1-halo conformity
+    │           └── pair_counter_rp <- Scripts used throughout both analyses.
+    │
+    └── tox.ini            <- tox file with settings for running tox; see tox.testrun.org
+
+
+--------
