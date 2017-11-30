@@ -147,5 +147,5 @@ This is the sequence of commands used to create the results shown in
 `Calderon et al. (2017).` The scripts already have default values.
 If one wishes to perform the analysis using a different set of parameters,
 these can be changed in the files that end with ***make.py**
-in the ```src/data/One_halo_conformtiy`` and ``src/data/Two_halo_conformtiy``
+in the ```src/data/One_halo_conformitiy`` and ``src/data/Two_halo_conformitiy``
 directories.
