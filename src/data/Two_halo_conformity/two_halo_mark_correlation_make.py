@@ -328,7 +328,7 @@ def file_construction_and_execution(params_pd, param_dict):
     ##
     ## Parsing text that will go in file
     # Working directory
-    working_dir = os.path.abspath(os.path.dirnama(__file__))
+    working_dir = os.path.abspath(os.path.dirname(__file__))
     ## Obtaining path to file
     outfile_name = 'two_halo_mark_correlation_{0}_run.sh'.format(param_dict['analysis_type'])
     outfile_path = os.path.join(working_dir, outfile_name)
