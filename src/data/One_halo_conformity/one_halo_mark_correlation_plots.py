@@ -1042,7 +1042,7 @@ def mocks_data_extraction(param_dict, proj_dict, pickle_ext='.p'):
 ## --------- Plotting ------------##
 
 def MCF_one_halo_plotting(prop_catl_dict, param_dict, proj_dict, fig_fmt='pdf',
-    figsize_1=(3.5,15.5), figsize_2=(10,15.5)):
+    figsize_1=(4.,15.5), figsize_2=(10,15.5)):
     """
     Funtion to plot the MCF for `data` for the given group mass bins
 
@@ -1387,7 +1387,10 @@ def MCF_one_halo_plotting(prop_catl_dict, param_dict, proj_dict, fig_fmt='pdf',
                 ax_sigma_minor = 1.
             ##
             ## Axes limits and sigma lines
-            xlim_data  = [0.9*param_dict['rpmin'], 1.1*param_dict['rpmax']]
+            if (param_dict['rpmin'] == 0.05) and (param_dict['rpmax']==10):
+                xlim_data  = [0.9*param_dict['rpmin'], 4.]
+            else:    
+                xlim_data  = [0.9*param_dict['rpmin'], 1.1*param_dict['rpmax']]
             ax_data.set_xlim(xlim_data)
             ax_data.set_ylim(ylim_data)
             ax_sigma.set_ylim(ylim_sigma)
