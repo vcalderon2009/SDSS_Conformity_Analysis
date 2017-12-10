@@ -864,7 +864,7 @@ def main():
             catl_step  = int(ncatls / cpu_number)
         else:
             catl_step  = int((ncatls / cpu_number)**-1)
-        ## Array with designanted catalogue numbers for each CPU
+        ## Array with designated catalogue numbers for each CPU
         memb_arr     = num.arange(0, ncatls+1, catl_step)
         memb_arr[-1] = ncatls
         ## Tuples of the ID of each catalogue
