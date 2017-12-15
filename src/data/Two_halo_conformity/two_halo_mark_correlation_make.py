@@ -207,7 +207,8 @@ def get_analysis_params(param_dict):
                                 ('perf_opt'       ,'-perf'         ,'False'),
                                 ('type_sigma'     ,'-sigma'        ,'std'),
                                 ('mg_min'         ,'-mg_min'       ,11.61),
-                                ('mg_max'         ,'-mg_max'       ,13.2),
+                                # ('mg_max'         ,'-mg_max'       ,13.2),
+                                ('mg_max'         ,'-mg_max'       ,12.4),
                                 ('verbose'        ,'-v'            ,'False'),
                                 ('pimax'          ,'-pimax'        ,20.  )])
     ##
