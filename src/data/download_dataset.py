@@ -205,6 +205,7 @@ def add_to_dict(param_dict):
     ###
     ### URL to download catalogues
     url_catl = 'http://vpac00.phy.vanderbilt.edu/~caldervf/Group_Catalogue_Websites/data/SDSS_DR7/'
+    url_catl = 'http://lss.phy.vanderbilt.edu/groups/data_vc/DR7/sdss_catalogues/'
     url_checker(url_catl)
     ###
     ### To dictionary
@@ -285,10 +286,10 @@ def download_directory(param_dict, proj_dict, cut_dirs=8):
         url_checker(calt_kind_url)
         ## String to be executed
         if param_dict['verbose']:
-            cmd_dw = 'wget -m -nH -x -np -r -c --accept=*.hdf5 --cut-dirs={1} --reject="index.html*" {2}'
+            cmd_dw = 'wget -m -nH -x -np -r -c --accept=*.hdf5 --cut-dirs={0} --reject="index.html*" {1}'
         else:
-            cmd_dw = 'wget -m -nH -x -np -r -c -nv --accept=*.hdf5 --cut-dirs={1} --reject="index.html*" {2}'
-        cmd_dw = cmd_dw.format(param_dict['sample_s'], cut_dirs, calt_kind_url)
+            cmd_dw = 'wget -m -nH -x -np -r -c -nv --accept=*.hdf5 --cut-dirs={0} --reject="index.html*" {1}'
+        cmd_dw = cmd_dw.format(cut_dirs, calt_kind_url)
         ## Executing command
         print('{0} Downloading Dataset......'.format(param_dict['Prog_msg']))
         print(cmd_dw)
@@ -325,7 +326,7 @@ def download_directory(param_dict, proj_dict, cut_dirs=8):
 
 ### ----| Main Function |--- ###
 
-def main():
+def main(args):
     """
     Downloads the necessary catalogues to perform the 1- and 2-halo 
     conformity analysis
@@ -358,4 +359,4 @@ if __name__=='__main__':
     ## Input arguments
     args = get_parser()
     # Main Function
-    main()
+    main(args)
