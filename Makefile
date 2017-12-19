@@ -131,13 +131,13 @@ remove_calc_screens:
 	screen -S "Two_Halo_MCF_conformity_calc" -X quit
 
 ## Download required Dataset
-download_dataset:
+download_dataset: remove_catalogues
 	# Downloading dataset
 	python $(SRC_DIR)/download_dataset.py
 
 ## Remove downloaded catalogues
 remove_catalogues:
-	@echo "find $(DATA_DIR) -type f -name '*.ff' -delete"
+	find $(DATA_DIR) -type f -name '*.hdf5' -delete
 
 #################################################################################
 # Self Documenting Commands                                                     #
