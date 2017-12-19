@@ -14,6 +14,7 @@ ENVIRONMENT_FILE = environment.yml
 SRC_DIR = $(PROJECT_DIR)/src/data
 ONE_HALO_DIR = $(SRC_DIR)/One_halo_conformity
 TWO_HALO_DIR = $(SRC_DIR)/Two_halo_conformity
+DATA_DIR = $(PROJECT_DIR)/data
 
 # CPU-Fraction
 CPU_FRAC = 0.7
@@ -133,6 +134,10 @@ remove_calc_screens:
 download_dataset:
 	# Downloading dataset
 	python $(SRC_DIR)/download_dataset.py
+
+## Remove downloaded catalogues
+remove_catalogues:
+	@echo "find $(DATA_DIR) -type f -name '*.ff' -delete"
 
 #################################################################################
 # Self Documenting Commands                                                     #
