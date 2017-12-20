@@ -204,7 +204,6 @@ def add_to_dict(param_dict):
     sample_s = str(param_dict['sample'])
     ###
     ### URL to download catalogues
-    url_catl = 'http://vpac00.phy.vanderbilt.edu/~caldervf/Group_Catalogue_Websites/data/SDSS_DR7/'
     url_catl = 'http://lss.phy.vanderbilt.edu/groups/data_vc/DR7/sdss_catalogues/'
     url_checker(url_catl)
     ###
