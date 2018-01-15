@@ -17,6 +17,7 @@ dependencies:
     - GitPython
     - progressbar2
     - halotools
+    - Corrfunc
     - Sphinx
     - coverage
     - flake8
