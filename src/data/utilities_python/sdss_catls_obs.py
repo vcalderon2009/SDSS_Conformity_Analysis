@@ -213,8 +213,8 @@ def sdss_catl_clean(catl_pd, catl_kind, catl_info='members', reindex=True):
         `cleaned` version of `catl_pd`, after having removed `failed` values
     """
     ## Mstar-ssfr `failed` values
-    ssfr_fail_arr  = [0, -99, -999]
-    mstar_fail_arr = [-1, 0]
+    ssfr_fail_arr  = [0, -99, -999, num.nan]
+    mstar_fail_arr = [-1, 0, num.nan]
     # Getting keys for catalogue
     logssfr_key, logmstar_key = catl_keys_prop(catl_kind=catl_kind,
                                                catl_info=catl_info,
