@@ -47,6 +47,9 @@ from argparse import ArgumentParser
 from argparse import HelpFormatter
 from operator import attrgetter
 from datetime import datetime
+import Corrfunc
+from Corrfunc.mocks.DDrppi_mocks import DDrppi_mocks
+from Corrfunc.utils import convert_rp_pi_counts_to_wp
 
 ## Functions
 class SortingHelpFormatter(HelpFormatter):
@@ -148,6 +151,12 @@ def get_parser():
                         help='Number of bins for projected distance `rp`',
                         type=int,
                         default=10)
+    ## Pimax
+    parser.add_argument('-pimax',
+                        dest='pimax',
+                        help='Value for `pimax` for the proj. corr. function',
+                        type=_check_pos_val,
+                        default=20.)
     ## Random Seed
     parser.add_argument('-seed',
                         dest='seed',
@@ -155,6 +164,12 @@ def get_parser():
                         type=int,
                         metavar='[0-4294967295]',
                         default=1)
+    ## Option for removing file
+    parser.add_argument('-remove',
+                        dest='remove_files',
+                        help='Delete pickle file containing pair counts',
+                        type=_str2bool,
+                        default=False)
     ## Program message
     parser.add_argument('-progmsg',
                         dest='Prog_msg',
@@ -194,7 +209,7 @@ def add_to_dict(param_dict):
     url_rand = os.path.join('http://lss.phy.vanderbilt.edu/groups/data_vc/DR7',
                             'mr-vollim-randoms',
                             'random_Mr{0}.rdcz'.format(sample_s))
-    cu.url_checker(url_rand)
+    # cu.url_checker(url_rand)
     ## Galaxy properties - Limits
     prop_lim = {'logssfr':  -11,
                 'sersic' :  3.,
@@ -268,11 +283,18 @@ def directory_skeleton(param_dict, proj_dict):
     figdir = os.path.join(  proj_dict['plot_dir'],
                             'referee_report_figs_1.0')
     ##
+    ## Randoms catalogue
+    rand_dir = os.path.join(proj_dict['data_dir'],
+                            'external',
+                            'SDSS',
+                            'randoms')
     ## Creating directories
-    cu.Path_Folder(figdir)
+    cu.Path_Folder(figdir  )
+    cu.Path_Folder(rand_dir)
     ##
     ## Adding to dictionary
-    proj_dict['figdir'] = figdir
+    proj_dict['figdir'  ] = figdir
+    proj_dict['rand_dir'] = rand_dir
 
     return proj_dict
 
@@ -289,8 +311,6 @@ def galprop_distr(data_cl_pd, mocks_pd, param_dict, proj_dict):
     proj_dict: python dictionary
         Dictionary with current and new paths to project directories
     """
-
-
 
 def loading_catls(param_dict, proj_dict):
     """
@@ -340,8 +360,347 @@ def loading_catls(param_dict, proj_dict):
 
     return data_cl_pd, mocks_pd
 
+def projected_wp_main(data_cl_pd, mocks_pd, param_dict, proj_dict):
+    """
+    Computes the projected correlation functions for the different 
+    datasets.
+    And plots the results of wp(rp)
+
+    Parameters
+    -----------
+    data_cl_pd: pandas DataFrame
+        DataFrame containig the on about the galaxy properties of the `data`
+        sample
+
+    mocks_pd: pandas DataFrame
+        DataFrame containig the on about the galaxy properties of the `mocks`
+        sample
+
+    param_dict: python dictionary
+        dictionary with `project` variables
+    
+    proj_dict: python dictionary
+        Dictionary with current and new paths to project directories
+
+    Returns
+    -----------
+    act_pd_data: pandas DataFrame
+        DataFrame with the data for `active` galaxies from `data`
+
+    pas_pd_data: pandas DataFrame
+        DataFrame with the data for `passive` galaxies from `data`
+
+    act_pd_mock: pandas DataFrame
+        DataFrame with the data for `active` galaxies from `mocks`
+
+    pas_pd_mock: pandas DataFrame
+        DataFrame with the data for `passive` galaxies from `mocks`
+    """
+    ##
+    ## Catalogue of Randoms
+    rand_file = os.path.join(   proj_dict['rand_dir'],
+                                os.path.basename(param_dict['url_rand']))
+    if os.path.exists(rand_file):
+        rand_pd = pd.read_hdf(  rand_file)
+    else:        
+        rand_pd = pd.read_csv(  param_dict['url_rand'],
+                                sep='\s+',
+                                names=['ra','dec','cz'])
+        rand_pd.to_hdf(rand_file, 'gal', compression='gzip', complevel=9)
+    ##
+    ## Removing files
+    act_data_file = os.path.join(proj_dict['rand_dir'], 'wp_rp_act_data.hdf5')
+    pas_data_file = os.path.join(proj_dict['rand_dir'], 'wp_rp_pas_data.hdf5')
+    act_mock_file = os.path.join(proj_dict['rand_dir'], 'wp_rp_act_mock.hdf5')
+    pas_mock_file = os.path.join(proj_dict['rand_dir'], 'wp_rp_pas_mock.hdf5')
+    #
+    # Check if file exists
+    act_pas_list = [act_data_file, pas_data_file, act_mock_file, pas_mock_file]
+    for file_ii in act_pas_list:
+        if param_dict['remove_files']:
+            if os.path.exists(file_ii):
+                os.remove(file_ii)
+    ##
+    ## Only running analysis if files are not present
+    if all([os.path.isfile(f) for f in act_pas_list]):
+        ## Reading in files
+        act_pd_data = pd.read_hdf(act_data_file, 'gal')
+        pas_pd_data = pd.read_hdf(pas_data_file, 'gal')
+        act_pd_mock = pd.read_hdf(act_mock_file, 'gal')
+        pas_pd_mock = pd.read_hdf(pas_mock_file, 'gal')
+    else:
+        ## Normalized keys
+        prop_keys     = param_dict['prop_keys']
+        prop_norm_key = [xx+'_normed' for xx in prop_keys]
+        n_keys        = len(prop_keys)
+        ##
+        ## Defining dictionaries
+        act_pd_data = pd.DataFrame({'rpbin':10**param_dict['rpbins_cens']})
+        pas_pd_data = pd.DataFrame({'rpbin':10**param_dict['rpbins_cens']})
+        act_pd_mock = pd.DataFrame({'rpbin':10**param_dict['rpbins_cens']})
+        pas_pd_mock = pd.DataFrame({'rpbin':10**param_dict['rpbins_cens']})
+        ## Looping over galaxy property
+        # ProgressBar properties
+        widgets   = [Bar('>'), 'wp(rp) Gals. Props ', ETA(), ' ', ReverseBar('<')]
+        pbar_mock = ProgressBar( widgets=widgets, maxval= 10 * n_keys).start()
+        for kk, prop in enumerate(prop_keys):
+            print('{0} Galaxy Property: {1}'.format(param_dict['Prog_msg'],
+                                                    prop))
+            ## Data
+            prop_normed = prop + '_normed'
+            data_act    = data_cl_pd.loc[data_cl_pd[prop_normed]<= 1.]
+            data_pas    = data_cl_pd.loc[data_cl_pd[prop_normed]>  1.]
+            ##
+            ## Computing wp(rp)
+            # Active
+            wp_act_data = projected_wp_calc(data_act  , rand_pd  ,
+                                            param_dict, proj_dict,
+                                            data_opt = True)
+            # Passive
+            wp_pas_data = projected_wp_calc(data_pas  , rand_pd  ,
+                                            param_dict, proj_dict,
+                                            data_opt = True)
+            ##
+            ## Saving to `active` and `passive` wp DataFrames
+            act_pd_data.loc[:,prop+'_wp'] = wp_act_data
+            pas_pd_data.loc[:,prop+'_wp'] = wp_pas_data
+            ##
+            ## Mocks
+            if prop in mocks_pd.columns.values:
+                # Active and Passive - Mock
+                mocks_act = mocks_pd.loc[mocks_pd[prop_normed] <= 1.]
+                mocks_pas = mocks_pd.loc[mocks_pd[prop_normed] >  1.]
+                ##
+                ## Computing wp(rp)
+                # Active
+                wp_act_mock = projected_wp_calc(mocks_act  , rand_pd  ,
+                                                param_dict, proj_dict,
+                                                data_opt = False)
+                # Passive
+                wp_pas_mock = projected_wp_calc(mocks_pas  , rand_pd  ,
+                                                param_dict, proj_dict,
+                                                data_opt = False)
+                ##
+                ## Saving to `active` and `passive` wp DataFrames
+                act_pd_mock.loc[:,prop+'_wp'] = wp_act_mock
+                pas_pd_mock.loc[:,prop+'_wp'] = wp_pas_mock
+            pbar_mock.update(10*kk)
+        pbar_mock.finish()
+        ##
+        ## Saving Data
+        act_pd_data.to_hdf(act_data_file, 'gal')
+        pas_pd_data.to_hdf(pas_data_file, 'gal')
+        act_pd_mock.to_hdf(act_mock_file, 'gal')
+        pas_pd_mock.to_hdf(pas_mock_file, 'gal')
+
+    return act_pd_data, pas_pd_data, act_pd_mock, pas_pd_mock
+
+def projected_wp_calc(catl_pd, rand_pd, param_dict, proj_dict, data_opt=False):
+    """
+    Separates between `active` and `passive` galaxies for a given galaxy 
+    property
+
+    Parameters
+    ------------
+    catl_pd: pandas DataFrame
+        DataFrame containg the galaxy properties to analyze
+
+    rand_pd: pandas DataFrame
+        DataFrame containing positions of `randoms`
+
+    param_dict: python dictionary
+        dictionary with `project` variables
+
+    proj_dict: python dictionary
+        Dictionary with current and new paths to project directories
+
+    data_opt: boolean, optional (default = False)
+        `True` if `catl_pd` is real SDSS data.
+        `False` if `catl_pd` is a mock catalogue
+
+    Returns
+    ------------
+    wp: numpy.ndarray, shape(N,)
+        The projected correlation function, calculated using the chosen
+        estimator, is returned. If *any* of the ``pi`` bins (in an ``rp``
+        bin) contains 0 for the ``RR`` counts, then ``NAN`` is returned
+        for that ``rp`` bin.
+
+    """
+    ## Corrfunc options
+    cosmology = 1
+    nthreads  = 2
+    ## Number of elements in `catl_pd` and `rand_pd`
+    N         = len(catl_pd)
+    rand_N    = len(rand_pd)
+    ## Weights
+    if data_opt:
+        weights1 = catl_pd['compl'].values**(-1)
+    else:
+        weights1 = num.ones(N)
+    ## Auto pair counts in DD
+    autocorr  = 1
+    DD_counts = DDrppi_mocks(   autocorr,
+                                cosmology,
+                                nthreads,
+                                param_dict['pimax'],
+                                10**param_dict['rpbin_arr'],
+                                catl_pd['ra'].values,
+                                catl_pd['dec'].values,
+                                catl_pd['cz'].values,
+                                weights1 = weights1,
+                                weights2 = weights1)
+    ## Cross pair counts in DR
+    autocorr  = 0
+    DR_counts = DDrppi_mocks(   autocorr,
+                                cosmology,
+                                nthreads,
+                                param_dict['pimax'],
+                                10**param_dict['rpbin_arr'],
+                                catl_pd['ra'].values,
+                                catl_pd['dec'].values,
+                                catl_pd['cz'].values,
+                                RA2  =rand_pd['ra'].values,
+                                DEC2 =rand_pd['dec'].values,
+                                CZ2  =rand_pd['cz'].values,
+                                weights1 = weights1,
+                                weights2 = num.ones(rand_N))
+    ## Auto apirs counts in RR
+    autocorr  = 1
+    RR_counts = DDrppi_mocks(   autocorr,
+                                cosmology,
+                                nthreads,
+                                param_dict['pimax'],
+                                10**param_dict['rpbin_arr'],
+                                rand_pd['ra'].values,
+                                rand_pd['dec'].values,
+                                rand_pd['cz'].values)
+    ## All the pair counts are done, get the angular correlation function
+    wp = convert_rp_pi_counts_to_wp(    N,
+                                        N,
+                                        rand_N,
+                                        rand_N,
+                                        DD_counts,
+                                        DR_counts,
+                                        DR_counts,
+                                        RR_counts,
+                                        param_dict['nrpbins'],
+                                        param_dict['pimax'])
+
+    return wp
+    
+def projected_wp_plot(act_pd_data, pas_pd_data, act_pd_mock, pas_pd_mock, 
+    param_dict, proj_dict, fig_fmt='pdf', figsize_2=(5.,5.)):
+    """
+    Plots the projected correlation function wp(rp)
+
+    Parameters
+    ------------
+    act_pd_data: pandas DataFrame
+        DataFrame with the data for `active` galaxies from `data`
+
+    pas_pd_data: pandas DataFrame
+        DataFrame with the data for `passive` galaxies from `data`
+
+    act_pd_mock: pandas DataFrame
+        DataFrame with the data for `active` galaxies from `mocks`
+
+    pas_pd_mock: pandas DataFrame
+        DataFrame with the data for `passive` galaxies from `mocks`
+
+    param_dict: python dictionary
+        dictionary with `project` variables
+    
+    proj_dict: python dictionary
+        Dictionary with current and new paths to project directories
+    """
+    Prog_msg = param_dict['Prog_msg']
+    ## Galaxy properties
+    prop_keys = param_dict['prop_keys']
+    ## Matplotlib option
+    matplotlib.rcParams['axes.linewidth'] = 2.5
+    matplotlib.rcParams['text.latex.unicode']=True
+    matplotlib.rcParams['text.usetex']=True
+    ##
+    ## Labels
+    xlabel       = r'\boldmath $r_{p}\ \left[h^{-1}\ \textrm{Mpc} \right]$'
+    ylabel       = r'\boldmath $\xi(r_{p})$'
+    ## Figure name
+    fname = os.path.join(   proj_dict['figdir'],
+                            'wprp_galprop_data_mocks.{0}'.format(fig_fmt))
+    ##
+    ## Figure details
+    figsize     = figsize_2
+    size_label  = 20
+    size_legend = 10
+    size_text   = 14
+    #
+    # Figure
+    plt.clf()
+    plt.close()
+    fig = plt.figure(figsize=figsize)
+    ax_data  = fig.add_subplot(111, facecolor='white')
+    ### Plot data
+    # Color and linestyles
+    lines_arr = ['-','--',':']
+    propbox   = dict(boxstyle='round', facecolor='white', alpha=0.7)
+    ## Looping over galaxy properties
+    for kk, prop in enumerate(prop_keys):
+        # Active
+        ax_data.plot(act_pd_data['rpbin'],
+                act_pd_data[prop+'_wp'],
+                color='blue',
+                linestyle=lines_arr[kk],
+                label=r'{0}'.format(prop.replace('_','-')))
+        # Passive
+        ax_data.plot(pas_pd_data['rpbin'],
+                pas_pd_data[prop+'_wp'].values,
+                color='red',
+                linestyle=lines_arr[kk])
+        ##
+        ## Mocks
+        try:
+            ## Active
+            ax_data.plot(act_pd_mock['rpbin'],
+                    act_pd_mock[prop+'_wp'],
+                    color='green',
+                    linestyle=lines_arr[kk],
+                    label=r'{0} - Mocks'.format(prop.replace('_','-')))
+            ## Passive
+            ax_data.plot(pas_pd_mock['rpbin'],
+                    pas_pd_mock[prop+'_wp'].values,
+                    color='orange',
+                    linestyle=lines_arr[kk])
+        except:
+            pass
+    ##
+    ## Legend
+    ax_data.legend(loc='lower left', prop={'size':size_legend})
+    ax_data.set_xscale('log')
+    ax_data.set_yscale('log')
+    ax_data.set_xlabel(xlabel, fontsize=size_label)
+    ax_data.set_ylabel(ylabel, fontsize=size_label)
+    ax_data.text(0.80, 0.95, 'SDSS',
+            transform=ax_data.transAxes,
+            verticalalignment='top',
+            color='black',
+            bbox=propbox,
+            weight='bold', fontsize=size_text)
+    ##
+    ## Saving figure
+    if fig_fmt == 'pdf':
+        plt.savefig(fname, bbox_inches='tight')
+    else:
+        plt.savefig(fname, bbox_inches='tight', dpi=400)
+    print('{0} Figure saved as: {1}'.format(Prog_msg, fname))
+    plt.clf()
+    plt.close()
 
 
+
+
+
+    
 
     
 
@@ -378,6 +737,24 @@ def main(args):
     print('\n'+50*'='+'\n')
     # Distribution of galaxy properties
     data_cl_pd, mocks_pd = loading_catls(param_dict, proj_dict)
+    ##
+    ## Projected correlation function
+    # Calculations
+    (   act_pd_data,
+        pas_pd_data,
+        act_pd_mock,
+        pas_pd_mock) = projected_wp_main(   data_cl_pd,
+                                            mocks_pd  ,
+                                            param_dict,
+                                            proj_dict )
+    # Plotting
+    projected_wp_plot(  act_pd_data,
+                        pas_pd_data,
+                        act_pd_mock,
+                        pas_pd_mock,
+                        param_dict ,
+                        proj_dict)
+
 
 
 # Main function
