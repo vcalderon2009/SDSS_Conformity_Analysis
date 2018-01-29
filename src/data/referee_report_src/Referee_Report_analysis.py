@@ -52,6 +52,9 @@ from Corrfunc.mocks.DDrppi_mocks import DDrppi_mocks
 from Corrfunc.utils import convert_rp_pi_counts_to_wp
 
 ## Functions
+
+#### --------- Argument Parsing --------- ####
+
 class SortingHelpFormatter(HelpFormatter):
     def add_arguments(self, actions):
         """
@@ -181,6 +184,8 @@ def get_parser():
 
     return args
 
+#### --------- Adding parameters --------- ####
+
 def add_to_dict(param_dict):
     """
     Aggregates extra variables to dictionary
@@ -298,19 +303,7 @@ def directory_skeleton(param_dict, proj_dict):
 
     return proj_dict
 
-def galprop_distr(data_cl_pd, mocks_pd, param_dict, proj_dict):
-    """
-    Plots the distribution of color, ssfr, and morphology for the 
-    SDSS DR7 dataset
-
-    Parameters
-    ----------
-    param_dict: python dictionary
-        dictionary with `project` variables
-
-    proj_dict: python dictionary
-        Dictionary with current and new paths to project directories
-    """
+#### --------- Reading Catalogue --------- ####
 
 def loading_catls(param_dict, proj_dict):
     """
@@ -359,6 +352,24 @@ def loading_catls(param_dict, proj_dict):
             mocks_pd.loc[:, col_kk+'_normed'] = mocks_pd[col_kk]/prop_lim[col_kk]
 
     return data_cl_pd, mocks_pd
+
+#### --------- Galaxy Properties - Distributions --------- ####
+
+def galprop_distr(data_cl_pd, mocks_pd, param_dict, proj_dict):
+    """
+    Plots the distribution of color, ssfr, and morphology for the 
+    SDSS DR7 dataset
+
+    Parameters
+    ----------
+    param_dict: python dictionary
+        dictionary with `project` variables
+
+    proj_dict: python dictionary
+        Dictionary with current and new paths to project directories
+    """
+
+#### --------- Projected Correlation Function --------- ####
 
 def projected_wp_main(data_cl_pd, mocks_pd, param_dict, proj_dict):
     """
@@ -695,6 +706,8 @@ def projected_wp_plot(act_pd_data, pas_pd_data, act_pd_mock, pas_pd_mock,
     print('{0} Figure saved as: {1}'.format(Prog_msg, fname))
     plt.clf()
     plt.close()
+
+#### --------- Main Function --------- ####
 
 def main(args):
     """
