@@ -377,62 +377,158 @@ def galprop_distr_main(data_cl_pd, mocks_pd, param_dict, proj_dict,
     proj_dict: python dictionary
         Dictionary with current and new paths to project directories
 
+    fig_fmt: string, optional (default = 'pdf')
+        extension to use for the figure
+
+    figsize: tuple, optional (default = (10,10))
+        size of the figure, in inches.
+
     Returns
     -----------
 
     """
-    Prog_msg         = param_dict['Prog_msg']
+    Prog_msg       = param_dict['Prog_msg']
+    ## Figure name
+    fname = os.path.join(   proj_dict['figdir'],
+                            'galprop_data_mocks_distr.{0}'.format(fig_fmt))
     ## Galaxy properties
-    prop_keys        = param_dict['prop_keys']
-    n_keys           = len(prop_keys)
-    prop_keys_normed = [xx+'_normed' for xx in prop_keys]
+    prop_keys      = param_dict['prop_keys']
+    n_keys         = len(prop_keys)
+    prop_keys_norm = [xx+'_normed' for xx in prop_keys]
+    ## Colors
+    act_color = 'blue'
+    pas_color = 'red'
+    ## Other properties
+    size_label  = 20
+    size_legend = 10
+    size_text   = 14
+    propbox     = dict(boxstyle='round', facecolor='white', alpha=0.7)
     ##
     ## Separating between active and passive galaxies, for each 
     ## galaxy property
     #
     # Initializing figure
+    ## Matplotlib option
+    matplotlib.rcParams['axes.linewidth'] = 2.5
+    matplotlib.rcParams['text.latex.unicode']=True
+    matplotlib.rcParams['text.usetex']=True
+    #
     plt.clf()
     plt.close()
-    fig = plt.figure(figsize=figsize)
-    ax1 = fig.add_subplot()
+    fig      = plt.figure(figsize=figsize)
+    ax1      = fig.add_subplot(311, facecolor='white')
+    ax2      = fig.add_subplot(312, facecolor='white')
+    ax3      = fig.add_subplot(313, facecolor='white')
+    axes_arr = [ax1, ax2, ax3]
+    ## Galaxy Properties - Labels
+    prop_labels = {'g_r':'Color', 'logssfr':'sSFR','sersic':'morphology'}
+    ##
+    ## Looping over galaxy properties
+    for kk, prop in enumerate(prop_keys):
+        # Normalized property
+        prop_norm = prop_keys_norm[kk]
+        ### Data
+        # Active
+        prop_act_data = data_cl_pd.loc[data_cl_pd[prop_norm] <= 1., prop_norm]
+        # Passive
+        prop_pas_data = data_cl_pd.loc[data_cl_pd[prop_norm] > 1., prop_norm]
+        ##
+        ## Plotting distributions
+        axes_arr[kk] = galprop_distr_plot(  prop_act_data,
+                                            axes_arr[kk],
+                                            data_opt=True,
+                                            act_pas_opt='act')
+        axes_arr[kk] = galprop_distr_plot(  prop_pas_data,
+                                            axes_arr[kk],
+                                            data_opt=True,
+                                            act_pas_opt='pas')
+        ### Mocks
+        if prop in mocks_pd.columns.values:
+            # Active
+            prop_act_mock = mocks_pd.loc[mocks_pd[prop_norm] <= 1., prop_norm]
+            # Passive
+            prop_pas_mock = mocks_pd.loc[mocks_pd[prop_norm] > 1., prop_norm]
+            ##
+            ## Plotting distributions
+            axes_arr[kk] = galprop_distr_plot(  prop_act_mock,
+                                                axes_arr[kk],
+                                                data_opt=False,
+                                                act_pas_opt='act')
+            axes_arr[kk] = galprop_distr_plot(  prop_pas_mock,
+                                                axes_arr[kk],
+                                                data_opt=False,
+                                                act_pas_opt='pas')
+        ## Text
+        axes_arr[kk].text(0.80, 0.95, prop_labels[prop],
+                transform=axes_arr[kk].transAxes,
+                verticalalignment='top',
+                color='black',
+                bbox=propbox,
+                weight='bold', fontsize=size_text)
+    ##
+    ## Axes limits
+    ax1.set_xlim(0.,1.5)
+    ax2.set_xlim(0.8,1.2)
+    ax3.set_xlim(0.0,2.)
+    ##
+    ## Saving figure
+    if fig_fmt == 'pdf':
+        plt.savefig(fname, bbox_inches='tight')
+    else:
+        plt.savefig(fname, bbox_inches='tight', dpi=400)
+    print('{0} Figure saved as: {1}'.format(Prog_msg, fname))
+    plt.clf()
+    plt.close()
 
-
-def galprop_distr_plot(data_cl_pd, mocks_pd, param_dict, proj_dict):
+def galprop_distr_plot(catl_pd, ax, data_opt=False, act_pas_opt='act'):
     """
     Plots the distributions of color, ssfr, and morphology for the 
     SDSS DR7 dataset.
 
     Parameters
     -----------
-    data_cl_pd: pandas DataFrame
-        DataFrame containig the on about the galaxy properties of the `data`
-        sample
+    catl_pd: pandas DataFrame
+        DataFrame with the values used for the distributions
 
-    mocks_pd: pandas DataFrame
-        DataFrame containig the on about the galaxy properties of the `mocks`
-        sample
+    ax: matplotlib.axes._subplots.AxesSubplot
+        axis object for the current distribution
 
-    param_dict: python dictionary
-        dictionary with `project` variables
-    
-    proj_dict: python dictionary
-        Dictionary with current and new paths to project directories
+    data_opt: boolean, optional (default = False)
+        option for determining if `catl_pd` is from real SDSS or from 
+        mock catalogue.
+
+    act_pas_opt: string, optional (default = 'act')
+        option for determining is `catl_pd` is `active` or `passive` 
+        population
+        Options:
+            - 'act' or 'pas'
 
     Returns
     -----------
 
     """
-    Prog_msg = param_dict['Prog_msg']
-    ## Galaxy properties
-    prop_keys = param_dict['prop_keys']
-    ## Matplotlib option
-    matplotlib.rcParams['axes.linewidth'] = 2.5
-    matplotlib.rcParams['text.latex.unicode']=True
-    matplotlib.rcParams['text.usetex']=True
+    # KDE plot - Color
+    if data_opt:
+        catl_line = '-'
+        if act_pas_opt == 'act':
+            col = 'blue'
+        else:
+            col = 'red'
+    else:
+        catl_line = '--'
+        if act_pas_opt == 'act':
+            col = 'orange'
+        else:
+            col = 'green'
+    # Plotting
+    mean_distr = catl_pd.values.mean()
+    std_distr  = catl_pd.values.std()
+    sns.kdeplot(catl_pd.values, shade=True, alpha=0.5, ax=ax, color=col)
+    ax.axvline(mean_distr, color=col, linestyle=catl_line)
+    ax.axvspan(mean_distr - std_distr, mean_distr + std_distr,
+                alpha = 0.5, color=col)
 
-def galprop_distr_calc(data_cl_pd, mocks_pd, param_dict, proj_dict):
-    """
-    """
+    return ax
 
 #### --------- Projected Correlation Function --------- ####
 
@@ -819,6 +915,10 @@ def main(args):
                         pas_pd_mock,
                         param_dict ,
                         proj_dict)
+    ##
+    ## Distributions of Galaxy Properties
+    galprop_distr_main(data_cl_pd, mocks_pd, param_dict, proj_dict)
+
 
 # Main function
 if __name__=='__main__':
