@@ -696,18 +696,6 @@ def projected_wp_plot(act_pd_data, pas_pd_data, act_pd_mock, pas_pd_mock,
     plt.clf()
     plt.close()
 
-
-
-
-
-    
-
-    
-
-
-
-
-
 def main(args):
     """
 
@@ -754,8 +742,6 @@ def main(args):
                         pas_pd_mock,
                         param_dict ,
                         proj_dict)
-
-
 
 # Main function
 if __name__=='__main__':
