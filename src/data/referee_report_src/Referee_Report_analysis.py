@@ -355,18 +355,83 @@ def loading_catls(param_dict, proj_dict):
 
 #### --------- Galaxy Properties - Distributions --------- ####
 
-def galprop_distr(data_cl_pd, mocks_pd, param_dict, proj_dict):
+def galprop_distr_main(data_cl_pd, mocks_pd, param_dict, proj_dict,
+    fig_fmt='pdf', figsize=(10,10)):
     """
     Plots the distribution of color, ssfr, and morphology for the 
-    SDSS DR7 dataset
+    SDSS DR7 dataset - Main Function
 
     Parameters
-    ----------
+    -----------
+    data_cl_pd: pandas DataFrame
+        DataFrame containig the on about the galaxy properties of the `data`
+        sample
+
+    mocks_pd: pandas DataFrame
+        DataFrame containig the on about the galaxy properties of the `mocks`
+        sample
+
     param_dict: python dictionary
         dictionary with `project` variables
-
+    
     proj_dict: python dictionary
         Dictionary with current and new paths to project directories
+
+    Returns
+    -----------
+
+    """
+    Prog_msg         = param_dict['Prog_msg']
+    ## Galaxy properties
+    prop_keys        = param_dict['prop_keys']
+    n_keys           = len(prop_keys)
+    prop_keys_normed = [xx+'_normed' for xx in prop_keys]
+    ##
+    ## Separating between active and passive galaxies, for each 
+    ## galaxy property
+    #
+    # Initializing figure
+    plt.clf()
+    plt.close()
+    fig = plt.figure(figsize=figsize)
+    ax1 = fig.add_subplot()
+
+
+def galprop_distr_plot(data_cl_pd, mocks_pd, param_dict, proj_dict):
+    """
+    Plots the distributions of color, ssfr, and morphology for the 
+    SDSS DR7 dataset.
+
+    Parameters
+    -----------
+    data_cl_pd: pandas DataFrame
+        DataFrame containig the on about the galaxy properties of the `data`
+        sample
+
+    mocks_pd: pandas DataFrame
+        DataFrame containig the on about the galaxy properties of the `mocks`
+        sample
+
+    param_dict: python dictionary
+        dictionary with `project` variables
+    
+    proj_dict: python dictionary
+        Dictionary with current and new paths to project directories
+
+    Returns
+    -----------
+
+    """
+    Prog_msg = param_dict['Prog_msg']
+    ## Galaxy properties
+    prop_keys = param_dict['prop_keys']
+    ## Matplotlib option
+    matplotlib.rcParams['axes.linewidth'] = 2.5
+    matplotlib.rcParams['text.latex.unicode']=True
+    matplotlib.rcParams['text.usetex']=True
+
+def galprop_distr_calc(data_cl_pd, mocks_pd, param_dict, proj_dict):
+    """
     """
 
 #### --------- Projected Correlation Function --------- ####
@@ -442,7 +507,6 @@ def projected_wp_main(data_cl_pd, mocks_pd, param_dict, proj_dict):
     else:
         ## Normalized keys
         prop_keys     = param_dict['prop_keys']
-        prop_norm_key = [xx+'_normed' for xx in prop_keys]
         n_keys        = len(prop_keys)
         ##
         ## Defining dictionaries
