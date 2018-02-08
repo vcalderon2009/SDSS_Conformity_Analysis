@@ -22,7 +22,7 @@ To Do:
 import os
 import sys
 import git
-from path_variables import *
+from .path_variables import *
 
 # Importing Modules
 import src.data.utilities_python as cu
