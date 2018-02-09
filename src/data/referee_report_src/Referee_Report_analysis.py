@@ -863,13 +863,15 @@ def projected_wp_plot(act_pd_data, pas_pd_data, act_pd_mock, pas_pd_mock,
                 100*(act_pd_mock[prop+'_wp']-act_pd_data[prop+'_wp'])/\
                     act_pd_data[prop+'_wp'],
                     color=color_arr[0],
-                    linestyle=lines_arr[kk])
+                    linestyle=lines_arr[kk],
+                    label=r'{0} - Act'.format(prop.replace('_','-')))
         ## Passive
         ax_res.plot(pas_pd_data['rpbin'],
                 100*(pas_pd_mock[prop+'_wp']-pas_pd_data[prop+'_wp'])/\
                     pas_pd_data[prop+'_wp'],
                     color=color_arr[1],
-                    linestyle=lines_arr[kk])
+                    linestyle=lines_arr[kk],
+                    label=r'{0} - Pas'.format(prop.replace('_','-')))
     ##
     ## Legend
     ax_data.legend( loc='lower left', bbox_to_anchor=[0, 0],
@@ -887,6 +889,9 @@ def projected_wp_plot(act_pd_data, pas_pd_data, act_pd_mock, pas_pd_mock,
             weight='bold', fontsize=size_text)
     ax_res.set_xlabel(xlabel, fontsize=size_label)
     ax_res.set_ylabel(ylabel_res, fontsize=size_label)
+    ax_res.legend( loc='upper right', bbox_to_anchor=[0.5, 0.5],
+                    ncol=2,
+                    prop={'size':size_legend})
     plt.subplots_adjust(hspace=0.)
     ##
     ## Saving figure
