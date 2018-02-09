@@ -69,6 +69,9 @@ target/
 # Jupyter NB Checkpoints
 .ipynb_checkpoints/
 
+# Images
+*.png
+
 # exclude data from source control by default
 /data/
 reports/figures/SDSS/
@@ -80,3 +83,4 @@ one_halo_conformity_quenched_fractions_plots_run.sh
 one_halo_mark_correlation_plots_run.sh
 two_halo_conformity_quenched_fractions_plots_run.sh
 two_halo_mark_correlation_plots_run.sh
+Synch_files.sh
