@@ -84,3 +84,6 @@ one_halo_mark_correlation_plots_run.sh
 two_halo_conformity_quenched_fractions_plots_run.sh
 two_halo_mark_correlation_plots_run.sh
 Synch_files.sh
+
+# Folders
+reports/figures
