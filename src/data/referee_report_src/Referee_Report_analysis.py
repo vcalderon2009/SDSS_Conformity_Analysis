@@ -852,7 +852,7 @@ def projected_wp_plot(act_pd_data, pas_pd_data, act_pd_mock, pas_pd_mock,
         ## Residuals
         ## Active
         ax_res.plot(act_pd_data['rpbin'],
-                100*.(act_pd_mock[prop+'_wp']-act_pd_data[prop+'_wp'])/\
+                100*(act_pd_mock[prop+'_wp']-act_pd_data[prop+'_wp'])/\
                     act_pd_data[prop+'_wp'],
                     color=color_arr[0],
                     linestyle=lines_arr[kk])
