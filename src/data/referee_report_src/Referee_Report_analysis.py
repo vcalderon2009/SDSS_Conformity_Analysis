@@ -36,6 +36,7 @@ import matplotlib
 matplotlib.use( 'Agg' )
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
+import matplotlib.gridspec as gridspec
 plt.rc('text', usetex=True)
 import seaborn as sns
 # sns.set()
@@ -812,8 +813,15 @@ def projected_wp_plot(act_pd_data, pas_pd_data, act_pd_mock, pas_pd_mock,
     plt.clf()
     plt.close()
     fig     = plt.figure(figsize=figsize)
-    ax_data = fig.add_subplot(211, facecolor='white')
-    ax_res  = fig.add_subplot(212, facecolor='white', sharex=ax_data)
+    gs_prop = gridspec.GridSpec(1, 1, hspace=0.05, wspace=0.1)
+    gs_prop_axes = gridspec.GridSpecFromSubplotSpec(2, 1, 
+        gs_prop[gs_ii], height_ratios=[2,1], hspace=0 )
+    ax_data  = plt.Subplot(fig, gs_prop_axes[0,:])
+    ax_res   = plt.Subplot(fig, gs_prop_axes[1,:], sharex=ax_data)
+    fig.add_subplot(ax_data)
+    fig.add_subplot(ax_res)
+    ax_data.set_facecolor('white')
+    ax_res.set_facecolor('white')
     ## Hiding labels
     plt.setp(ax_data.get_yticklabels(), visible=False)
     ### Plot data
