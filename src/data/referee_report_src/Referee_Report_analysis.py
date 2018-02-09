@@ -815,7 +815,7 @@ def projected_wp_plot(act_pd_data, pas_pd_data, act_pd_mock, pas_pd_mock,
     ax_data = fig.add_subplot(211, facecolor='white')
     ax_res  = fig.add_subplot(212, facecolor='white', sharex=ax_data)
     ## Hiding labels
-    ax_data.axes().get_xaxis().set_visible(False)
+    plt.setp(ax_data.get_yticklabels(), visible=False)
     ### Plot data
     # Color and linestyles
     lines_arr = ['-','--',':']
