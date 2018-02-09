@@ -809,8 +809,8 @@ def projected_wp_plot(act_pd_data, pas_pd_data, act_pd_mock, pas_pd_mock,
     # Figure
     plt.clf()
     plt.close()
-    fig = plt.figure(figsize=figsize)
-    ax_data  = fig.add_subplot(111, facecolor='white')
+    fig     = plt.figure(figsize=figsize)
+    ax_data = fig.add_subplot(111, facecolor='white')
     ### Plot data
     # Color and linestyles
     lines_arr = ['-','--',':']
@@ -830,23 +830,20 @@ def projected_wp_plot(act_pd_data, pas_pd_data, act_pd_mock, pas_pd_mock,
                 linestyle=lines_arr[kk])
         ##
         ## Mocks
-        try:
-            ## Active
-            ax_data.plot(act_pd_mock['rpbin'],
-                    act_pd_mock[prop+'_wp'],
-                    color='green',
-                    linestyle=lines_arr[kk],
-                    label=r'{0} - Mocks'.format(prop.replace('_','-')))
-            ## Passive
-            ax_data.plot(pas_pd_mock['rpbin'],
-                    pas_pd_mock[prop+'_wp'].values,
-                    color='orange',
-                    linestyle=lines_arr[kk])
-        except:
-            pass
+        ## Active
+        ax_data.plot(act_pd_mock['rpbin'],
+                act_pd_mock[prop+'_wp'],
+                color='green',
+                linestyle=lines_arr[kk],
+                label=r'{0} - Mocks'.format(prop.replace('_','-')))
+        ## Passive
+        ax_data.plot(pas_pd_mock['rpbin'],
+                pas_pd_mock[prop+'_wp'].values,
+                color='orange',
+                linestyle=lines_arr[kk])
     ##
     ## Legend
-    ax_data.legend(loc='lower left', prop={'size':size_legend})
+    plt.legend(loc='lower left', prop={'size':size_legend})
     ax_data.set_xscale('log')
     ax_data.set_yscale('log')
     ax_data.set_xlabel(xlabel, fontsize=size_label)
