@@ -761,7 +761,7 @@ def projected_wp_calc(catl_pd, rand_pd, param_dict, proj_dict, data_opt=False):
     return wp
     
 def projected_wp_plot(act_pd_data, pas_pd_data, act_pd_mock, pas_pd_mock, 
-    param_dict, proj_dict, fig_fmt='pdf', figsize_2=(7.,7.)):
+    param_dict, proj_dict, fig_fmt='pdf', figsize_2=(10.,7.)):
     """
     Plots the projected correlation function wp(rp)
 
@@ -796,6 +796,7 @@ def projected_wp_plot(act_pd_data, pas_pd_data, act_pd_mock, pas_pd_mock,
     ## Labels
     xlabel       = r'\boldmath $r_{p}\ \left[h^{-1}\ \textrm{Mpc} \right]$'
     ylabel       = r'\boldmath $\xi(r_{p})$'
+    ylabel_res   = r'\boldmath $\Delta\ \xi(r_{p})$'
     ## Figure name
     fname = os.path.join(   proj_dict['figdir'],
                             'wprp_galprop_data_mocks.{0}'.format(fig_fmt))
@@ -805,13 +806,16 @@ def projected_wp_plot(act_pd_data, pas_pd_data, act_pd_mock, pas_pd_mock,
     size_label  = 20
     size_legend = 10
     size_text   = 14
+    color_arr = ['blue','red','green','orange']
     #
     # Figure
     plt.clf()
     plt.close()
     fig     = plt.figure(figsize=figsize)
-    ax_data = fig.add_subplot(111, facecolor='white')
-    color_arr = ['blue','red','green','orange']
+    ax_data = fig.add_subplot(211, facecolor='white')
+    ax_res  = fig.add_subplot(212, facecolor='white', sharex=ax_data)
+    ## Hiding labels
+    ax_data.axes().get_xaxis().set_visible(False)
     ### Plot data
     # Color and linestyles
     lines_arr = ['-','--',':']
@@ -852,7 +856,6 @@ def projected_wp_plot(act_pd_data, pas_pd_data, act_pd_mock, pas_pd_mock,
     ax_data.get_legend().get_title().set_color("red")
     ax_data.set_xscale('log')
     ax_data.set_yscale('log')
-    ax_data.set_xlabel(xlabel, fontsize=size_label)
     ax_data.set_ylabel(ylabel, fontsize=size_label)
     ax_data.text(0.80, 0.95, 'SDSS',
             transform=ax_data.transAxes,
@@ -860,6 +863,9 @@ def projected_wp_plot(act_pd_data, pas_pd_data, act_pd_mock, pas_pd_mock,
             color='black',
             bbox=propbox,
             weight='bold', fontsize=size_text)
+    ax_res.set_xlabel(xlabel, fontsize=size_label)
+    ax_res.set_ylabel(ylabel_res, fontsize=size_label)
+    plt.subplots_adjust(hspace=0.)
     ##
     ## Saving figure
     if fig_fmt == 'pdf':
