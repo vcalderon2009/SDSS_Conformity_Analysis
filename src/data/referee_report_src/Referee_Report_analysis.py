@@ -761,7 +761,7 @@ def projected_wp_calc(catl_pd, rand_pd, param_dict, proj_dict, data_opt=False):
     return wp
     
 def projected_wp_plot(act_pd_data, pas_pd_data, act_pd_mock, pas_pd_mock, 
-    param_dict, proj_dict, fig_fmt='pdf', figsize_2=(5.,5.)):
+    param_dict, proj_dict, fig_fmt='pdf', figsize_2=(7.,7.)):
     """
     Plots the projected correlation function wp(rp)
 
@@ -823,12 +823,13 @@ def projected_wp_plot(act_pd_data, pas_pd_data, act_pd_mock, pas_pd_mock,
                 act_pd_data[prop+'_wp'],
                 color=color_arr[0],
                 linestyle=lines_arr[kk],
-                label=r'{0}'.format(prop.replace('_','-')))
+                label=r'{0} - Act'.format(prop.replace('_','-')))
         # Passive
         ax_data.plot(pas_pd_data['rpbin'],
                 pas_pd_data[prop+'_wp'].values,
                 color=color_arr[1],
-                linestyle=lines_arr[kk])
+                linestyle=lines_arr[kk],
+                label=r'{0} - Pas'.format(prop.replace('_','-')))
         ##
         ## Mocks
         ## Active
@@ -836,16 +837,17 @@ def projected_wp_plot(act_pd_data, pas_pd_data, act_pd_mock, pas_pd_mock,
                 act_pd_mock[prop+'_wp'],
                 color=color_arr[2],
                 linestyle=lines_arr[kk],
-                label=r'{0} - Mocks'.format(prop.replace('_','-')))
+                label=r'{0} (M) - Act'.format(prop.replace('_','-')))
         ## Passive
         ax_data.plot(pas_pd_mock['rpbin'],
                 pas_pd_mock[prop+'_wp'].values,
                 color=color_arr[3],
-                linestyle=lines_arr[kk])
+                linestyle=lines_arr[kk],
+                label=r'{0} (M) - Pas'.format(prop.replace('_','-')))
     ##
     ## Legend
     ax_data.legend( loc='lower left', bbox_to_anchor=[0, 0],
-                    ncol=2, title='Galaxy Properties',
+                    ncol=4, title='Galaxy Properties',
                     prop={'size':size_legend})
     ax_data.get_legend().get_title().set_color("red")
     ax_data.set_xscale('log')
