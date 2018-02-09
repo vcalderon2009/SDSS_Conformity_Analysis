@@ -889,8 +889,8 @@ def projected_wp_plot(act_pd_data, pas_pd_data, act_pd_mock, pas_pd_mock,
             weight='bold', fontsize=size_text)
     ax_res.set_xlabel(xlabel, fontsize=size_label)
     ax_res.set_ylabel(ylabel_res, fontsize=size_label)
-    ax_res.legend( loc='upper right', bbox_to_anchor=[0.5, 0.5],
-                    ncol=2,
+    ax_res.legend( loc='upper right', #bbox_to_anchor=[0.5, 0.5],
+                    ncol=3,
                     prop={'size':size_legend})
     plt.subplots_adjust(hspace=0.)
     ##
