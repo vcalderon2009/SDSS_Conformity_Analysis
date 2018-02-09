@@ -848,6 +848,20 @@ def projected_wp_plot(act_pd_data, pas_pd_data, act_pd_mock, pas_pd_mock,
                 color=color_arr[3],
                 linestyle=lines_arr[kk],
                 label=r'{0} (M) - Pas'.format(prop.replace('_','-')))
+        ##
+        ## Residuals
+        ## Active
+        ax_res.plot(act_pd_data['rpbin'],
+                100*.(act_pd_mock[prop+'_wp']-act_pd_data[prop+'_wp'])/\
+                    act_pd_data[prop+'_wp'],
+                    color=color_arr[0],
+                    linestyle=lines_arr[kk])
+        ## Passive
+        ax_res.plot(pas_pd_data['rpbin'],
+                100*.(pas_pd_mock[prop+'_wp']-pas_pd_data[prop+'_wp'])/\
+                    pas_pd_data[prop+'_wp'],
+                    color=color_arr[1],
+                    linestyle=lines_arr[kk])
     ##
     ## Legend
     ax_data.legend( loc='lower left', bbox_to_anchor=[0, 0],
