@@ -796,8 +796,8 @@ def projected_wp_plot(act_pd_data, pas_pd_data, act_pd_mock, pas_pd_mock,
     ##
     ## Labels
     xlabel       = r'\boldmath $r_{p}\ \left[h^{-1}\ \textrm{Mpc} \right]$'
-    ylabel       = r'\boldmath $\xi(r_{p})$'
-    ylabel_res   = r'\boldmath $\Delta\ \xi(r_{p})$'
+    ylabel       = r'\boldmath $w_{p}(r_{p})$'
+    ylabel_res   = r'\boldmath $\Delta\ w_{p}(r_{p})$'
     ## Figure name
     fname = os.path.join(   proj_dict['figdir'],
                             'wprp_galprop_data_mocks.{0}'.format(fig_fmt))
