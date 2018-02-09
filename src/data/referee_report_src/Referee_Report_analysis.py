@@ -847,7 +847,7 @@ def projected_wp_plot(act_pd_data, pas_pd_data, act_pd_mock, pas_pd_mock,
     ##
     ## Legend
     ax_data.legend( loc='lower left', bbox_to_anchor=[0, 0],
-                    ncol=4, title='Galaxy Properties',
+                    ncol=3, title='Galaxy Properties',
                     prop={'size':size_legend})
     ax_data.get_legend().get_title().set_color("red")
     ax_data.set_xscale('log')
