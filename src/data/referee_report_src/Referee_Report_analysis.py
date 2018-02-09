@@ -520,7 +520,7 @@ def galprop_distr_plot(catl_pd, ax, data_opt=False, act_pas_opt='act'):
         if act_pas_opt == 'act':
             col = 'orange'
         else:
-            col = 'green'
+            col = 'cyan'
     # Plotting
     mean_distr = catl_pd.values.mean()
     std_distr  = catl_pd.values.std()
