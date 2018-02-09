@@ -26,7 +26,6 @@ def get_base_path(node=None):
     """
     get the base path for the system
     """
-    if node==None: node = get_system()
     ##
     ## Base path
     try:
