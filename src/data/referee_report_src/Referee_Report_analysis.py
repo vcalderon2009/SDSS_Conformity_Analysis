@@ -762,7 +762,7 @@ def projected_wp_calc(catl_pd, rand_pd, param_dict, proj_dict, data_opt=False):
     return wp
     
 def projected_wp_plot(act_pd_data, pas_pd_data, act_pd_mock, pas_pd_mock, 
-    param_dict, proj_dict, fig_fmt='pdf', figsize_2=(10.,7.)):
+    param_dict, proj_dict, fig_fmt='pdf', figsize_2=(7.,10.)):
     """
     Plots the projected correlation function wp(rp)
 
@@ -823,7 +823,7 @@ def projected_wp_plot(act_pd_data, pas_pd_data, act_pd_mock, pas_pd_mock,
     ax_data.set_facecolor('white')
     ax_res.set_facecolor('white')
     ## Hiding labels
-    plt.setp(ax_data.get_yticklabels(), visible=False)
+    plt.setp(ax_data.get_xticklabels(), visible=False)
     ### Plot data
     # Color and linestyles
     lines_arr = ['-','--',':']
