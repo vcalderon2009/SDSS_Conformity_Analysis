@@ -811,6 +811,7 @@ def projected_wp_plot(act_pd_data, pas_pd_data, act_pd_mock, pas_pd_mock,
     plt.close()
     fig     = plt.figure(figsize=figsize)
     ax_data = fig.add_subplot(111, facecolor='white')
+    color_arr = ['blue','red','green','orange']
     ### Plot data
     # Color and linestyles
     lines_arr = ['-','--',':']
@@ -820,30 +821,30 @@ def projected_wp_plot(act_pd_data, pas_pd_data, act_pd_mock, pas_pd_mock,
         # Active
         ax_data.plot(act_pd_data['rpbin'],
                 act_pd_data[prop+'_wp'],
-                color='blue',
+                color=color_arr[0],
                 linestyle=lines_arr[kk],
                 label=r'{0}'.format(prop.replace('_','-')))
         # Passive
         ax_data.plot(pas_pd_data['rpbin'],
                 pas_pd_data[prop+'_wp'].values,
-                color='red',
+                color=color_arr[1],
                 linestyle=lines_arr[kk])
         ##
         ## Mocks
         ## Active
         ax_data.plot(act_pd_mock['rpbin'],
                 act_pd_mock[prop+'_wp'],
-                color='green',
+                color=color_arr[2],
                 linestyle=lines_arr[kk],
                 label=r'{0} - Mocks'.format(prop.replace('_','-')))
         ## Passive
         ax_data.plot(pas_pd_mock['rpbin'],
                 pas_pd_mock[prop+'_wp'].values,
-                color='orange',
+                color=color_arr[3],
                 linestyle=lines_arr[kk])
     ##
     ## Legend
-    plt.legend(loc='lower left', prop={'size':size_legend})
+    ax_data.legend(loc='lower left', prop={'size':size_legend})
     ax_data.set_xscale('log')
     ax_data.set_yscale('log')
     ax_data.set_xlabel(xlabel, fontsize=size_label)
