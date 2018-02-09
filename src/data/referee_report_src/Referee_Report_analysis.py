@@ -858,7 +858,7 @@ def projected_wp_plot(act_pd_data, pas_pd_data, act_pd_mock, pas_pd_mock,
                     linestyle=lines_arr[kk])
         ## Passive
         ax_res.plot(pas_pd_data['rpbin'],
-                100*.(pas_pd_mock[prop+'_wp']-pas_pd_data[prop+'_wp'])/\
+                100*(pas_pd_mock[prop+'_wp']-pas_pd_data[prop+'_wp'])/\
                     pas_pd_data[prop+'_wp'],
                     color=color_arr[1],
                     linestyle=lines_arr[kk])
