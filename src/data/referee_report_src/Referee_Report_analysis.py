@@ -524,7 +524,8 @@ def galprop_distr_main(data_cl_pd, mocks_pd, param_dict, proj_dict,
     Prog_msg       = param_dict['Prog_msg']
     ## Figure name
     fname = os.path.join(   proj_dict['figdir'],
-                            'galprop_data_mocks_distr.{0}'.format(fig_fmt))
+                            'galprop_data_mocks_distr_method_{0}.{1}'.format(
+                                param_dict['clf_method'], fig_fmt))
     ## Galaxy properties
     prop_keys      = param_dict['prop_keys']
     n_keys         = len(prop_keys)
