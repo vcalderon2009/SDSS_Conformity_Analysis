@@ -51,6 +51,7 @@ from datetime import datetime
 import Corrfunc
 from Corrfunc.mocks.DDrppi_mocks import DDrppi_mocks
 from Corrfunc.utils import convert_rp_pi_counts_to_wp
+import tqdm
 
 ## Functions
 
@@ -321,8 +322,18 @@ def loading_catls(param_dict, proj_dict):
 
     Returns
     ----------
+    data_cl_pd: pandas DataFrame
+        data from the `data` catalogue
+
+    mocks_pd_arr: list, shape (n_mocks,)
+        list with pandas DataFrames for each mock catalogue being 
+        analyzed
 
     """
+    ##
+    ## Galaxy properties - Limits
+    prop_lim  = param_dict['prop_lim' ]
+    prop_keys = param_dict['prop_keys']
     ## Loading data from `data` and `mock` catalogues
     # Data
     data_pd = cu.read_hdf5_file_to_pandas_DF(
@@ -330,29 +341,30 @@ def loading_catls(param_dict, proj_dict):
                                     param_dict['catl_type'],
                                     param_dict['sample_s'])[0])
     data_cl_pd = cu.sdss_catl_clean(data_pd, 'data').copy()
-    # Mocks
-    mocks_pd = cu.read_hdf5_file_to_pandas_DF(
-                cu.extract_catls(   'mocks',
-                                    param_dict['catl_type'],
-                                    param_dict['sample_s'])[0]).copy()
     ##
-    ## Galaxy properties - Limits
-    prop_lim  = param_dict['prop_lim' ]
-    prop_keys = param_dict['prop_keys']
-    ##
-    ## Normalizing data
-    ##
-    ## Data
+    ## Normalizing Data
     for col_kk in prop_keys:
         if col_kk in data_cl_pd.columns.values:
             data_cl_pd.loc[:, col_kk+'_normed'] = data_cl_pd[col_kk]/prop_lim[col_kk]
     ##
     ## Mocks
-    for col_kk in prop_keys:
-        if col_kk in mocks_pd.columns.values:
-            mocks_pd.loc[:, col_kk+'_normed'] = mocks_pd[col_kk]/prop_lim[col_kk]
+    mocks_arr = cu.Index(   cu.catl_sdss_dir( 'mocks',
+                                param_dict['catl_type'],
+                                param_dict['sample_s']), '.hdf5')
+    n_mocks   = len(mocks_arr)
+    # Saving mock data
+    mocks_pd_arr = [[] for x in range(n_mocks)]
+    for ii, mock_ii in enumerate(tqdm(mocks_arr)):
+        ## Extracting data
+        mock_ii_pd = cu.read_hdf5_file_to_pandas_DF(mock_ii)
+        ## Normalizing data
+        for col_kk in prop_keys:
+            if col_kk in mock_ii_pd.columns.values:
+                mock_ii_pd.loc[:, col_kk+'_normed'] = mock_ii_pd[col_kk]/prop_lim[col_kk]
+        ## Saving to list
+        mocks_pd_arr[ii] = mock_ii_pd
 
-    return data_cl_pd, mocks_pd
+    return data_cl_pd, mocks_pd_arr
 
 #### --------- Galaxy Properties - Distributions --------- ####
 
@@ -933,7 +945,7 @@ def main(args):
             print('{0} `{1}`: {2}'.format(Prog_msg, key, key_val))
     print('\n'+50*'='+'\n')
     # Distribution of galaxy properties
-    data_cl_pd, mocks_pd = loading_catls(param_dict, proj_dict)
+    data_cl_pd, mocks_pd_arr = loading_catls(param_dict, proj_dict)
     ##
     ## Projected correlation function
     # Calculations
