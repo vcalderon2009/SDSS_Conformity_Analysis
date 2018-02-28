@@ -706,7 +706,9 @@ def projected_wp_main(data_cl_pd, mocks_pd_arr, param_dict, proj_dict):
     ## Catalogue of Randoms
     wp_rp_dir    = os.path.join(    proj_dict['rand_dir'], 'wp_rp')
     wp_data_dir  = os.path.join(    wp_rp_dir            , 'data')
-    wp_mocks_dir = os.path.join(    wp_rp_dir            , 'mocks')
+    wp_mocks_dir = os.path.join(    wp_rp_dir            , 
+                                    'mocks', 'clf_method_{0}'.format(
+                                        param_dict['clf_method']))
     cu.Path_Folder(wp_rp_dir   )
     cu.Path_Folder(wp_data_dir )
     cu.Path_Folder(wp_mocks_dir)
@@ -894,6 +896,89 @@ def projected_wp_multiprocessing(memb_tuples_ii, mocks_pd_arr, rand_ii,
             cu.File_Exists(act_file_ii)
             cu.File_Exists(pas_file_ii)
 
+def projected_wp_mocks_range(wp_mocks_dir, prop_keys, type_sigma='std'):
+    """
+    Returns the range of mocks at each rp-bin
+
+    Parameters
+    ------------
+    wp_mocks_dir: string
+        path to the mock results from wp-rp
+
+    Returns
+    ------------
+    wp_act_stats: python dictionary
+        dictionary with `active` upper/lower limits for each galaxy property
+
+    wp_pas_stats: python dictionary
+        dictionary with `passive` upper/lower limits for each galaxy property
+
+    """
+    ## Arrays of `active` and `passive` wp-results
+    mocks_act_arr = num.sort(glob(wp_mocks_dir+'/*act*.hdf5'))
+    mocks_pas_arr = num.sort(glob(wp_mocks_dir+'/*pas*.hdf5'))
+    # Variables
+    n_catls = len(mocks_act_arr)
+    # Initializing arrays
+    zeros_arr = num.zeros((param_dict['nrpbins'],1))
+    wp_act_results = dict(zip(prop_keys, [copy.deepcopy(zeros_arr) for xx in 
+                            range(len(prop_keys))]))
+    wp_pas_results = dict(zip(prop_keys, [copy.deepcopy(zeros_arr) for xx in 
+                            range(len(prop_keys))]))
+    ## Looping over galaxy properties
+    for ii in range(n_catls):
+        # Active
+        catl_act_ii = cu.read_hdf5_file_to_pandas_DF(mocks_act_arr[ii])
+        # Passive
+        catl_pas_ii = cu.read_hdf5_file_to_pandas_DF(mocks_pas_arr[ii])
+        # Looping over galaxy properties
+        for prop_zz in prop_keys:
+            # Active
+            wp_act_results[prop_zz] = array_insert( wp_act_results[prop_zz],
+                                                    catl_act_ii[prop_zz+'_wp'],
+                                                    axis=1)
+            # Passive
+            wp_pas_results[prop_zz] = array_insert( wp_pas_results[prop_zz],
+                                                    catl_pas_ii[prop_zz+'_wp'],
+                                                    axis=1)
+    ##
+    ## Statistics for `active` and `passive`
+    wp_act_stats = dict(zip(prop_keys, [{} for xx in range(len(prop_keys))]))
+    wp_pas_stats = dict(zip(prop_keys, [{} for xx in range(len(prop_keys))]))
+    # Looping over galaxy properties
+    for prop_zz in prop_keys:
+        # Deleting 1st row of zeros
+        wp_act_ii = num.delete(wp_act_results[prop_zz], 0, axis=1)
+        wp_pas_ii = num.delete(wp_pas_results[prop_zz], 0, axis=1)
+        ##
+        ## Statistics: Mean, and St. Dev.
+        ## Errors, mean, and St. Dev.
+        # Active
+        (   sigma_act,
+            mean_act ,
+            std_act  ) = sigma_calcs(   wp_act_ii,
+                                        type_sigma=type_sigma,
+                                        return_mean_std=True)
+        # Passive
+        (   sigma_pas,
+            mean_pas ,
+            std_pas  ) = sigma_calcs(   wp_pas_ii,
+                                        type_sigma=type_sigma,
+                                        return_mean_std=True)
+        ##
+        ## Saving values
+        # Active
+        wp_act_stats[prop_zz]['mean' ] = mean_act
+        wp_act_stats[prop_zz]['std'  ] = std_act
+        wp_act_stats[prop_zz]['sigma'] = sigma_act
+        # wp_act_stats[prop_zz]['wp_rp'] = wp_act_ii
+        # Passive
+        wp_pas_stats[prop_zz]['mean' ] = mean_pas
+        wp_pas_stats[prop_zz]['std'  ] = std_pas
+        wp_pas_stats[prop_zz]['sigma'] = sigma_pas
+        # wp_pas_stats[prop_zz]['wp_rp'] = wp_pas_ii
+
+    return wp_act_stats, wp_pas_stats
 
 def projected_wp_calc(catl_pd, rand_pd, param_dict, data_opt=False):
     """
@@ -1149,91 +1234,6 @@ def projected_wp_plot(act_pd_data, pas_pd_data, wp_act_stats, wp_pas_stats,
     print('{0} Figure saved as: {1}'.format(Prog_msg, fname))
     plt.clf()
     plt.close()
-
-def projected_wp_mocks_range(wp_mocks_dir, prop_keys, type_sigma='std'):
-    """
-    Returns the range of mocks at each rp-bin
-
-    Parameters
-    ------------
-    wp_mocks_dir: string
-        path to the mock results from wp-rp
-
-    Returns
-    ------------
-    wp_act_stats: python dictionary
-        dictionary with `active` upper/lower limits for each galaxy property
-
-    wp_pas_stats: python dictionary
-        dictionary with `passive` upper/lower limits for each galaxy property
-
-    """
-    ## Arrays of `active` and `passive` wp-results
-    mocks_act_arr = num.sort(glob(wp_mocks_dir+'/*act*.hdf5'))
-    mocks_pas_arr = num.sort(glob(wp_mocks_dir+'/*pas*.hdf5'))
-    # Variables
-    n_catls = len(mocks_act_arr)
-    # Initializing arrays
-    zeros_arr = num.zeros((param_dict['nrpbins'],1))
-    wp_act_results = dict(zip(prop_keys, [copy.deepcopy(zeros_arr) for xx in 
-                            range(len(prop_keys))]))
-    wp_pas_results = dict(zip(prop_keys, [copy.deepcopy(zeros_arr) for xx in 
-                            range(len(prop_keys))]))
-    ## Looping over galaxy properties
-    for ii in range(n_catls):
-        # Active
-        catl_act_ii = cu.read_hdf5_file_to_pandas_DF(mocks_act_arr[ii])
-        # Passive
-        catl_pas_ii = cu.read_hdf5_file_to_pandas_DF(mocks_pas_arr[ii])
-        # Looping over galaxy properties
-        for prop_zz in prop_keys:
-            # Active
-            wp_act_results[prop_zz] = array_insert( wp_act_results[prop_zz],
-                                                    catl_act_ii[prop_zz+'_wp'],
-                                                    axis=1)
-            # Passive
-            wp_pas_results[prop_zz] = array_insert( wp_pas_results[prop_zz],
-                                                    catl_pas_ii[prop_zz+'_wp'],
-                                                    axis=1)
-    ##
-    ## Statistics for `active` and `passive`
-    wp_act_stats = dict(zip(prop_keys, [{} for xx in range(len(prop_keys))]))
-    wp_pas_stats = dict(zip(prop_keys, [{} for xx in range(len(prop_keys))]))
-    # Looping over galaxy properties
-    for prop_zz in prop_keys:
-        # Deleting 1st row of zeros
-        wp_act_ii = num.delete(wp_act_results[prop_zz], 0, axis=1)
-        wp_pas_ii = num.delete(wp_pas_results[prop_zz], 0, axis=1)
-        ##
-        ## Statistics: Mean, and St. Dev.
-        ## Errors, mean, and St. Dev.
-        # Active
-        (   sigma_act,
-            mean_act ,
-            std_act  ) = sigma_calcs(   wp_act_ii,
-                                        type_sigma=type_sigma,
-                                        return_mean_std=True)
-        # Passive
-        (   sigma_pas,
-            mean_pas ,
-            std_pas  ) = sigma_calcs(   wp_pas_ii,
-                                        type_sigma=type_sigma,
-                                        return_mean_std=True)
-        ##
-        ## Saving values
-        # Active
-        wp_act_stats[prop_zz]['mean' ] = mean_act
-        wp_act_stats[prop_zz]['std'  ] = std_act
-        wp_act_stats[prop_zz]['sigma'] = sigma_act
-        # wp_act_stats[prop_zz]['wp_rp'] = wp_act_ii
-        # Passive
-        wp_pas_stats[prop_zz]['mean' ] = mean_pas
-        wp_pas_stats[prop_zz]['std'  ] = std_pas
-        wp_pas_stats[prop_zz]['sigma'] = sigma_pas
-        # wp_pas_stats[prop_zz]['wp_rp'] = wp_pas_ii
-
-    return wp_act_stats, wp_pas_stats
-
 
 
 #### --------- Main Function --------- ####
