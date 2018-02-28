@@ -897,7 +897,7 @@ def projected_wp_multiprocessing(memb_tuples_ii, mocks_pd_arr, rand_ii,
             cu.File_Exists(act_file_ii)
             cu.File_Exists(pas_file_ii)
 
-def projected_wp_mocks_range(wp_mocks_dir, prop_keys, type_sigma='std'):
+def projected_wp_mocks_range(wp_mocks_dir, param_dict, type_sigma='std'):
     """
     Returns the range of mocks at each rp-bin
 
@@ -905,6 +905,15 @@ def projected_wp_mocks_range(wp_mocks_dir, prop_keys, type_sigma='std'):
     ------------
     wp_mocks_dir: string
         path to the mock results from wp-rp
+
+    param_dict: python dictionary
+        dictionary with all of the script's variables
+
+    type_sigma: string, optional (default = 'std')
+        option for calculating either `percentiles` or `standard deviations`
+        Options:
+            - 'perc': calculates percentiles
+            - 'std' : uses standard deviations as 1-, 2-, and 3-sigmas
 
     Returns
     ------------
@@ -915,6 +924,8 @@ def projected_wp_mocks_range(wp_mocks_dir, prop_keys, type_sigma='std'):
         dictionary with `passive` upper/lower limits for each galaxy property
 
     """
+    ## Constants
+    prop_keys = param_dict['prop_keys']
     ## Arrays of `active` and `passive` wp-results
     mocks_act_arr = num.sort(glob(wp_mocks_dir+'/*act*.hdf5'))
     mocks_pas_arr = num.sort(glob(wp_mocks_dir+'/*pas*.hdf5'))
@@ -1280,7 +1291,7 @@ def main(args):
     ##
     ## Getting range for mocks
     (   wp_act_stats,
-        wp_pas_stats) = projected_wp_mocks_range(wp_mocks_dir, prop_keys)
+        wp_pas_stats) = projected_wp_mocks_range(wp_mocks_dir, param_dict)
     # Plotting
     projected_wp_plot(  act_pd_data ,
                         pas_pd_data ,
@@ -1292,6 +1303,11 @@ def main(args):
     ##
     ## Distributions of Galaxy Properties
     galprop_distr_main(data_cl_pd, mocks_pd_arr[5], param_dict, proj_dict)
+    ##
+    ## End time for running the catalogues
+    end_time   = datetime.now()
+    total_time = end_time - start_time
+    print('{0} Total Time taken (Create): {1}'.format(Prog_msg, total_time))
 
 
 # Main function
