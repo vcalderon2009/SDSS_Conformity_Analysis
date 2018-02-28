@@ -181,6 +181,12 @@ def get_parser():
                         type=int,
                         choices=[1,2,3],
                         default=1)
+    ## Option for removing file
+    parser.add_argument('-shade',
+                        dest='shade_opt',
+                        help='Option for plotting shades for wp(rp). Default: True',
+                        type=_str2bool,
+                        default=True)
     ## CPU Counts
     parser.add_argument('-cpu',
                         dest='cpu_frac',
@@ -1164,24 +1170,25 @@ def projected_wp_plot(act_pd_data, pas_pd_data, wp_act_stats, wp_pas_stats,
     for kk, prop in enumerate(prop_keys):
         ##
         ## Shaded contours for `mocks`
-        # Active
-        for zz in range(3):
-            ## Active
-            ax_data.fill_between(
-                act_pd_data['rpbin'],
-                wp_act_stats[prop]['sigma'][zz][0],
-                wp_act_stats[prop]['sigma'][zz][1],
-                facecolor=color_prop_dict[prop+'_act'],
-                alpha=alpha_arr[zz],
-                zorder=zz+1)
-            # Passive
-            ax_data.fill_between(
-                act_pd_data['rpbin'],
-                wp_pas_stats[prop]['sigma'][zz][0],
-                wp_pas_stats[prop]['sigma'][zz][1],
-                facecolor=color_prop_dict[prop+'_act'],
-                alpha=alpha_arr[zz],
-                zorder=zz+1)
+        if param_dict['shade_opt']:
+            # Active
+            for zz in range(3):
+                ## Active
+                ax_data.fill_between(
+                    act_pd_data['rpbin'],
+                    wp_act_stats[prop]['sigma'][zz][0],
+                    wp_act_stats[prop]['sigma'][zz][1],
+                    facecolor=color_prop_dict[prop+'_act'],
+                    alpha=alpha_arr[zz],
+                    zorder=zz+1)
+                # Passive
+                ax_data.fill_between(
+                    act_pd_data['rpbin'],
+                    wp_pas_stats[prop]['sigma'][zz][0],
+                    wp_pas_stats[prop]['sigma'][zz][1],
+                    facecolor=color_prop_dict[prop+'_act'],
+                    alpha=alpha_arr[zz],
+                    zorder=zz+1)
         # Active
         ax_data.plot(act_pd_data['rpbin'],
                 act_pd_data[prop+'_wp'],
