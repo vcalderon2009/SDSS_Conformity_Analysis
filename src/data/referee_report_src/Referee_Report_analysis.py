@@ -1131,7 +1131,14 @@ def projected_wp_plot(act_pd_data, pas_pd_data, wp_act_stats, wp_pas_stats,
     size_label  = 20
     size_legend = 10
     size_text   = 14
-    color_arr   = ['blue','red','green','orange']
+    color_prop_dict = { 'data_act'   :'blue',
+                        'data_pas'   :'red' ,
+                        'g_r_act'    :'green',
+                        'g_r_pas'    :'lightgreen',
+                        'logssfr_act':'indigo',
+                        'logssfr_pas':'slateblue',
+                        'sersic_act' :'orange',
+                        'sersic_pas' :'cyan'}
     alpha_arr   = [0.7, 0.5, 0.3]
     #
     # Figure
@@ -1155,32 +1162,6 @@ def projected_wp_plot(act_pd_data, pas_pd_data, wp_act_stats, wp_pas_stats,
     propbox   = dict(boxstyle='round', facecolor='white', alpha=0.7)
     ## Looping over galaxy properties
     for kk, prop in enumerate(prop_keys):
-        # Active
-        ax_data.plot(act_pd_data['rpbin'],
-                act_pd_data[prop+'_wp'],
-                color=color_arr[0],
-                linestyle=lines_arr[kk],
-                label=r'{0} - Act'.format(prop.replace('_','-')))
-        # Passive
-        ax_data.plot(pas_pd_data['rpbin'],
-                pas_pd_data[prop+'_wp'].values,
-                color=color_arr[1],
-                linestyle=lines_arr[kk],
-                label=r'{0} - Pas'.format(prop.replace('_','-')))
-        ##
-        ## Mocks
-        ## Active
-        ax_data.plot(act_pd_data['rpbin'],
-                wp_act_stats[prop]['mean'],
-                color=color_arr[2],
-                linestyle=lines_arr[kk],
-                label=r'{0} (M) - Act'.format(prop.replace('_','-')))
-        ## Passive
-        ax_data.plot(act_pd_data['rpbin'],
-                wp_pas_stats[prop]['mean'],
-                color=color_arr[3],
-                linestyle=lines_arr[kk],
-                label=r'{0} (M) - Pas'.format(prop.replace('_','-')))
         ##
         ## Shaded contours for `mocks`
         # Active
@@ -1190,7 +1171,7 @@ def projected_wp_plot(act_pd_data, pas_pd_data, wp_act_stats, wp_pas_stats,
                 act_pd_data['rpbin'],
                 wp_act_stats[prop]['sigma'][zz][0],
                 wp_act_stats[prop]['sigma'][zz][1],
-                facecolor=color_arr[2],
+                facecolor=color_prop_dict[prop+'_act'],
                 alpha=alpha_arr[zz],
                 zorder=zz+1)
             # Passive
@@ -1198,23 +1179,49 @@ def projected_wp_plot(act_pd_data, pas_pd_data, wp_act_stats, wp_pas_stats,
                 act_pd_data['rpbin'],
                 wp_pas_stats[prop]['sigma'][zz][0],
                 wp_pas_stats[prop]['sigma'][zz][1],
-                facecolor=color_arr[3],
+                facecolor=color_prop_dict[prop+'_act'],
                 alpha=alpha_arr[zz],
                 zorder=zz+1)
+        # Active
+        ax_data.plot(act_pd_data['rpbin'],
+                act_pd_data[prop+'_wp'],
+                color=color_prop_dict['data_act'],
+                linestyle=lines_arr[kk],
+                label=r'{0} - Act'.format(prop.replace('_','-')))
+        # Passive
+        ax_data.plot(pas_pd_data['rpbin'],
+                pas_pd_data[prop+'_wp'].values,
+                color=color_prop_dict['data_pas'],
+                linestyle=lines_arr[kk],
+                label=r'{0} - Pas'.format(prop.replace('_','-')))
+        ##
+        ## Mocks
+        ## Active
+        ax_data.plot(act_pd_data['rpbin'],
+                wp_act_stats[prop]['mean'],
+                color=color_prop_dict[prop+'_act'],
+                linestyle=lines_arr[kk],
+                label=r'{0} (M) - Act'.format(prop.replace('_','-')))
+        ## Passive
+        ax_data.plot(act_pd_data['rpbin'],
+                wp_pas_stats[prop]['mean'],
+                color=color_prop_dict[prop+'_pas'],
+                linestyle=lines_arr[kk],
+                label=r'{0} (M) - Pas'.format(prop.replace('_','-')))
         ##
         ## Residuals
         ## Active
         ax_res.plot(act_pd_data['rpbin'],
                 100*(wp_act_stats[prop]['mean']-act_pd_data[prop+'_wp'])/\
                     act_pd_data[prop+'_wp'],
-                    color=color_arr[0],
+                    color=color_prop_dict['data_act'],
                     linestyle=lines_arr[kk],
                     label=r'{0} - Act'.format(prop.replace('_','-')))
         ## Passive
         ax_res.plot(act_pd_data['rpbin'],
                 100*(wp_pas_stats[prop]['mean']-pas_pd_data[prop+'_wp'])/\
                     pas_pd_data[prop+'_wp'],
-                    color=color_arr[1],
+                    color=color_prop_dict['data_pas'],
                     linestyle=lines_arr[kk],
                     label=r'{0} - Pas'.format(prop.replace('_','-')))
     ##
