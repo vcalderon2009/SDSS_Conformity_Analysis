@@ -25,3 +25,4 @@ dependencies:
     - awscli
     - click
     - sphinx_rtd_theme
+    - tqdm
