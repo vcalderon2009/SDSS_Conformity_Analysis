@@ -186,7 +186,7 @@ def get_parser():
                         dest='cpu_frac',
                         help='Fraction of total number of CPUs to use',
                         type=float,
-                        default=0.75)
+                        default=0.5)
     ## Random Seed
     parser.add_argument('-seed',
                         dest='seed',
