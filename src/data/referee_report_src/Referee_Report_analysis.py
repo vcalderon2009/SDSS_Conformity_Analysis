@@ -180,7 +180,7 @@ def get_parser():
                         """,
                         type=int,
                         choices=[1,2,3],
-                        default=3)
+                        default=1)
     ## CPU Counts
     parser.add_argument('-cpu',
                         dest='cpu_frac',
@@ -1287,10 +1287,10 @@ def main(args):
                         wp_pas_stats,
                         param_dict  ,
                         proj_dict   ,
-                        clf_method=1)
+                        clf_method=param_dict['clf_method'])
     ##
     ## Distributions of Galaxy Properties
-    galprop_distr_main(data_cl_pd, mocks_pd_arr[0], param_dict, proj_dict)
+    galprop_distr_main(data_cl_pd, mocks_pd_arr[5], param_dict, proj_dict)
 
 
 # Main function
