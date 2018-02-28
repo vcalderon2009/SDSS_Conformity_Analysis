@@ -51,7 +51,10 @@ from datetime import datetime
 import Corrfunc
 from Corrfunc.mocks.DDrppi_mocks import DDrppi_mocks
 from Corrfunc.utils import convert_rp_pi_counts_to_wp
-import tqdm
+from tqdm import tqdm
+from multiprocessing import Pool, Process, cpu_count
+from glob import glob
+import copy
 
 ## Functions
 
@@ -162,6 +165,12 @@ def get_parser():
                         help='Value for `pimax` for the proj. corr. function',
                         type=_check_pos_val,
                         default=20.)
+    ## CPU Counts
+    parser.add_argument('-cpu',
+                        dest='cpu_frac',
+                        help='Fraction of total number of CPUs to use',
+                        type=float,
+                        default=0.75)
     ## Random Seed
     parser.add_argument('-seed',
                         dest='seed',
@@ -185,6 +194,93 @@ def get_parser():
     args = parser.parse_args()
 
     return args
+
+def array_insert(arr1, arr2, axis=1):
+    """
+    Joins the arrays into a signle multi-dimensional array
+
+    Parameters
+    ----------
+    arr1: array_like
+        first array to merge
+
+    arr2: array_like
+        second array to merge
+
+    Return
+    ---------
+    arr3: array_like
+        merged array from `arr1` and `arr2`
+    """
+    arr3 = num.insert(arr1, len(arr1.T), arr2, axis=axis)
+
+    return arr3
+
+def sigma_calcs(data_arr, type_sigma='std', perc_arr = [68., 95., 99.7],
+    return_mean_std=False):
+    """
+    Calcualates the 1-, 2-, and 3-sigma ranges for `data_arr`
+
+    Parameters
+    -----------
+    data_arr: numpy.ndarray, shape( param_dict['nrpbins'], param_dict['itern_tot'])
+        array of values, from which to calculate percentiles or St. Dev.
+
+    type_sigma: string, optional (default = 'std')
+        option for calculating either `percentiles` or `standard deviations`
+        Options:
+            - 'perc': calculates percentiles
+            - 'std' : uses standard deviations as 1-, 2-, and 3-sigmas
+
+    perc_arr: array_like, optional (default = [68., 95., 99.7])
+        array of percentiles to calculate
+
+    return_mean_std: boolean, optional (default = False)
+        option for returning mean and St. Dev. along with `sigma_dict`
+
+    Return
+    ----------
+    sigma_dict: python dicitionary
+        dictionary containg the 1-, 2-, and 3-sigma upper and lower 
+        ranges for `data-arr`
+
+    mark_mean: array_like
+        array of the mean value of `data_arr`.
+        Only returned if `return_mean_std == True`
+
+    mark_std: array_like
+        array of the St. Dev. value of `data_arr`.
+        Only returned if `return_mean_std == True`
+    """
+    ## Creating dictionary for saving `sigma`s
+    sigma_dict = {}
+    for ii in range(len(perc_arr)):
+        sigma_dict[ii] = []
+    ## Using Percentiles to estimate errors
+    if type_sigma=='perc':
+        for ii, perc_ii in enumerate(perc_arr):
+            mark_lower = num.nanpercentile(data_arr, 50.-(perc_ii/2.),axis=1)
+            mark_upper = num.nanpercentile(data_arr, 50.+(perc_ii/2.),axis=1)
+            # Saving to dictionary
+            sigma_dict[ii] = num.column_stack((mark_lower, mark_upper)).T
+    ## Using standard deviations to estimate errors
+    if type_sigma=='std':
+        mean_val = num.nanmean(data_arr, axis=1)
+        std_val  = num.nanstd( data_arr, axis=1)
+        for ii in range(len(perc_arr)):
+            mark_lower = mean_val - ((ii+1) * std_val)
+            mark_upper = mean_val + ((ii+1) * std_val)
+            # Saving to dictionary
+            sigma_dict[ii] = num.column_stack((mark_lower, mark_upper)).T
+    ##
+    ## Estimating mean and St. Dev. of `data_arr`
+    mark_mean = num.nanmean(data_arr, axis=1)
+    mark_std  = num.nanstd (data_arr, axis=1)
+
+    if return_mean_std:
+        return sigma_dict, mark_mean, mark_std
+    else:
+        return sigma_dict
 
 #### --------- Adding parameters --------- ####
 
@@ -263,6 +359,15 @@ def param_vals_test(param_dict):
         msg += 'this script. You can download the entire dataset at {1}.\n\t\t'
         msg += 'Exiting....'
         msg = msg.format(param_dict['Prog_msg'], param_dict['url_catl'])
+        raise ValueError(msg)
+    ##
+    ## Checking `cpu_frac` range
+    if (param_dict['cpu_frac'] > 0) and (param_dict['cpu_frac'] <= 1):
+        pass
+    else:
+        msg = '{0} `cpu_frac` ({1}) must be between (0,1]'.format(
+            param_dict['Prog_msg'],
+            param_dict['cpu_frac'])
         raise ValueError(msg)
 
 def directory_skeleton(param_dict, proj_dict):
@@ -545,7 +650,7 @@ def galprop_distr_plot(catl_pd, ax, data_opt=False, act_pas_opt='act'):
 
 #### --------- Projected Correlation Function --------- ####
 
-def projected_wp_main(data_cl_pd, mocks_pd, param_dict, proj_dict):
+def projected_wp_main(data_cl_pd, mocks_pd_arr, param_dict, proj_dict):
     """
     Computes the projected correlation functions for the different 
     datasets.
@@ -557,9 +662,9 @@ def projected_wp_main(data_cl_pd, mocks_pd, param_dict, proj_dict):
         DataFrame containig the on about the galaxy properties of the `data`
         sample
 
-    mocks_pd: pandas DataFrame
-        DataFrame containig the on about the galaxy properties of the `mocks`
-        sample
+    mocks_pd_arr: list, shape (n_mocks,)
+        list with pandas DataFrames for each mock catalogue being 
+        analyzed
 
     param_dict: python dictionary
         dictionary with `project` variables
@@ -583,6 +688,13 @@ def projected_wp_main(data_cl_pd, mocks_pd, param_dict, proj_dict):
     """
     ##
     ## Catalogue of Randoms
+    wp_rp_dir    = os.path.join(    proj_dict['rand_dir'], 'wp_rp')
+    wp_data_dir  = os.path.join(    wp_rp_dir            , 'data')
+    wp_mocks_dir = os.path.join(    wp_rp_dir            , 'mocks')
+    cu.Path_Folder(wp_rp_dir   )
+    cu.Path_Folder(wp_data_dir )
+    cu.Path_Folder(wp_mocks_dir)
+    ## Randoms file
     rand_file = os.path.join(   proj_dict['rand_dir'],
                                 os.path.basename(param_dict['url_rand']))
     if os.path.exists(rand_file):
@@ -592,27 +704,25 @@ def projected_wp_main(data_cl_pd, mocks_pd, param_dict, proj_dict):
                                 sep='\s+',
                                 names=['ra','dec','cz'])
         rand_pd.to_hdf(rand_file, 'gal', compression='gzip', complevel=9)
-    ##
+    ###
+    ### ------| DATA |------ ###
+    ###
     ## Removing files
-    act_data_file = os.path.join(proj_dict['rand_dir'], 'wp_rp_act_data.hdf5')
-    pas_data_file = os.path.join(proj_dict['rand_dir'], 'wp_rp_pas_data.hdf5')
-    act_mock_file = os.path.join(proj_dict['rand_dir'], 'wp_rp_act_mock.hdf5')
-    pas_mock_file = os.path.join(proj_dict['rand_dir'], 'wp_rp_pas_mock.hdf5')
-    #
-    # Check if file exists
-    act_pas_list = [act_data_file, pas_data_file, act_mock_file, pas_mock_file]
-    for file_ii in act_pas_list:
+    # Data
+    act_data_file = os.path.join(   wp_data_dir, 'wp_rp_act_data.hdf5')
+    pas_data_file = os.path.join(   wp_data_dir, 'wp_rp_pas_data.hdf5')
+    ## Checking if file exists
+    act_pas_data_list = [act_data_file, pas_data_file]
+    for file_ii in act_pas_data_list:
         if param_dict['remove_files']:
             if os.path.exists(file_ii):
                 os.remove(file_ii)
     ##
-    ## Only running analysis if files are not present
-    if all([os.path.isfile(f) for f in act_pas_list]):
+    ## Reading Data if files present
+    if all([os.path.isfile(f) for f in act_pas_data_list]):
         ## Reading in files
         act_pd_data = pd.read_hdf(act_data_file, 'gal')
         pas_pd_data = pd.read_hdf(pas_data_file, 'gal')
-        act_pd_mock = pd.read_hdf(act_mock_file, 'gal')
-        pas_pd_mock = pd.read_hdf(pas_mock_file, 'gal')
     else:
         ## Normalized keys
         prop_keys     = param_dict['prop_keys']
@@ -621,8 +731,6 @@ def projected_wp_main(data_cl_pd, mocks_pd, param_dict, proj_dict):
         ## Defining dictionaries
         act_pd_data = pd.DataFrame({'rpbin':10**param_dict['rpbins_cens']})
         pas_pd_data = pd.DataFrame({'rpbin':10**param_dict['rpbins_cens']})
-        act_pd_mock = pd.DataFrame({'rpbin':10**param_dict['rpbins_cens']})
-        pas_pd_mock = pd.DataFrame({'rpbin':10**param_dict['rpbins_cens']})
         ## Looping over galaxy property
         # ProgressBar properties
         widgets   = [Bar('>'), 'wp(rp) Gals. Props ', ETA(), ' ', ReverseBar('<')]
@@ -638,48 +746,140 @@ def projected_wp_main(data_cl_pd, mocks_pd, param_dict, proj_dict):
             ## Computing wp(rp)
             # Active
             wp_act_data = projected_wp_calc(data_act  , rand_pd  ,
-                                            param_dict, proj_dict,
-                                            data_opt = True)
+                                            param_dict, data_opt = True)
             # Passive
             wp_pas_data = projected_wp_calc(data_pas  , rand_pd  ,
-                                            param_dict, proj_dict,
-                                            data_opt = True)
+                                            param_dict, data_opt = True)
             ##
             ## Saving to `active` and `passive` wp DataFrames
             act_pd_data.loc[:,prop+'_wp'] = wp_act_data
             pas_pd_data.loc[:,prop+'_wp'] = wp_pas_data
-            ##
-            ## Mocks
-            if prop in mocks_pd.columns.values:
-                # Active and Passive - Mock
-                mocks_act = mocks_pd.loc[mocks_pd[prop_normed] <= 1.]
-                mocks_pas = mocks_pd.loc[mocks_pd[prop_normed] >  1.]
-                ##
-                ## Computing wp(rp)
-                # Active
-                wp_act_mock = projected_wp_calc(mocks_act  , rand_pd  ,
-                                                param_dict, proj_dict,
-                                                data_opt = False)
-                # Passive
-                wp_pas_mock = projected_wp_calc(mocks_pas  , rand_pd  ,
-                                                param_dict, proj_dict,
-                                                data_opt = False)
-                ##
-                ## Saving to `active` and `passive` wp DataFrames
-                act_pd_mock.loc[:,prop+'_wp'] = wp_act_mock
-                pas_pd_mock.loc[:,prop+'_wp'] = wp_pas_mock
-            pbar_mock.update(10*kk)
-        pbar_mock.finish()
         ##
         ## Saving Data
         act_pd_data.to_hdf(act_data_file, 'gal')
         pas_pd_data.to_hdf(pas_data_file, 'gal')
-        act_pd_mock.to_hdf(act_mock_file, 'gal')
-        pas_pd_mock.to_hdf(pas_mock_file, 'gal')
+        cu.File_Exists(act_data_file)
+        cu.File_Exists(pas_data_file)
+    ###
+    ### ------| Mock Catalogues |------ ###
+    ###
+    n_mocks = len(mocks_pd_arr)
+    ## Number of CPUs to use
+    cpu_number = int(cpu_count() * param_dict['cpu_frac'])
+    ## Defining step-size for each CPU
+    if cpu_number <= n_mocks:
+        catl_step  = int(n_mocks / cpu_number)
+    else:
+        catl_step  = int(1)
+    ## Array with designanted catalogue numbers for each CPU
+    memb_arr     = num.arange(0, n_mocks+1, catl_step)
+    memb_arr[-1] = n_mocks
+    ## Tuples of the ID of each catalogue
+    memb_tuples  = num.asarray([(memb_arr[xx], memb_arr[xx+1])
+                            for xx in range(memb_arr.size-1)])
+    ## Assigning `memb_tuples` to function `multiprocessing_catls`
+    procs = []
+    for ii in range(len(memb_tuples)):
+        # Defining `proc` element
+        proc = Process(target=projected_wp_multiprocessing, 
+                        args=(memb_tuples[ii], mocks_pd_arr, rand_pd.copy(), 
+                            wp_mocks_dir, param_dict, proj_dict))
+        # Appending to main `procs` list
+        procs.append(proc)
+        proc.start()
+    ##
+    ## Joining `procs`
+    for proc in procs:
+        proc.join()
 
-    return act_pd_data, pas_pd_data, act_pd_mock, pas_pd_mock
+    return act_pd_data, pas_pd_data, wp_mocks_dir
 
-def projected_wp_calc(catl_pd, rand_pd, param_dict, proj_dict, data_opt=False):
+def projected_wp_multiprocessing(memb_tuples_ii, mocks_pd_arr, rand_ii, 
+    catl_out, param_dict, proj_dict):
+    """
+    Multiprocessing for wp(rp) for mock catalogues
+
+    Parameters
+    ------------
+    memb_tuples_ii: tuple
+        tuple with the indices of the catalogues to be analyzed
+
+    mocks_pd_arr: list
+        list of pandas DataFrames for each mock catalogue to be analyzed
+
+    rand_ii: pandas DataFrame
+        DataFrame with the 3-positions from the random galaxy catalogues
+
+    catl_out: string
+        path to the output folder for the wp-rp result
+
+    param_dict: python dictionary
+        dictionary with all of the script's variables
+
+    proj_dict: python dictionary
+        dictionary with all of the paths used throughout the script
+
+    """
+    ## Program Message
+    Prog_msg = param_dict['Prog_msg']
+    ## Reading in Catalogue IDs
+    start_ii, end_ii = memb_tuples_ii
+    print('{0}  start_ii: {1} | end_ii: {2}'.format(Prog_msg, start_ii, end_ii))
+    ##
+    ## Looping the desired catalogues
+    for ii in range(start_ii,end_ii):
+        print('{0} Analyzing `Mock {1}`\n'.format(Prog_msg, ii))
+        mock_ii     = mocks_pd_arr[ii]
+        act_file_ii = os.path.join( catl_out,
+                                    'wp_rp_act_{0}_mock.hdf5'.format(ii))
+        pas_file_ii = os.path.join( catl_out,
+                                    'wp_rp_pas_{0}_mock.hdf5'.format(ii))
+        ## Checking if files exist
+        act_pas_list_ii = [act_file_ii, pas_file_ii]
+        for file_ii in act_pas_list_ii:
+            if param_dict['remove_files']:
+                if os.path.exists(file_ii):
+                    os.remove(file_ii)
+        ##
+        ##
+        if all([os.path.isfile(f) for f in act_pas_list_ii]):
+            ## Reading in files
+            pass
+        else:
+            ## Normalized keys
+            prop_keys     = param_dict['prop_keys']
+            n_keys        = len(prop_keys)
+            ##
+            ## Defining dictionaries
+            act_pd_ii = pd.DataFrame({'rpbin':10**param_dict['rpbins_cens']})
+            pas_pd_ii = pd.DataFrame({'rpbin':10**param_dict['rpbins_cens']})
+            ## Looping over galaxy property
+            for kk, prop in enumerate(prop_keys):
+                ## Data
+                prop_normed = prop + '_normed'
+                data_act_ii    = mock_ii.loc[mock_ii[prop_normed]<= 1.]
+                data_pas_ii    = mock_ii.loc[mock_ii[prop_normed]>  1.]
+                ##
+                ## Computing wp(rp)
+                # Active
+                wp_act_data = projected_wp_calc(data_act_ii, rand_ii  ,
+                                                param_dict , data_opt = False)
+                # Passive
+                wp_pas_data = projected_wp_calc(data_pas_ii, rand_ii  ,
+                                                param_dict , data_opt = False)
+                ##
+                ## Saving to `active` and `passive` wp DataFrames
+                act_pd_ii.loc[:,prop+'_wp'] = wp_act_data
+                pas_pd_ii.loc[:,prop+'_wp'] = wp_pas_data
+            ##
+            ## Saving Data
+            act_pd_ii.to_hdf(act_file_ii, 'gal')
+            pas_pd_ii.to_hdf(pas_file_ii, 'gal')
+            cu.File_Exists(act_file_ii)
+            cu.File_Exists(pas_file_ii)
+
+
+def projected_wp_calc(catl_pd, rand_pd, param_dict, data_opt=False):
     """
     Separates between `active` and `passive` galaxies for a given galaxy 
     property
@@ -694,10 +894,7 @@ def projected_wp_calc(catl_pd, rand_pd, param_dict, proj_dict, data_opt=False):
 
     param_dict: python dictionary
         dictionary with `project` variables
-
-    proj_dict: python dictionary
-        Dictionary with current and new paths to project directories
-
+    
     data_opt: boolean, optional (default = False)
         `True` if `catl_pd` is real SDSS data.
         `False` if `catl_pd` is a mock catalogue
@@ -773,7 +970,7 @@ def projected_wp_calc(catl_pd, rand_pd, param_dict, proj_dict, data_opt=False):
 
     return wp
     
-def projected_wp_plot(act_pd_data, pas_pd_data, act_pd_mock, pas_pd_mock, 
+def projected_wp_plot(act_pd_data, pas_pd_data, wp_act_stats, wp_pas_stats,
     param_dict, proj_dict, fig_fmt='pdf', figsize_2=(7.,10.)):
     """
     Plots the projected correlation function wp(rp)
@@ -786,11 +983,8 @@ def projected_wp_plot(act_pd_data, pas_pd_data, act_pd_mock, pas_pd_mock,
     pas_pd_data: pandas DataFrame
         DataFrame with the data for `passive` galaxies from `data`
 
-    act_pd_mock: pandas DataFrame
-        DataFrame with the data for `active` galaxies from `mocks`
-
-    pas_pd_mock: pandas DataFrame
-        DataFrame with the data for `passive` galaxies from `mocks`
+    wp_mocks_dir: string
+        directory, in which results from mocks are saved
 
     param_dict: python dictionary
         dictionary with `project` variables
@@ -915,6 +1109,92 @@ def projected_wp_plot(act_pd_data, pas_pd_data, act_pd_mock, pas_pd_mock,
     plt.clf()
     plt.close()
 
+def projected_wp_mocks_range(wp_mocks_dir, prop_keys, type_sigma='std'):
+    """
+    Returns the range of mocks at each rp-bin
+
+    Parameters
+    ------------
+    wp_mocks_dir: string
+        path to the mock results from wp-rp
+
+    Returns
+    ------------
+    wp_act_stats: python dictionary
+        dictionary with `active` upper/lower limits for each galaxy property
+
+    wp_pas_stats: python dictionary
+        dictionary with `passive` upper/lower limits for each galaxy property
+    
+    """
+    ## Arrays of `active` and `passive` wp-results
+    mocks_act_arr = num.sort(glob(wp_mocks_dir+'/*act*.hdf5'))
+    mocks_pas_arr = num.sort(glob(wp_mocks_dir+'/*pas*.hdf5'))
+    # Variables
+    n_catls = len(mocks_act_arr)
+    # Initializing arrays
+    zeros_arr = num.zeros((param_dict['nrpbins'],1))
+    wp_act_results = dict(zip(prop_keys, [copy.deepcopy(zeros_arr) for xx in 
+                            range(len(prop_keys))]))
+    wp_pas_results = dict(zip(prop_keys, [copy.deepcopy(zeros_arr) for xx in 
+                            range(len(prop_keys))]))
+    ## Looping over galaxy properties
+    for ii in range(n_catls):
+        # Active
+        catl_act_ii = cu.read_hdf5_file_to_pandas_DF(mocks_act_arr[ii])
+        # Passive
+        catl_pas_ii = cu.read_hdf5_file_to_pandas_DF(mocks_pas_arr[ii])
+        # Looping over galaxy properties
+        for prop_zz in prop_keys:
+            # Active
+            wp_act_results[prop_zz] = array_insert( wp_act_results[prop_zz],
+                                                    catl_act_ii[prop_zz+'_wp'],
+                                                    axis=1)
+            # Passive
+            wp_pas_results[prop_zz] = array_insert( wp_pas_results[prop_zz],
+                                                    catl_pas_ii[prop_zz+'_wp'],
+                                                    axis=1)
+    ##
+    ## Statistics for `active` and `passive`
+    wp_act_stats = dict(zip(prop_keys, [{} for xx in range(len(prop_keys))]))
+    wp_pas_stats = dict(zip(prop_keys, [{} for xx in range(len(prop_keys))]))
+    # Looping over galaxy properties
+    for prop_zz in prop_keys:
+        # Deleting 1st row of zeros
+        wp_act_ii = num.delete(wp_act_results[prop_zz], 0, axis=1)
+        wp_pas_ii = num.delete(wp_pas_results[prop_zz], 0, axis=1)
+        ##
+        ## Statistics: Mean, and St. Dev.
+        ## Errors, mean, and St. Dev.
+        # Active
+        (   sigma_act,
+            mean_act ,
+            std_act  ) = sigma_calcs(   wp_act_ii,
+                                        type_sigma=type_sigma,
+                                        return_mean_std=True)
+        # Passive
+        (   sigma_pas,
+            mean_pas ,
+            std_pas  ) = sigma_calcs(   wp_pas_ii,
+                                        type_sigma=type_sigma,
+                                        return_mean_std=True)
+        ##
+        ## Saving values
+        # Active
+        wp_act_stats[prop_zz]['mean' ] = mean_act
+        wp_act_stats[prop_zz]['std'  ] = std_act
+        wp_act_stats[prop_zz]['sigma'] = sigma_act
+        # wp_act_stats[prop_zz]['wp_rp'] = wp_act_ii
+        # Passive
+        wp_pas_stats[prop_zz]['mean' ] = mean_pas
+        wp_pas_stats[prop_zz]['std'  ] = std_pas
+        wp_pas_stats[prop_zz]['sigma'] = sigma_pas
+        # wp_pas_stats[prop_zz]['wp_rp'] = wp_pas_ii
+
+    return wp_act_stats, wp_pas_stats
+
+
+
 #### --------- Main Function --------- ####
 
 def main(args):
@@ -949,20 +1229,23 @@ def main(args):
     ##
     ## Projected correlation function
     # Calculations
-    (   act_pd_data,
-        pas_pd_data,
-        act_pd_mock,
-        pas_pd_mock) = projected_wp_main(   data_cl_pd,
-                                            mocks_pd  ,
+    (   act_pd_data ,
+        pas_pd_data ,
+        wp_mocks_dir) = projected_wp_main(  data_cl_pd,
+                                            mocks_pd_arr,
                                             param_dict,
                                             proj_dict )
+    ##
+    ## Getting range for mocks
+    (   wp_act_stats,
+        wp_pas_stats) = projected_wp_mocks_range(wp_mocks_dir, prop_keys)
     # Plotting
-    projected_wp_plot(  act_pd_data,
-                        pas_pd_data,
-                        act_pd_mock,
-                        pas_pd_mock,
-                        param_dict ,
-                        proj_dict)
+    projected_wp_plot(  act_pd_data ,
+                        pas_pd_data ,
+                        wp_act_stats,
+                        wp_pas_stats,
+                        param_dict  ,
+                        proj_dict   )
     ##
     ## Distributions of Galaxy Properties
     galprop_distr_main(data_cl_pd, mocks_pd, param_dict, proj_dict)
