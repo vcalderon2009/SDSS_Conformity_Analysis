@@ -1144,7 +1144,7 @@ def projected_wp_plot(act_pd_data, pas_pd_data, wp_act_stats, wp_pas_stats,
                         'logssfr_act':'indigo',
                         'logssfr_pas':'slateblue',
                         'sersic_act' :'orange',
-                        'sersic_pas' :'cyan'}
+                        'sersic_pas' :'teal'}
     alpha_arr   = [0.7, 0.5, 0.3]
     #
     # Figure
