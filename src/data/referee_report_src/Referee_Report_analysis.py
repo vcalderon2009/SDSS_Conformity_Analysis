@@ -165,6 +165,22 @@ def get_parser():
                         help='Value for `pimax` for the proj. corr. function',
                         type=_check_pos_val,
                         default=20.)
+    ## CLF/CSMF method of assigning galaxy properties
+    parser.add_argument('-clf_method',
+                        dest='clf_method',
+                        help="""
+                        Method for assigning galaxy properties to mock 
+                        galaxies. Options:
+                        (1) = Independent assignment of (g-r), sersic, logssfr
+                        (2) = (g-r) decides active/passive designation and 
+                        draws values independently.
+                        (3) (g-r) decides active/passive designation, and 
+                        assigns other galaxy properties for that given 
+                        galaxy.
+                        """,
+                        type=int,
+                        choices=[1,2,3],
+                        default=3)
     ## CPU Counts
     parser.add_argument('-cpu',
                         dest='cpu_frac',
@@ -971,7 +987,7 @@ def projected_wp_calc(catl_pd, rand_pd, param_dict, data_opt=False):
     return wp
     
 def projected_wp_plot(act_pd_data, pas_pd_data, wp_act_stats, wp_pas_stats,
-    param_dict, proj_dict, fig_fmt='pdf', figsize_2=(7.,10.)):
+    param_dict, proj_dict, fig_fmt='pdf', figsize_2=(7.,10.), clf_method=1):
     """
     Plots the projected correlation function wp(rp)
 
@@ -983,8 +999,11 @@ def projected_wp_plot(act_pd_data, pas_pd_data, wp_act_stats, wp_pas_stats,
     pas_pd_data: pandas DataFrame
         DataFrame with the data for `passive` galaxies from `data`
 
-    wp_mocks_dir: string
-        directory, in which results from mocks are saved
+    wp_act_stats: python dictionary
+        dictionary with `active` upper/lower limits for each galaxy property
+
+    wp_pas_stats: python dictionary
+        dictionary with `passive` upper/lower limits for each galaxy property
 
     param_dict: python dictionary
         dictionary with `project` variables
@@ -1006,14 +1025,16 @@ def projected_wp_plot(act_pd_data, pas_pd_data, wp_act_stats, wp_pas_stats,
     ylabel_res   = r'\boldmath $\Delta\ w_{p}(r_{p})$'
     ## Figure name
     fname = os.path.join(   proj_dict['figdir'],
-                            'wprp_galprop_data_mocks.{0}'.format(fig_fmt))
+                            'wprp_galprop_data_mocks_method_{0}.{1}'.format(
+                                clf_method, fig_fmt))
     ##
     ## Figure details
     figsize     = figsize_2
     size_label  = 20
     size_legend = 10
     size_text   = 14
-    color_arr = ['blue','red','green','orange']
+    color_arr   = ['blue','red','green','orange']
+    alpha_arr   = [0.7, 0.5, 0.3]
     #
     # Figure
     plt.clf()
@@ -1051,29 +1072,49 @@ def projected_wp_plot(act_pd_data, pas_pd_data, wp_act_stats, wp_pas_stats,
         ##
         ## Mocks
         ## Active
-        ax_data.plot(act_pd_mock['rpbin'],
-                act_pd_mock[prop+'_wp'],
+        ax_data.plot(act_pd_data['rpbin'],
+                wp_act_stats[prop]['mean'],
                 color=color_arr[2],
                 linestyle=lines_arr[kk],
                 label=r'{0} (M) - Act'.format(prop.replace('_','-')))
         ## Passive
-        ax_data.plot(pas_pd_mock['rpbin'],
-                pas_pd_mock[prop+'_wp'].values,
+        ax_data.plot(act_pd_data['rpbin'],
+                wp_pas_stats[prop]['mean'],
                 color=color_arr[3],
                 linestyle=lines_arr[kk],
                 label=r'{0} (M) - Pas'.format(prop.replace('_','-')))
         ##
+        ## Shaded contours for `mocks`
+        # Active
+        for zz in range(3):
+            ## Active
+            ax_data.fill_between(
+                act_pd_data['rpbin'],
+                wp_act_stats[prop]['sigma'][zz][0],
+                wp_act_stats[prop]['sigma'][zz][1],
+                facecolor=color_arr[2],
+                alpha=alpha_arr[zz],
+                zorder=zz+1)
+            # Passive
+            ax_data.fill_between(
+                act_pd_data['rpbin'],
+                wp_pas_stats[prop]['sigma'][zz][0],
+                wp_pas_stats[prop]['sigma'][zz][1],
+                facecolor=color_arr[3],
+                alpha=alpha_arr[zz],
+                zorder=zz+1)
+        ##
         ## Residuals
         ## Active
         ax_res.plot(act_pd_data['rpbin'],
-                100*(act_pd_mock[prop+'_wp']-act_pd_data[prop+'_wp'])/\
+                100*(wp_act_stats[prop]['mean']-act_pd_data[prop+'_wp'])/\
                     act_pd_data[prop+'_wp'],
                     color=color_arr[0],
                     linestyle=lines_arr[kk],
                     label=r'{0} - Act'.format(prop.replace('_','-')))
         ## Passive
-        ax_res.plot(pas_pd_data['rpbin'],
-                100*(pas_pd_mock[prop+'_wp']-pas_pd_data[prop+'_wp'])/\
+        ax_res.plot(act_pd_data['rpbin'],
+                100*(wp_pas_stats[prop]['mean']-pas_pd_data[prop+'_wp'])/\
                     pas_pd_data[prop+'_wp'],
                     color=color_arr[1],
                     linestyle=lines_arr[kk],
@@ -1087,7 +1128,7 @@ def projected_wp_plot(act_pd_data, pas_pd_data, wp_act_stats, wp_pas_stats,
     ax_data.set_xscale('log')
     ax_data.set_yscale('log')
     ax_data.set_ylabel(ylabel, fontsize=size_label)
-    ax_data.text(0.80, 0.95, 'SDSS',
+    ax_data.text(0.60, 0.95, 'SDSS - Method {0}'.format(clf_method),
             transform=ax_data.transAxes,
             verticalalignment='top',
             color='black',
@@ -1125,7 +1166,7 @@ def projected_wp_mocks_range(wp_mocks_dir, prop_keys, type_sigma='std'):
 
     wp_pas_stats: python dictionary
         dictionary with `passive` upper/lower limits for each galaxy property
-    
+
     """
     ## Arrays of `active` and `passive` wp-results
     mocks_act_arr = num.sort(glob(wp_mocks_dir+'/*act*.hdf5'))
@@ -1245,10 +1286,11 @@ def main(args):
                         wp_act_stats,
                         wp_pas_stats,
                         param_dict  ,
-                        proj_dict   )
+                        proj_dict   ,
+                        clf_method=1)
     ##
     ## Distributions of Galaxy Properties
-    galprop_distr_main(data_cl_pd, mocks_pd, param_dict, proj_dict)
+    galprop_distr_main(data_cl_pd, mocks_pd_arr[0], param_dict, proj_dict)
 
 
 # Main function
