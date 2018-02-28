@@ -707,7 +707,8 @@ def projected_wp_main(data_cl_pd, mocks_pd_arr, param_dict, proj_dict):
     wp_rp_dir    = os.path.join(    proj_dict['rand_dir'], 'wp_rp')
     wp_data_dir  = os.path.join(    wp_rp_dir            , 'data')
     wp_mocks_dir = os.path.join(    wp_rp_dir            , 
-                                    'mocks', 'clf_method_{0}'.format(
+                                    'mocks',
+                                    'clf_method_{0}'.format(
                                         param_dict['clf_method']))
     cu.Path_Folder(wp_rp_dir   )
     cu.Path_Folder(wp_data_dir )
