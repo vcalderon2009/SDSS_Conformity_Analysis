@@ -1172,7 +1172,7 @@ def projected_wp_plot(act_pd_data, pas_pd_data, wp_act_stats, wp_pas_stats,
         ## Shaded contours for `mocks`
         if param_dict['shade_opt']:
             # Active
-            for zz in range(2,3):
+            for zz in range(3):
                 ## Active
                 ax_data.fill_between(
                     act_pd_data['rpbin'],
