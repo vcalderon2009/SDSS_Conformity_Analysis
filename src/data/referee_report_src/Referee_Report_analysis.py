@@ -418,17 +418,34 @@ def directory_skeleton(param_dict, proj_dict):
                             'referee_report_figs_1.0')
     ##
     ## Randoms catalogue
-    rand_dir = os.path.join(proj_dict['data_dir'],
-                            'external',
-                            'SDSS',
-                            'randoms')
+    rand_dir = os.path.join(    proj_dict['data_dir'],
+                                'external',
+                                'SDSS',
+                                'randoms')
+    ##
+    ## Projected correlation - folder
+    wp_rp_dir = os.path.join(   rand_dir,
+                                'wp_rp')
+    ##
+    ## wp(rp) - Data
+    wp_data_dir  = os.path.join(    wp_rp_dir,
+                                    'data')
+    ## wp(rp) - Mocks
+    wp_mocks_dir = os.path.join(    wp_rp_dir,
+                                    'mocks',
+                                    'clf_method_'+param_dict['clf_method'])
     ## Creating directories
     cu.Path_Folder(figdir  )
     cu.Path_Folder(rand_dir)
+    cu.Path_Folder(wp_data_dir)
+    cu.Path_Folder(wp_mocks_dir)
     ##
     ## Adding to dictionary
-    proj_dict['figdir'  ] = figdir
-    proj_dict['rand_dir'] = rand_dir
+    proj_dict['figdir'      ] = figdir
+    proj_dict['rand_dir'    ] = rand_dir
+    proj_dict['wp_rp_dir'   ] = wp_rp_dir
+    proj_dict['wp_data_dir' ] = wp_data_dir
+    proj_dict['wp_mocks_dir'] = wp_mocks_dir
 
     return proj_dict
 
@@ -703,23 +720,8 @@ def projected_wp_main(data_cl_pd, mocks_pd_arr, param_dict, proj_dict):
     pas_pd_data: pandas DataFrame
         DataFrame with the data for `passive` galaxies from `data`
 
-    act_pd_mock: pandas DataFrame
-        DataFrame with the data for `active` galaxies from `mocks`
-
-    pas_pd_mock: pandas DataFrame
-        DataFrame with the data for `passive` galaxies from `mocks`
     """
     ##
-    ## Catalogue of Randoms
-    wp_rp_dir    = os.path.join(    proj_dict['rand_dir'], 'wp_rp')
-    wp_data_dir  = os.path.join(    wp_rp_dir            , 'data')
-    wp_mocks_dir = os.path.join(    wp_rp_dir            , 
-                                    'mocks',
-                                    'clf_method_{0}'.format(
-                                        param_dict['clf_method']))
-    cu.Path_Folder(wp_rp_dir   )
-    cu.Path_Folder(wp_data_dir )
-    cu.Path_Folder(wp_mocks_dir)
     ## Randoms file
     rand_file = os.path.join(   proj_dict['rand_dir'],
                                 os.path.basename(param_dict['url_rand']))
@@ -735,12 +737,14 @@ def projected_wp_main(data_cl_pd, mocks_pd_arr, param_dict, proj_dict):
     ###
     ## Removing files
     # Data
-    act_data_file = os.path.join(   wp_data_dir, 'wp_rp_act_data.hdf5')
-    pas_data_file = os.path.join(   wp_data_dir, 'wp_rp_pas_data.hdf5')
+    act_data_file = os.path.join(   proj_dict['wp_data_dir'],
+                                    'wp_rp_act_data.hdf5')
+    pas_data_file = os.path.join(   proj_dict['wp_data_dir'],
+                                    'wp_rp_pas_data.hdf5')
     ## Checking if file exists
     act_pas_data_list = [act_data_file, pas_data_file]
-    for file_ii in act_pas_data_list:
-        if param_dict['remove_files']:
+    if param_dict['remove_files']:
+        for file_ii in act_pas_data_list:
             if os.path.exists(file_ii):
                 os.remove(file_ii)
     ##
@@ -809,7 +813,7 @@ def projected_wp_main(data_cl_pd, mocks_pd_arr, param_dict, proj_dict):
         # Defining `proc` element
         proc = Process(target=projected_wp_multiprocessing, 
                         args=(memb_tuples[ii], mocks_pd_arr, rand_pd.copy(), 
-                            wp_mocks_dir, param_dict, proj_dict))
+                            proj_dict['wp_mocks_dir'], param_dict, proj_dict))
         # Appending to main `procs` list
         procs.append(proc)
         proc.start()
@@ -818,7 +822,7 @@ def projected_wp_main(data_cl_pd, mocks_pd_arr, param_dict, proj_dict):
     for proc in procs:
         proc.join()
 
-    return act_pd_data, pas_pd_data, wp_mocks_dir
+    return act_pd_data, pas_pd_data
 
 def projected_wp_multiprocessing(memb_tuples_ii, mocks_pd_arr, rand_ii, 
     catl_out, param_dict, proj_dict):
@@ -862,8 +866,8 @@ def projected_wp_multiprocessing(memb_tuples_ii, mocks_pd_arr, rand_ii,
                                     'wp_rp_pas_{0}_mock.hdf5'.format(ii))
         ## Checking if files exist
         act_pas_list_ii = [act_file_ii, pas_file_ii]
-        for file_ii in act_pas_list_ii:
-            if param_dict['remove_files']:
+        if param_dict['remove_files']:
+            for file_ii in act_pas_list_ii:
                 if os.path.exists(file_ii):
                     os.remove(file_ii)
         ##
@@ -904,14 +908,14 @@ def projected_wp_multiprocessing(memb_tuples_ii, mocks_pd_arr, rand_ii,
             cu.File_Exists(act_file_ii)
             cu.File_Exists(pas_file_ii)
 
-def projected_wp_mocks_range(wp_mocks_dir, param_dict, type_sigma='std'):
+def projected_wp_mocks_range(param_dict, proj_dict, type_sigma='std'):
     """
     Returns the range of mocks at each rp-bin
 
     Parameters
     ------------
-    wp_mocks_dir: string
-        path to the mock results from wp-rp
+    proj_dict: python dictionary
+        Dictionary with current and new paths to project directories
 
     param_dict: python dictionary
         dictionary with all of the script's variables
@@ -932,7 +936,8 @@ def projected_wp_mocks_range(wp_mocks_dir, param_dict, type_sigma='std'):
 
     """
     ## Constants
-    prop_keys = param_dict['prop_keys']
+    prop_keys    = param_dict['prop_keys'   ]
+    wp_mocks_dir = proj_dict ['wp_mocks_dir']
     ## Arrays of `active` and `passive` wp-results
     mocks_act_arr = num.sort(glob(wp_mocks_dir+'/*act*.hdf5'))
     mocks_pas_arr = num.sort(glob(wp_mocks_dir+'/*pas*.hdf5'))
@@ -1298,15 +1303,14 @@ def main(args):
     ## Projected correlation function
     # Calculations
     (   act_pd_data ,
-        pas_pd_data ,
-        wp_mocks_dir) = projected_wp_main(  data_cl_pd,
+        pas_pd_data ) = projected_wp_main(  data_cl_pd,
                                             mocks_pd_arr,
                                             param_dict,
                                             proj_dict )
     ##
     ## Getting range for mocks
     (   wp_act_stats,
-        wp_pas_stats) = projected_wp_mocks_range(wp_mocks_dir, param_dict)
+        wp_pas_stats) = projected_wp_mocks_range(param_dict, proj_dict)
     # Plotting
     projected_wp_plot(  act_pd_data ,
                         pas_pd_data ,
