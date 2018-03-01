@@ -433,7 +433,8 @@ def directory_skeleton(param_dict, proj_dict):
     ## wp(rp) - Mocks
     wp_mocks_dir = os.path.join(    wp_rp_dir,
                                     'mocks',
-                                    'clf_method_'+param_dict['clf_method'])
+                                    'clf_method_{0}'.format(
+                                        param_dict['clf_method']))
     ## Creating directories
     cu.Path_Folder(figdir  )
     cu.Path_Folder(rand_dir)
@@ -813,7 +814,7 @@ def projected_wp_main(data_cl_pd, mocks_pd_arr, param_dict, proj_dict):
         # Defining `proc` element
         proc = Process(target=projected_wp_multiprocessing, 
                         args=(memb_tuples[ii], mocks_pd_arr, rand_pd.copy(), 
-                            proj_dict['wp_mocks_dir'], param_dict, proj_dict))
+                            param_dict, proj_dict))
         # Appending to main `procs` list
         procs.append(proc)
         proc.start()
@@ -825,7 +826,7 @@ def projected_wp_main(data_cl_pd, mocks_pd_arr, param_dict, proj_dict):
     return act_pd_data, pas_pd_data
 
 def projected_wp_multiprocessing(memb_tuples_ii, mocks_pd_arr, rand_ii, 
-    catl_out, param_dict, proj_dict):
+    param_dict, proj_dict):
     """
     Multiprocessing for wp(rp) for mock catalogues
 
@@ -840,9 +841,6 @@ def projected_wp_multiprocessing(memb_tuples_ii, mocks_pd_arr, rand_ii,
     rand_ii: pandas DataFrame
         DataFrame with the 3-positions from the random galaxy catalogues
 
-    catl_out: string
-        path to the output folder for the wp-rp result
-
     param_dict: python dictionary
         dictionary with all of the script's variables
 
@@ -851,7 +849,8 @@ def projected_wp_multiprocessing(memb_tuples_ii, mocks_pd_arr, rand_ii,
 
     """
     ## Program Message
-    Prog_msg = param_dict['Prog_msg']
+    Prog_msg     = param_dict['Prog_msg']
+    wp_mocks_dir = proj_dict['wp_mocks_dir']
     ## Reading in Catalogue IDs
     start_ii, end_ii = memb_tuples_ii
     print('{0}  start_ii: {1} | end_ii: {2}'.format(Prog_msg, start_ii, end_ii))
@@ -860,9 +859,9 @@ def projected_wp_multiprocessing(memb_tuples_ii, mocks_pd_arr, rand_ii,
     for ii in range(start_ii,end_ii):
         print('{0} Analyzing `Mock {1}`\n'.format(Prog_msg, ii))
         mock_ii     = mocks_pd_arr[ii]
-        act_file_ii = os.path.join( catl_out,
+        act_file_ii = os.path.join( wp_mocks_dir,
                                     'wp_rp_act_{0}_mock.hdf5'.format(ii))
-        pas_file_ii = os.path.join( catl_out,
+        pas_file_ii = os.path.join( wp_mocks_dir,
                                     'wp_rp_pas_{0}_mock.hdf5'.format(ii))
         ## Checking if files exist
         act_pas_list_ii = [act_file_ii, pas_file_ii]
