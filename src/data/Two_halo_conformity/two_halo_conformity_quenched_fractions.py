@@ -1204,7 +1204,8 @@ def halo_corr(catl_pd, catl_name, param_dict, proj_dict):
     if param_dict['catl_kind']=='data':
         pd_keys     = ['logssfr', 'g_r', 'sersic']
     elif param_dict['catl_kind']=='mocks':
-        pd_keys = ['logssfr']
+        # pd_keys = ['logssfr']
+        pd_keys     = ['logssfr', 'g_r', 'sersic']
     # Cleaning catalogue with groups of N > `ngals_min`
     catl_pd_clean = cu.sdss_catl_clean_nmin(catl_pd, param_dict['catl_kind'],
         nmin=param_dict['ngals_min'])

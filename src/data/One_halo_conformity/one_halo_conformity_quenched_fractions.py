@@ -687,7 +687,8 @@ def gm_fractions_calc(catl_pd, catl_name, param_dict, proj_dict):
     if param_dict['catl_kind']=='data':
         pd_keys     = ['logssfr', 'g_r', 'sersic']
     elif param_dict['catl_kind']=='mocks':
-        pd_keys = ['logssfr']
+        # pd_keys = ['logssfr']
+        pd_keys     = ['logssfr', 'g_r', 'sersic']
     # Limits for each galaxy property
     prop_lim = {'logssfr':-11,
                 'sersic':3,
