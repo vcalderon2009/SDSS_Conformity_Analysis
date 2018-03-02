@@ -256,6 +256,22 @@ def get_parser():
                         help='Maximum mass bin to show in the results plot',
                         type=float,
                         default=14.)
+    ## CLF/CSMF method of assigning galaxy properties
+    parser.add_argument('-clf_method',
+                        dest='clf_method',
+                        help="""
+                        Method for assigning galaxy properties to mock 
+                        galaxies. Options:
+                        (1) = Independent assignment of (g-r), sersic, logssfr
+                        (2) = (g-r) decides active/passive designation and 
+                        draws values independently.
+                        (3) (g-r) decides active/passive designation, and 
+                        assigns other galaxy properties for that given 
+                        galaxy.
+                        """,
+                        type=int,
+                        choices=[1,2,3],
+                        default=3)
     ## Verbose
     parser.add_argument('-v','--verbose',
                         dest='verbose',
@@ -1079,8 +1095,9 @@ def MCF_one_halo_plotting(prop_catl_dict, param_dict, proj_dict, fig_fmt='pdf',
     color_prop     = 'black'
     color_prop_seg = 'dimgrey'
     ## Figure name
-    fname_prefix = ('MCF_{0}_{1}'.format(   param_dict['catl_kind'],
-                                            param_dict['fig_prefix'])
+    fname_prefix = ('MCF_{0}_{1}_clf_{2}'.format(   param_dict['catl_kind'],
+                                            param_dict['fig_prefix'],
+                                            param_dict['clf_method'])
                                             ).replace('.', 'p')+'.'+fig_fmt
     fname = proj_dict['figure_dir']+fname_prefix
     ##

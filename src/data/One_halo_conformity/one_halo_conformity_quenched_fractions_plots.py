@@ -212,6 +212,22 @@ def get_parser():
                         type=str,
                         choices=['diff', 'ratio'],
                         default='diff')
+    ## CLF/CSMF method of assigning galaxy properties
+    parser.add_argument('-clf_method',
+                        dest='clf_method',
+                        help="""
+                        Method for assigning galaxy properties to mock 
+                        galaxies. Options:
+                        (1) = Independent assignment of (g-r), sersic, logssfr
+                        (2) = (g-r) decides active/passive designation and 
+                        draws values independently.
+                        (3) (g-r) decides active/passive designation, and 
+                        assigns other galaxy properties for that given 
+                        galaxy.
+                        """,
+                        type=int,
+                        choices=[1,2,3],
+                        default=3)
     ## Show Progbar
     parser.add_argument('-prog',
                         dest='prog_bar',
@@ -926,8 +942,9 @@ def fractions_one_halo_plotting(prop_catl_dict, param_dict,
     color_prop     = 'black'
     color_prop_seg = 'dimgrey'
     ## Figure name
-    fname_prefix = ('Frac_{0}_{1}'.format(   param_dict['catl_kind'],
-                                            param_dict['fig_prefix'])
+    fname_prefix = ('Frac_{0}_{1}_clf_{2}'.format(   param_dict['catl_kind'],
+                                            param_dict['fig_prefix'],
+                                            param_dict['clf_method'])
                                             ).replace('.', 'p')+'.'+fig_fmt
     fname = os.path.join(proj_dict['figure_dir'], fname_prefix)
     ##

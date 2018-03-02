@@ -142,6 +142,22 @@ def get_parser():
                         type=str,
                         choices=['diff', 'ratio'],
                         default='diff')
+    ## CLF/CSMF method of assigning galaxy properties
+    parser.add_argument('-clf_method',
+                        dest='clf_method',
+                        help="""
+                        Method for assigning galaxy properties to mock 
+                        galaxies. Options:
+                        (1) = Independent assignment of (g-r), sersic, logssfr
+                        (2) = (g-r) decides active/passive designation and 
+                        draws values independently.
+                        (3) (g-r) decides active/passive designation, and 
+                        assigns other galaxy properties for that given 
+                        galaxy.
+                        """,
+                        type=int,
+                        choices=[1,2,3],
+                        default=3)
     ## Type of Shuffling
     parser.add_argument('-shuffle_type',
                         dest='shuffle_type',
@@ -227,7 +243,8 @@ def get_analysis_params(param_dict):
                                 ('mg_max'         ,'-mg_max'       ,13.2),
                                 ('verbose'        ,'-v'            ,'False'),
                                 ('pimax'          ,'-pimax'        ,20.  ),
-                                ('frac_stat'      ,'-frac_stat'    ,'diff')])
+                                ('frac_stat'      ,'-frac_stat'    ,'diff'),
+                                ('clf_method'     ,'-clf_method'   ,3     )])
     ##
     ## Converting to pandas DataFrame
     colnames = ['Name','Flag','Value']
@@ -271,6 +288,9 @@ def get_analysis_params(param_dict):
         ##
         ## Chaning `pimax` value
         params_pd.loc[params_pd['Name']=='pimax','Value'] = param_dict['pimax']
+        ##
+        ## Option for type of CLF Method
+        params_pd.loc[params_pd['Name']=='clf_method','Value'] = param_dict['clf_method']
 
     return params_pd
 

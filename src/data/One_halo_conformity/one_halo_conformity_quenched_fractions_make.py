@@ -112,6 +112,22 @@ def get_parser():
                         help='Delete pickle files containing pair counts',
                         type=_str2bool,
                         default=False)
+    ## CLF/CSMF method of assigning galaxy properties
+    parser.add_argument('-clf_method',
+                        dest='clf_method',
+                        help="""
+                        Method for assigning galaxy properties to mock 
+                        galaxies. Options:
+                        (1) = Independent assignment of (g-r), sersic, logssfr
+                        (2) = (g-r) decides active/passive designation and 
+                        draws values independently.
+                        (3) (g-r) decides active/passive designation, and 
+                        assigns other galaxy properties for that given 
+                        galaxy.
+                        """,
+                        type=int,
+                        choices=[1,2,3],
+                        default=3)
     ## CPU to use
     parser.add_argument('-cpu_frac',
                         dest='cpu_frac',
@@ -184,7 +200,8 @@ def get_analysis_params(param_dict):
                                 ('catl_finish'    ,'-catl_finish',100),
                                 ('perf_opt'       ,'-perf'       ,'False'),
                                 ('type_sigma'     ,'-sigma'      ,'std'),
-                                ('frac_stat'      ,'-frac_stat'  ,'diff'  )])
+                                ('frac_stat'      ,'-frac_stat'  ,'diff'  ),
+                                ('clf_method'     ,'-clf_method' ,3       )])
     ##
     ## Converting to pandas DataFrame
     colnames = ['Name','Flag','Value']
@@ -209,6 +226,9 @@ def get_analysis_params(param_dict):
     ##
     ## Options for `Plotting`
     if (param_dict['analysis_type'] == 'plots'):
+        ##
+        ## Option for type of CLF Method
+        params_pd.loc[params_pd['Name']=='clf_method','Value'] = param_dict['clf_method']
         ##
         ## Option for verbose output
         if param_dict['verbose']:
