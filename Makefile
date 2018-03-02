@@ -19,6 +19,7 @@ DATA_DIR = $(PROJECT_DIR)/data
 # CPU-Fraction
 CPU_FRAC = 0.7
 REMOVE_FILES = "True"
+REMOVE_WP = "False"
 SHUFFLE_TYPE_CENS = "normal"
 
 ifeq (,$(shell which conda))
@@ -104,17 +105,17 @@ plot_figures:
 ## 1-halo Marked Correlation Function - Calculations
 1_halo_mcf_calc:
 	# 1-halo
-	@python $(ONE_HALO_DIR)/one_halo_mark_correlation_make.py -a calc -cpu_frac $(CPU_FRAC) -remove $(REMOVE_FILES)
+	@python $(ONE_HALO_DIR)/one_halo_mark_correlation_make.py -a calc -cpu_frac $(CPU_FRAC) -remove $(REMOVE_FILES) -remove-wp $(REMOVE_WP)
 
 ## 2-halo Quenched Fractions - Calculations
 2_halo_fracs_calc:
 	# 2-halo
-	@python $(TWO_HALO_DIR)/two_halo_conformity_quenched_fractions_make.py -a calc -cpu_frac $(CPU_FRAC) -remove $(REMOVE_FILES) -shuffle_type $(SHUFFLE_TYPE_CENS)
+	@python $(TWO_HALO_DIR)/two_halo_conformity_quenched_fractions_make.py -a calc -cpu_frac $(CPU_FRAC) -remove $(REMOVE_FILES) -shuffle_type $(SHUFFLE_TYPE_CENS) -remove-wp $(REMOVE_WP)
 
 ## 2-halo Marked Correlation Function - Calculations
 2_halo_mcf_calc:
 	# 2-halo
-	@python $(TWO_HALO_DIR)/two_halo_mark_correlation_make.py -a calc -cpu_frac $(CPU_FRAC) -remove $(REMOVE_FILES)
+	@python $(TWO_HALO_DIR)/two_halo_mark_correlation_make.py -a calc -cpu_frac $(CPU_FRAC) -remove $(REMOVE_FILES) -remove-wp $(REMOVE_WP)
 
 ## Remove Plot screen session
 remove_plot_screens:
