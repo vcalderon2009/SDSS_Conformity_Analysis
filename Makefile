@@ -126,17 +126,17 @@ plot_figures:
 
 ## Remove Plot screen session
 remove_plot_screens:
-	screen -S "One_Halo_FRAC_STAT_conformity_plots" -X quit
-	screen -S "One_Halo_MCF_conformity_plots" -X quit
-	screen -S "Two_Halo_FRAC_STAT_conformity_plots" -X quit
-	screen -S "Two_Halo_MCF_conformity_plots" -X quit
+	screen -S "One_Halo_FRAC_STAT_conformity_plots" -X quit || echo ""
+	screen -S "One_Halo_MCF_conformity_plots" -X quit || echo ""
+	screen -S "Two_Halo_FRAC_STAT_conformity_plots" -X quit || echo ""
+	screen -S "Two_Halo_MCF_conformity_plots" -X quit || echo ""
 
 ## Remove Calc. screen session
 remove_calc_screens:
-	screen -S "One_Halo_FRAC_STAT_conformity_calc" -X quit
-	screen -S "One_Halo_MCF_conformity_calc" -X quit
-	screen -S "Two_Halo_FRAC_STAT_conformity_calc" -X quit
-	screen -S "Two_Halo_MCF_conformity_calc" -X quit
+	screen -S "One_Halo_FRAC_STAT_conformity_calc" -X quit || echo ""
+	screen -S "One_Halo_MCF_conformity_calc" -X quit || echo ""
+	screen -S "Two_Halo_FRAC_STAT_conformity_calc" -X quit || echo ""
+	screen -S "Two_Halo_MCF_conformity_calc" -X quit || echo ""
 
 ## Download required Dataset
 download_dataset:
