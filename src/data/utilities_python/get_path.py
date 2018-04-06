@@ -28,14 +28,16 @@ def get_base_path(node=None):
     """
     ##
     ## Base path
-    try:
-        path = os.environ['sdss_catl_path']
-        assert(os.path.exists(path))
-    except:
-        proj_dict = cookiecutter_paths(__file__)
-        ##
-        ## Path to `base`
-        path = proj_dict['base_dir']
+    proj_dict = cookiecutter_paths(__file__)
+    path = proj_dict['base_dir']
+    # try:
+    #     path = os.environ['sdss_catl_path']
+    #     assert(os.path.exists(path))
+    # except:
+    #     proj_dict = cookiecutter_paths(__file__)
+    #     ##
+    #     ## Path to `base`
+    #     path = proj_dict['base_dir']
 
     return path
 

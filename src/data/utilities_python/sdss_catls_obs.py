@@ -27,8 +27,8 @@ from . import get_path       as gp
 from   collections import Counter
 
 def catl_sdss_dir(catl_kind='data', catl_type='mr', sample_s='19',
-    catl_info='members', perf_opt=False, print_filedir=True,
-    Program_Msg=fd.Program_Msg(__file__)):
+    catl_info='members', halotype='fof', clf_method=3, hod_n=0,
+    perf_opt=False, print_filedir=True, Program_Msg=fd.Program_Msg(__file__)):
     """
     Extracts the path to the catalogues
 
@@ -59,6 +59,26 @@ def catl_sdss_dir(catl_kind='data', catl_type='mr', sample_s='19',
         Options:
             - 'members': member galaxies of group catalogues
             - 'groups' : catalogues with group information
+
+    halotype: string, optional (default = 'fof')
+        Type of the DM halo.
+        Options:
+            - 'fof': Friends-of-Friends halos
+            - 'so' : Spherical Overdensity halos
+
+    clf_method: int, optional (default = 3)
+        Method for assigning galaxy properties to mock galaxies. 
+        Options:
+            - '1' : Independent assignment of (g-r), sersic, logssfr
+            - '2' : (g-r) decides active/passive designation and 
+                    draws values independently.
+            - '3' : (g-r) decides active/passive designation, and 
+                    assigns other galaxy properties for that given 
+                    galaxy.
+    
+    hod_n: int, optional (default = 0)
+        HOD model to use.
+        Only relevant when "catl_kind == `mocks`".
 
     perf_opt: boolean, optional (default = False)
         option for choosing 'perfect' catalogues
@@ -98,16 +118,36 @@ def catl_sdss_dir(catl_kind='data', catl_type='mr', sample_s='19',
     else:
         catl_info_str_mod = catl_info_str
     ## Extracting URL of the files
-    filedir  = gp.get_output_path(__file__)+'/SDSS/'+catl_kind+'/'+catl_type+'/'
-    filedir += 'Mr'+sample_s+'/'+catl_info_str_mod
-    fd.Path_Folder(filedir)
+    if catl_kind == 'data':
+        filedir = os.path.join( gp.get_output_path(__file__),
+                                'SDSS',
+                                catl_kind,
+                                catl_type,
+                                'Mr'+sample_s,
+                                catl_info_str_mod)
+    elif catl_kind == 'mocks':
+        filedir = os.path.join( gp.get_output_path(__file__),
+                                'SDSS',
+                                catl_kind,
+                                'halos_{0}'.format(halotype),
+                                'hod_model_{0}'.format(hod_n),
+                                'clf_method_{0}'.format(clf_method),
+                                catl_type,
+                                'Mr'+sample_s,
+                                catl_info_str_mod)
+    try:
+        assert(os.path.exists(filedir))
+    except:
+        msg = '{0} `filedir` ({1}) does not exist! Exiting'.format(
+            Program_Msg, filedir)
     if print_filedir:
         print('{0} `filedir`: {1}'.format(Program_Msg, filedir))
 
     return filedir
 
 def extract_catls(catl_kind='data', catl_type='mr', sample_s='19',
-    datatype='.hdf5', catl_info='members', perf_opt=False, 
+    datatype='.hdf5', catl_info='members', 
+    halotype='fof', clf_method=3, hod_n=0, perf_opt=False, 
     return_len=False, print_filedir=True,
     Program_Msg=fd.Program_Msg(__file__)):
     """
@@ -144,6 +184,26 @@ def extract_catls(catl_kind='data', catl_type='mr', sample_s='19',
             - 'members': member galaxies of group catalogues
             - 'groups' : catalogues with group information
 
+    halotype: string, optional (default = 'fof')
+        Type of the DM halo.
+        Options:
+            - 'fof': Friends-of-Friends halos
+            - 'so' : Spherical Overdensity halos
+
+    clf_method: int, optional (default = 3)
+        Method for assigning galaxy properties to mock galaxies. 
+        Options:
+            - '1' : Independent assignment of (g-r), sersic, logssfr
+            - '2' : (g-r) decides active/passive designation and 
+                    draws values independently.
+            - '3' : (g-r) decides active/passive designation, and 
+                    assigns other galaxy properties for that given 
+                    galaxy.
+    
+    hod_n: int, optional (default = 0)
+        HOD model to use.
+        Only relevant when "catl_kind == `mocks`".
+
     perf_opt: boolean, optional (default = False)
         option for choosing 'perfect' catalogues
         Options:
@@ -170,6 +230,9 @@ def extract_catls(catl_kind='data', catl_type='mr', sample_s='19',
                             catl_type=catl_type,
                             sample_s=sample_s,
                             catl_info=catl_info,
+                            halotype=halotype,
+                            clf_method=clf_method,
+                            hod_n=hod_n,
                             perf_opt=perf_opt,
                             print_filedir=print_filedir)
     ## Converting to numpy arrays

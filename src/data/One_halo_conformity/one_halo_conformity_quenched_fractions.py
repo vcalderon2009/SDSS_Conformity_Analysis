@@ -284,6 +284,8 @@ def add_to_dict(param_dict):
     """
     ### Sample - Int
     sample_s = str(param_dict['sample'])
+    ### Sample - Mr
+    sample_Mr = 'Mr{0}'.format(param_dict['sample'])
     ### Perfect Catalogue
     if param_dict['perf_opt']:
         perf_str = 'haloperf'
@@ -308,6 +310,7 @@ def add_to_dict(param_dict):
     ###
     ### To dictionary
     param_dict['sample_s'     ] = sample_s
+    param_dict['sample_Mr'    ] = sample_Mr
     param_dict['perf_str'     ] = perf_str
     param_dict['fig_idx'      ] = fig_idx
     param_dict['sample_title' ] = sample_title
@@ -390,20 +393,31 @@ def directory_skeleton(param_dict, proj_dict):
         Dictionary with current and new paths to project directories
     """
     ### MCF Folder prefix
-    path_prefix = 'SDSS/{0}/{1}/Mr{2}/Frac_results'.format(
-                        param_dict['catl_kind'],
-                        param_dict['catl_type'],
-                        param_dict['sample'   ])
+    if param_dict['catl_kind'] == 'data':
+        path_prefix = os.path.join( 'SDSS',
+                                    param_dict['catl_kind'],
+                                    param_dict['catl_type'],
+                                    param_dict['sample_Mr'],
+                                    'Frac_results')
+    elif param_dict['catl_kind'] == 'mocks':
+        path_prefix = os.path.join( 'SDSS',
+                                    param_dict['catl_kind'],
+                                    'halos_{0}'.format(param_dict['halotype']),
+                                    'hod_model_{0}'.format(param_dict['hod_n']),
+                                    'clf_method_{0}'.format(param_dict['clf_method']),
+                                    param_dict['catl_type'],
+                                    param_dict['sample_Mr'],
+                                    'Frac_results')
     ### MCF Output directory - Results
-    pickdir = '{0}/processed/{1}/{2}/catl_pickle_files/{3}/'.format(
-                    proj_dict['data_dir'],
-                    path_prefix          ,
-                    param_dict['corr_type'],
-                    param_dict['param_str'])
+    pickdir = os.path.join( proj_dict['data_dir'],
+                            'processed',
+                            path_prefix,
+                            param_dict['corr_type'],
+                            param_dict['param_str'])
     # Creating Folders
     cu.Path_Folder(pickdir)
     ## Adding to `proj_dict`
-    proj_dict['pickdir'   ] = pickdir
+    proj_dict['pickdir'] = pickdir
 
     return proj_dict
 
