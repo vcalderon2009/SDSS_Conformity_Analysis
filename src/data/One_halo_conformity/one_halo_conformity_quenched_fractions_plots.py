@@ -459,15 +459,29 @@ def directory_skeleton(param_dict, proj_dict):
                                 param_dict['param_str'])
     ###
     ### Figure out directory
-    figure_dir = os.path.join(  proj_dict['plot_dir'],
-                                'SDSS',
-                                param_dict['catl_kind'],
-                                param_dict['catl_type'],
-                                param_dict['sample_Mr'],
-                                'conformity_output',
-                                'Frac_figures',
-                                param_dict['corr_type'],
-                                param_dict['param_str'])
+    if param_dict['catl_kind'] == 'data':
+        figure_dir = os.path.join(  proj_dict['plot_dir'],
+                                    'SDSS',
+                                    param_dict['catl_kind'],
+                                    param_dict['catl_type'],
+                                    param_dict['sample_Mr'],
+                                    'conformity_output',
+                                    'Frac_figures',
+                                    param_dict['corr_type'],
+                                    param_dict['param_str'])
+    elif param_dict['catl_kind'] == 'mocks':
+        figure_dir = os.path.join(  proj_dict['plot_dir'],
+                                    'SDSS',
+                                    param_dict['catl_kind'],
+                                    'halos_{0}'.format(param_dict['halotype']),
+                                    'hod_model_{0}'.format(param_dict['hod_n']),
+                                    'clf_method_{0}'.format(param_dict['clf_method']),
+                                    param_dict['catl_type'],
+                                    param_dict['sample_Mr'],
+                                    'conformity_output',
+                                    'Frac_figures',
+                                    param_dict['corr_type'],
+                                    param_dict['param_str'])
     ## Figure - Paper directory
     fig_paper_dir = os.path.join(   proj_dict['plot_dir'],
                                     'SDSS',
