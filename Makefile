@@ -4,23 +4,30 @@
 # GLOBALS                                                                       #
 #################################################################################
 
-PROJECT_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
-BUCKET = [OPTIONAL] your-bucket-for-syncing-data (do not include 's3://')
-PROFILE = default
-PROJECT_NAME = conformity
+# General Project variables
+PROJECT_DIR       := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
+BUCKET             = [OPTIONAL] your-bucket-for-syncing-data (do not include 's3://')
+PROFILE            = default
+PROJECT_NAME       = conformity
 PYTHON_INTERPRETER = python3
-ENVIRONMENT_FILE = environment.yml
+ENVIRONMENT_FILE   = environment.yml
 
-SRC_DIR = $(PROJECT_DIR)/src/data
+# Directories
+SRC_DIR      = $(PROJECT_DIR)/src/data
 ONE_HALO_DIR = $(SRC_DIR)/One_halo_conformity
 TWO_HALO_DIR = $(SRC_DIR)/Two_halo_conformity
-DATA_DIR = $(PROJECT_DIR)/data
+DATA_DIR     = $(PROJECT_DIR)/data
 
-# CPU-Fraction
-CPU_FRAC = 0.7
-REMOVE_FILES = "True"
-REMOVE_WP = "False"
+# Function variables
+CPU_FRAC          = 0.7
+REMOVE_FILES      = "True"
+REMOVE_WP         = "False"
 SHUFFLE_TYPE_CENS = "normal"
+CLF_METHOD        = 3
+HALOTYPE          = 'fof'
+HOD_N             = 0
+PERF_OPT          = "False"
+SAMPLE            = "19"
 
 ifeq (,$(shell which conda))
 HAS_CONDA=False
@@ -134,7 +141,7 @@ remove_calc_screens:
 ## Download required Dataset
 download_dataset: remove_catalogues
 	# Downloading dataset
-	python $(SRC_DIR)/download_dataset.py
+	python $(SRC_DIR)/download_dataset.py -hod_model_n $(HOD_N) -halotype $(HALOTYPE) -clf_method $(CLF_METHOD) -sample $(SAMPLE)
 
 ## Remove downloaded catalogues
 remove_catalogues:
