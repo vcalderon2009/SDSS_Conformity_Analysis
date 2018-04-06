@@ -412,6 +412,7 @@ def add_to_dict(param_dict):
     ###
     ### To dictionary
     param_dict['sample_s'     ] = sample_s
+    param_dict['sample_Mr'    ] = sample_Mr
     param_dict['perf_str'     ] = perf_str
     param_dict['fig_idx'      ] = fig_idx
     param_dict['logrpmin'     ] = logrpmin
