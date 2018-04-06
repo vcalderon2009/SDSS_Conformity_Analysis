@@ -288,22 +288,6 @@ def get_parser():
                         help='Maximum mass bin to show in the results plot',
                         type=float,
                         default=13.2)
-    ## CLF/CSMF method of assigning galaxy properties
-    parser.add_argument('-clf_method',
-                        dest='clf_method',
-                        help="""
-                        Method for assigning galaxy properties to mock 
-                        galaxies. Options:
-                        (1) = Independent assignment of (g-r), sersic, logssfr
-                        (2) = (g-r) decides active/passive designation and 
-                        draws values independently.
-                        (3) (g-r) decides active/passive designation, and 
-                        assigns other galaxy properties for that given 
-                        galaxy.
-                        """,
-                        type=int,
-                        choices=[1,2,3],
-                        default=3)
     ## Verbose
     parser.add_argument('-v','--verbose',
                         dest='verbose',
