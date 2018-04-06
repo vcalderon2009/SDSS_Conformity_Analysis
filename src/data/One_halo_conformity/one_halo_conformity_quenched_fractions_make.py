@@ -3,7 +3,7 @@
 
 # Victor Calderon
 # Created      : 10/31/2017
-# Last Modified: 11/07/2017
+# Last Modified: 04/06/2018
 # Vanderbilt University
 from __future__ import print_function, division, absolute_import
 __author__     =['Victor Calderon']
@@ -100,6 +100,38 @@ def get_parser():
                         type=str,
                         choices=['calc', 'plots'],
                         default='calc')
+    ## Number of HOD's to create. Dictates how many different types of 
+    ##      mock catalogues to create
+    parser.add_argument('-hod_model_n',
+                        dest='hod_n',
+                        help="Number of distinct HOD model to use. Default = 0",
+                        type=int,
+                        choices=range(0,1),
+                        metavar='[0]',
+                        default=0)
+    ## Type of dark matter halo to use in the simulation
+    parser.add_argument('-halotype',
+                        dest='halotype',
+                        help='Type of the DM halo.',
+                        type=str,
+                        choices=['so','fof'],
+                        default='fof')
+    ## CLF/CSMF method of assigning galaxy properties
+    parser.add_argument('-clf_method',
+                        dest='clf_method',
+                        help="""
+                        Method for assigning galaxy properties to mock 
+                        galaxies. Options:
+                        (1) = Independent assignment of (g-r), sersic, logssfr
+                        (2) = (g-r) decides active/passive designation and 
+                        draws values independently.
+                        (3) (g-r) decides active/passive designation, and 
+                        assigns other galaxy properties for that given 
+                        galaxy.
+                        """,
+                        type=int,
+                        choices=[1,2,3],
+                        default=3)
     ## Program message
     parser.add_argument('-progmsg',
                         dest='Prog_msg',
@@ -112,6 +144,22 @@ def get_parser():
                         help='Delete pickle files containing pair counts',
                         type=_str2bool,
                         default=False)
+    ## CLF/CSMF method of assigning galaxy properties
+    parser.add_argument('-clf_method',
+                        dest='clf_method',
+                        help="""
+                        Method for assigning galaxy properties to mock 
+                        galaxies. Options:
+                        (1) = Independent assignment of (g-r), sersic, logssfr
+                        (2) = (g-r) decides active/passive designation and 
+                        draws values independently.
+                        (3) (g-r) decides active/passive designation, and 
+                        assigns other galaxy properties for that given 
+                        galaxy.
+                        """,
+                        type=int,
+                        choices=[1,2,3],
+                        default=3)
     ## CPU to use
     parser.add_argument('-cpu_frac',
                         dest='cpu_frac',
@@ -184,7 +232,8 @@ def get_analysis_params(param_dict):
                                 ('catl_finish'    ,'-catl_finish',100),
                                 ('perf_opt'       ,'-perf'       ,'False'),
                                 ('type_sigma'     ,'-sigma'      ,'std'),
-                                ('frac_stat'      ,'-frac_stat'  ,'diff'  )])
+                                ('frac_stat'      ,'-frac_stat'  ,'diff'  ),
+                                ('clf_method'     ,'-clf_method' ,3       )])
     ##
     ## Converting to pandas DataFrame
     colnames = ['Name','Flag','Value']
@@ -209,6 +258,9 @@ def get_analysis_params(param_dict):
     ##
     ## Options for `Plotting`
     if (param_dict['analysis_type'] == 'plots'):
+        ##
+        ## Option for type of CLF Method
+        params_pd.loc[params_pd['Name']=='clf_method','Value'] = param_dict['clf_method']
         ##
         ## Option for verbose output
         if param_dict['verbose']:

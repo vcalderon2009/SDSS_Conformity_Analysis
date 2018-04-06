@@ -3,7 +3,7 @@
 
 # Victor Calderon
 # Created      : 11/08/2017
-# Last Modified: 11/08/2017
+# Last Modified: 04/05/2018
 # Vanderbilt University
 from __future__ import print_function, division, absolute_import
 __author__     =['Victor Calderon']
@@ -122,6 +122,38 @@ def get_parser():
                             formatter_class=SortingHelpFormatter,)
     ## 
     parser.add_argument('--version', action='version', version='%(prog)s 1.0')
+    ## Number of HOD's to create. Dictates how many different types of 
+    ##      mock catalogues to create
+    parser.add_argument('-hod_model_n',
+                        dest='hod_n',
+                        help="Number of distinct HOD model to use. Default = 0",
+                        type=int,
+                        choices=range(0,1),
+                        metavar='[0]',
+                        default=0)
+    ## Type of dark matter halo to use in the simulation
+    parser.add_argument('-halotype',
+                        dest='halotype',
+                        help='Type of the DM halo.',
+                        type=str,
+                        choices=['so','fof'],
+                        default='fof')
+    ## CLF/CSMF method of assigning galaxy properties
+    parser.add_argument('-clf_method',
+                        dest='clf_method',
+                        help="""
+                        Method for assigning galaxy properties to mock 
+                        galaxies. Options:
+                        (1) = Independent assignment of (g-r), sersic, logssfr
+                        (2) = (g-r) decides active/passive designation and 
+                        draws values independently.
+                        (3) (g-r) decides active/passive designation, and 
+                        assigns other galaxy properties for that given 
+                        galaxy.
+                        """,
+                        type=int,
+                        choices=[1,2,3],
+                        default=3)
     ## SDSS Sample
     parser.add_argument('-sample',
                         dest='sample',
@@ -153,6 +185,7 @@ def get_parser():
                         dest='verbose',
                         help='Option to print out project parameters',
                         action="store_true")
+
     ## Parsing Objects
     args = parser.parse_args()
 
@@ -202,14 +235,17 @@ def add_to_dict(param_dict):
     """
     ### Sample - Int
     sample_s = str(param_dict['sample'])
+    ### Sample - Mr
+    sample_Mr = 'Mr{0}'.format(param_dict['sample'])
     ###
     ### URL to download catalogues
     url_catl = 'http://lss.phy.vanderbilt.edu/groups/data_vc/DR7/sdss_catalogues/'
     url_checker(url_catl)
     ###
     ### To dictionary
-    param_dict['sample_s'] = sample_s
-    param_dict['url_catl'] = url_catl
+    param_dict['sample_s' ] = sample_s
+    param_dict['sample_Mr'] = sample_Mr
+    param_dict['url_catl' ] = url_catl
 
     return param_dict
 
@@ -233,21 +269,36 @@ def directory_skeleton(param_dict, proj_dict):
     """
     ## Directory for Catalogues
     for catl_kind in ['data', 'mocks']:
-        catl_dir = os.path.join(proj_dict['data_dir'],
-                                'external',
-                                'SDSS',
-                                catl_kind,
-                                param_dict['catl_type'],
-                                'Mr{0}'.format(param_dict['sample']))
+        # Data
+        if catl_kind == 'data':
+            catl_dir = os.path.join(    proj_dict['data_dir'],
+                                        'external',
+                                        'SDSS',
+                                        catl_kind,
+                                        param_dict['catl_type'],
+                                        param_dict['sample_Mr'])
+        # Mocks
+        if catl_kind == 'mocks':
+            catl_dir = os.path.join(    proj_dict['data_dir'],
+                                        'external',
+                                        'SDSS',
+                                        catl_kind,
+                                        'halos_{0}'.format(param_dict['halotype']),
+                                        'hod_model_{0}'.format(param_dict['hod_n']),
+                                        'clf_method_{0}'.format(param_dict['clf_method']),
+                                        param_dict['catl_type'],
+                                        param_dict['sample_Mr'])
         ##
-        ## Extra Folders
+        ## Extra folders
         # Member galaxy directory
         member_dir = os.path.join(catl_dir, 'member_galaxy_catalogues')
         cu.Path_Folder(member_dir)
         proj_dict['{0}_out_memb'.format(catl_kind)] = member_dir
-        # Perfect galaxy directory
+        ##
+        ## Perfect galaxy directory
         if (catl_kind == 'mocks') and (param_dict['perf_opt']):
-            perf_member_dir = os.path.join(catl_dir, 'perfect_member_galaxy_catalogues')
+            perf_member_dir = os.path.join( catl_dir,
+                                            'perfect_member_galaxy_catalogues')
             cu.Path_Folder(perf_member_dir)
             proj_dict['{0}_out_perf_memb'.format(catl_kind)] = perf_member_dir
 
@@ -268,7 +319,7 @@ def download_directory(param_dict, proj_dict, cut_dirs=8):
         dictionary with info of the project that uses the
         `Data Science` Cookiecutter template.
 
-    cut_dirs: int, optional (default = 100)
+    cut_dirs: int, optional (default = 8)
         number of directories to skip.
         See `wget` documentation for more details.
 
@@ -277,11 +328,28 @@ def download_directory(param_dict, proj_dict, cut_dirs=8):
     ## Creating command to execute download
     for catl_kind in ['data', 'mocks']:
         ## Downloading directories from the web
-        calt_kind_url = os.path.join(param_dict['url_catl'],
-                                    catl_kind,
-                                    param_dict['catl_type'],
-                                    'Mr'+param_dict['sample_s'],
-                                    'member_galaxy_catalogues/')
+        # Data
+        if catl_kind == 'data':
+            calt_kind_url = os.path.join(param_dict['url_catl'],
+                                        catl_kind,
+                                        param_dict['catl_type'],
+                                        'Mr'+param_dict['sample_s'],
+                                        'member_galaxy_catalogues/')
+            # Number of directories to cut
+            cut_dirs = 8
+        # Mocks
+        if catl_kind == 'mocks':
+            calt_kind_url = os.path.join(param_dict['url_catl'],
+                                        catl_kind,
+                                        'halos_{0}'.format(param_dict['halotype']),
+                                        'hod_model_{0}'.format(param_dict['hod_n']),
+                                        'clf_method_{0}'.format(param_dict['clf_method']),
+                                        param_dict['catl_type'],
+                                        param_dict['sample_Mr'],
+                                        'member_galaxy_catalogues/')
+            # Number of directories to cut
+            cut_dirs = 11
+        ## Checking if URL exists
         url_checker(calt_kind_url)
         ## String to be executed
         if param_dict['verbose']:

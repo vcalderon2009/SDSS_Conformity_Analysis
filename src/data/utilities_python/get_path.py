@@ -22,13 +22,30 @@ import git
 import os
 from .file_dir_check import Path_Folder as PF
 
-def get_base_path(path='./'):
+def get_base_path(node=None):
     """
     get the base path for the system
     """
-    base_path = git_root_dir(path) + '/'
+    ##
+    ## Base path
+    try:
+        path = os.environ['sdss_catl_path']
+        assert(os.path.exists(path))
+    except:
+        proj_dict = cookiecutter_paths(__file__)
+        ##
+        ## Path to `base`
+        path = proj_dict['base_dir']
 
-    return base_path
+    return path
+
+# def get_base_path(path='./'):
+#     """
+#     get the base path for the system
+#     """
+#     base_path = git_root_dir(path) + '/'
+
+#     return base_path
 
 def get_output_path(path='./'):
     """
