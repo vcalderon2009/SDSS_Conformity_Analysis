@@ -532,7 +532,7 @@ def directory_skeleton(param_dict, proj_dict):
     pickle_data = os.path.join( proj_dict['data_dir'],
                                 'processed',
                                 path_prefix_data,
-                                'catl_pickle_files'
+                                'catl_pickle_files',
                                 param_dict['corr_type'],
                                 param_dict['param_str'])
     ###
