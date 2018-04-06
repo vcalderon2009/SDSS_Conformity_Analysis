@@ -141,7 +141,7 @@ remove_calc_screens:
 ## Download required Dataset
 download_dataset: remove_catalogues
 	# Downloading dataset
-	python $(SRC_DIR)/download_dataset.py -hod_model_n $(HOD_N) -halotype $(HALOTYPE) -clf_method $(CLF_METHOD) -sample $(SAMPLE)
+	@python $(SRC_DIR)/download_dataset.py -hod_model_n $(HOD_N) -halotype $(HALOTYPE) -clf_method $(CLF_METHOD) -sample $(SAMPLE)
 
 ## Remove downloaded catalogues
 remove_catalogues:
