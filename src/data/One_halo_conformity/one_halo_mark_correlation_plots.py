@@ -535,7 +535,7 @@ def directory_skeleton(param_dict, proj_dict):
                                 path_prefix_data,
                                 'catl_pickle_files',
                                 param_dict['corr_type'],
-                                param_dict['param_str'])
+                                param_dict['param_str']).replace('mocks','data')
     ### Figure out directory
     if param_dict['catl_kind'] == 'data':
         figure_dir = os.path.join(  proj_dict['plot_dir'],
@@ -564,8 +564,6 @@ def directory_skeleton(param_dict, proj_dict):
     fig_paper_dir = os.path.join(   proj_dict['plot_dir'],
                                     'SDSS',
                                     'Paper_Figures/')
-
-
     ### MCF Folder prefix
     # path_prefix = 'SDSS/{0}/{1}/Mr{2}/MCF_results/'.format(
     #                     param_dict['catl_kind'],

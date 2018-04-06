@@ -543,7 +543,7 @@ def directory_skeleton(param_dict, proj_dict):
                                 path_prefix_data,
                                 'catl_pickle_files',
                                 param_dict['corr_type'],
-                                param_dict['param_str'])
+                                param_dict['param_str']).replace('mocks','data')
     ###
     ### Figure out directory
     if param_dict['catl_kind'] == 'data':
