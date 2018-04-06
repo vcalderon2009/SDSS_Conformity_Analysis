@@ -3,7 +3,7 @@
 
 # Victor Calderon
 # Created      : 10/24/2017
-# Last Modified: 10/24/2017
+# Last Modified: 04/06/2018
 # Vanderbilt University
 from __future__ import print_function, division, absolute_import
 __author__     =['Victor Calderon']
@@ -103,6 +103,38 @@ def get_parser():
                             formatter_class=SortingHelpFormatter,)
     # 
     parser.add_argument('--version', action='version', version='%(prog)s 1.0')
+    ## Number of HOD's to create. Dictates how many different types of 
+    ##      mock catalogues to create
+    parser.add_argument('-hod_model_n',
+                        dest='hod_n',
+                        help="Number of distinct HOD model to use. Default = 0",
+                        type=int,
+                        choices=range(0,1),
+                        metavar='[0]',
+                        default=0)
+    ## Type of dark matter halo to use in the simulation
+    parser.add_argument('-halotype',
+                        dest='halotype',
+                        help='Type of the DM halo.',
+                        type=str,
+                        choices=['so','fof'],
+                        default='fof')
+    ## CLF/CSMF method of assigning galaxy properties
+    parser.add_argument('-clf_method',
+                        dest='clf_method',
+                        help="""
+                        Method for assigning galaxy properties to mock 
+                        galaxies. Options:
+                        (1) = Independent assignment of (g-r), sersic, logssfr
+                        (2) = (g-r) decides active/passive designation and 
+                        draws values independently.
+                        (3) (g-r) decides active/passive designation, and 
+                        assigns other galaxy properties for that given 
+                        galaxy.
+                        """,
+                        type=int,
+                        choices=[1,2,3],
+                        default=3)
     ## SDSS Sample
     parser.add_argument('-sample',
                         dest='sample',
