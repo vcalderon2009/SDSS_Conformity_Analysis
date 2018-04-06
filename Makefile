@@ -139,7 +139,7 @@ remove_calc_screens:
 	screen -S "Two_Halo_MCF_conformity_calc" -X quit
 
 ## Download required Dataset
-download_dataset: remove_catalogues
+download_dataset:
 	# Downloading dataset
 	@python $(SRC_DIR)/download_dataset.py -hod_model_n $(HOD_N) -halotype $(HALOTYPE) -clf_method $(CLF_METHOD)
 
