@@ -412,6 +412,7 @@ def directory_skeleton(param_dict, proj_dict):
     pickdir = os.path.join( proj_dict['data_dir'],
                             'processed',
                             path_prefix,
+                            'catl_pickle_files',
                             param_dict['corr_type'],
                             param_dict['param_str'])
     # Creating Folders
@@ -880,6 +881,9 @@ def main():
                                     sample_s =param_dict['sample_s'],
                                     perf_opt =param_dict['perf_opt'],
                                     catl_info='members',
+                                    halotype=param_dict['halotype'],
+                                    clf_method=param_dict['clf_method'],
+                                    hod_n=param_dict['hod_n'],
                                     print_filedir=False)
     ##
     ## Only reading desired number of catalogues

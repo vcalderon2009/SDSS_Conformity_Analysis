@@ -162,22 +162,6 @@ def get_parser():
                         help='Maximum parallel distance to find galaxy pairs',
                         type=float,
                         default=20.)
-    ## CLF/CSMF method of assigning galaxy properties
-    parser.add_argument('-clf_method',
-                        dest='clf_method',
-                        help="""
-                        Method for assigning galaxy properties to mock 
-                        galaxies. Options:
-                        (1) = Independent assignment of (g-r), sersic, logssfr
-                        (2) = (g-r) decides active/passive designation and 
-                        draws values independently.
-                        (3) (g-r) decides active/passive designation, and 
-                        assigns other galaxy properties for that given 
-                        galaxy.
-                        """,
-                        type=int,
-                        choices=[1,2,3],
-                        default=3)
     ## Verbose
     parser.add_argument('-v','--verbose',
                         dest='verbose',
@@ -215,7 +199,10 @@ def get_analysis_params(param_dict):
     #
     # For Calculations
     if param_dict['analysis_type'] == 'calc':
-        params_arr = num.array([('sample'         ,'-sample'     ,19),
+        params_arr = num.array([('hod_n'          ,'-hod_model_n',0),
+                                ('halotype'       ,'-halotype'   ,'fof'),
+                                ('clf_method'     ,'-clf_method' ,3),
+                                ('sample'         ,'-sample'     ,19),
                                 ('catl_type'      ,'-abopt'      ,'mr'),
                                 ('corr_pair_type' ,'-pairtype'   ,'cen_sat'),
                                 ('shuffle_marks'  ,'-shuffle'    ,'censat_sh'),
@@ -239,7 +226,10 @@ def get_analysis_params(param_dict):
     #
     # Variables for plotting
     if param_dict['analysis_type']=='plots':
-        params_arr = num.array([('sample'         ,'-sample'     ,19),
+        params_arr = num.array([('hod_n'          ,'-hod_model_n',0),
+                                ('halotype'       ,'-halotype'   ,'fof'),
+                                ('clf_method'     ,'-clf_method' ,3),
+                                ('sample'         ,'-sample'     ,19),
                                 ('catl_type'      ,'-abopt'      ,'mr'),
                                 ('corr_pair_type' ,'-pairtype'   ,'cen_sat'),
                                 ('shuffle_marks'  ,'-shuffle'    ,'censat_sh'),
@@ -257,8 +247,7 @@ def get_analysis_params(param_dict):
                                 ('mg_min'         ,'-mg_min'     ,12.41),
                                 ('mg_max'         ,'-mg_max'     ,14.),
                                 ('verbose'        ,'-v'          ,'False'),
-                                ('pimax'          ,'-pimax'      ,20.  ),
-                                ('clf_method'     ,'-clf_method' ,3    )])
+                                ('pimax'          ,'-pimax'      ,20.  )])
     ##
     ## Converting to pandas DataFrame
     colnames = ['Name','Flag','Value']
@@ -299,9 +288,13 @@ def get_analysis_params(param_dict):
         ##
         ## Chaning `pimax` value
         params_pd.loc[params_pd['Name']=='pimax','Value'] = param_dict['pimax']
-        ##
-        ## Option for type of CLF Method
-        params_pd.loc[params_pd['Name']=='clf_method','Value'] = param_dict['clf_method']
+    ##
+    ## Number of distinct HOD model to use. Default = 0
+    params_pd.loc[params_pd['Name']=='hod_n','Value'] = param_dict['hod_n']
+    ## Type of the DM halo.
+    params_pd.loc[params_pd['Name']=='halotype','Value'] = param_dict['halotype']
+    ## Method for assigning galaxy properties to mock galaxies
+    params_pd.loc[params_pd['Name']=='clf_method','Value'] = param_dict['clf_method']
 
     return params_pd
 

@@ -144,22 +144,6 @@ def get_parser():
                         help='Delete pickle files containing pair counts',
                         type=_str2bool,
                         default=False)
-    ## CLF/CSMF method of assigning galaxy properties
-    parser.add_argument('-clf_method',
-                        dest='clf_method',
-                        help="""
-                        Method for assigning galaxy properties to mock 
-                        galaxies. Options:
-                        (1) = Independent assignment of (g-r), sersic, logssfr
-                        (2) = (g-r) decides active/passive designation and 
-                        draws values independently.
-                        (3) (g-r) decides active/passive designation, and 
-                        assigns other galaxy properties for that given 
-                        galaxy.
-                        """,
-                        type=int,
-                        choices=[1,2,3],
-                        default=3)
     ## CPU to use
     parser.add_argument('-cpu_frac',
                         dest='cpu_frac',
@@ -203,7 +187,10 @@ def get_analysis_params(param_dict):
     #
     # For Calculations
     if param_dict['analysis_type'] == 'calc':
-        params_arr = num.array([('sample'         ,'-sample'     ,19),
+        params_arr = num.array([('hod_n'          ,'-hod_model_n',0),
+                                ('halotype'       ,'-halotype'   ,'fof'),
+                                ('clf_method'     ,'-clf_method' ,3),
+                                ('sample'         ,'-sample'     ,19),
                                 ('catl_type'      ,'-abopt'      ,'mr'),
                                 ('shuffle_marks'  ,'-shuffle'    ,'censat_sh'),
                                 ('itern_tot'      ,'-itern'      ,1000),
@@ -221,7 +208,10 @@ def get_analysis_params(param_dict):
     #
     # Variables for plotting
     if param_dict['analysis_type']=='plots':
-        params_arr = num.array([('sample'         ,'-sample'     ,19),
+        params_arr = num.array([('hod_n'          ,'-hod_model_n',0),
+                                ('halotype'       ,'-halotype'   ,'fof'),
+                                ('clf_method'     ,'-clf_method' ,3),
+                                ('sample'         ,'-sample'     ,19),
                                 ('catl_type'      ,'-abopt'      ,'mr'),
                                 ('shuffle_marks'  ,'-shuffle'    ,'censat_sh'),
                                 ('itern_tot'      ,'-itern'      ,1000),
@@ -232,8 +222,7 @@ def get_analysis_params(param_dict):
                                 ('catl_finish'    ,'-catl_finish',100),
                                 ('perf_opt'       ,'-perf'       ,'False'),
                                 ('type_sigma'     ,'-sigma'      ,'std'),
-                                ('frac_stat'      ,'-frac_stat'  ,'diff'  ),
-                                ('clf_method'     ,'-clf_method' ,3       )])
+                                ('frac_stat'      ,'-frac_stat'  ,'diff'  )])
     ##
     ## Converting to pandas DataFrame
     colnames = ['Name','Flag','Value']
@@ -259,13 +248,17 @@ def get_analysis_params(param_dict):
     ## Options for `Plotting`
     if (param_dict['analysis_type'] == 'plots'):
         ##
-        ## Option for type of CLF Method
-        params_pd.loc[params_pd['Name']=='clf_method','Value'] = param_dict['clf_method']
-        ##
         ## Option for verbose output
         if param_dict['verbose']:
             ## Overwriting `verbose` from `params_pd`
             params_pd.loc[params_pd['Name']=='verbose','Value'] = 'True'
+    ##
+    ## Number of distinct HOD model to use. Default = 0
+    params_pd.loc[params_pd['Name']=='hod_n','Value'] = param_dict['hod_n']
+    ## Type of the DM halo.
+    params_pd.loc[params_pd['Name']=='halotype','Value'] = param_dict['halotype']
+    ## Method for assigning galaxy properties to mock galaxies
+    params_pd.loc[params_pd['Name']=='clf_method','Value'] = param_dict['clf_method']
 
     return params_pd
 

@@ -505,6 +505,8 @@ def add_to_dict(param_dict):
     """
     ### Sample - Int
     sample_s = str(param_dict['sample'])
+    ### Sample - Mr
+    sample_Mr = 'Mr{0}'.format(param_dict['sample'])
     ### Perfect Catalogue
     if param_dict['perf_opt']:
         perf_str = 'haloperf'
@@ -551,6 +553,7 @@ def add_to_dict(param_dict):
     ###
     ### To dictionary
     param_dict['sample_s'     ] = sample_s
+    param_dict['sample_Mr'    ] = sample_Mr
     param_dict['perf_str'     ] = perf_str
     param_dict['fig_idx'      ] = fig_idx
     param_dict['logrpmin'     ] = logrpmin
@@ -659,22 +662,35 @@ def directory_skeleton(param_dict, proj_dict):
         Dictionary with current and new paths to project directories
     """
     ### MCF Folder prefix
-    path_prefix = 'SDSS/{0}/{1}/Mr{2}/MCF_results/'.format(
-                        param_dict['catl_kind'],
-                        param_dict['catl_type'],
-                        param_dict['sample'   ])
-    ### MCF Output directory - Results
-    pickdir = '{0}/processed/{1}/catl_pickle_files/{2}/{3}/'.format(
-                    proj_dict['data_dir'],
-                    path_prefix          ,
-                    param_dict['corr_type'],
-                    param_dict['param_str'])
+    if param_dict['catl_kind'] == 'data':
+        path_prefix = os.path.join( 'SDSS',
+                                    param_dict['catl_kind'],
+                                    param_dict['catl_type'],
+                                    param_dict['sample_Mr'],
+                                    'MCF_results')
+    elif param_dict['catl_kind'] == 'mocks':
+        path_prefix = os.path.join( 'SDSS',
+                                    param_dict['catl_kind'],
+                                    'halos_{0}'.format(param_dict['halotype']),
+                                    'hod_model_{0}'.format(param_dict['hod_n']),
+                                    'clf_method_{0}'.format(param_dict['clf_method']),
+                                    param_dict['catl_type'],
+                                    param_dict['sample_Mr'],
+                                    'MCF_results')
+    ### MCF Output Directory - Results
+    pickdir = os.path.join( proj_dict['data_dir'],
+                            'processed',
+                            path_prefix,
+                            'catl_pickle_files',
+                            param_dict['corr_type'],
+                            param_dict['param_str'])
     ### MCF Output directory - Galaxy Pairs
-    out_catl_p = '{0}/interim/{1}/DDrppi_results/{2}/{3}/'.format(
-                    proj_dict['data_dir'],
-                    path_prefix          ,
-                    param_dict['corr_type'],
-                    param_dict['param_str'])
+    out_catl_p = os.path.join( proj_dict['data_dir'],
+                            'interim',
+                            path_prefix,
+                            'DDrppi_results',
+                            param_dict['corr_type'],
+                            param_dict['param_str'])
     # Creating Folders
     cu.Path_Folder(pickdir)
     cu.Path_Folder(out_catl_p)
@@ -1605,6 +1621,9 @@ def main(args):
                                     sample_s =param_dict['sample_s'],
                                     perf_opt =param_dict['perf_opt'],
                                     catl_info='members',
+                                    halotype=param_dict['halotype'],
+                                    clf_method=param_dict['clf_method'],
+                                    hod_n=param_dict['hod_n'],
                                     print_filedir=False)
     ##
     ## Only reading desired number of catalogues

@@ -339,6 +339,8 @@ def add_to_dict(param_dict):
     ###
     ### Sample - Int
     sample_s = str(param_dict['sample'])
+    ### Sample - Mr
+    sample_Mr = 'Mr{0}'.format(param_dict['sample'])
     ###
     ### Perfect Catalogue
     if param_dict['perf_opt']:
@@ -405,6 +407,7 @@ def add_to_dict(param_dict):
     ###
     ### To dictionary
     param_dict['sample_s'         ] = sample_s
+    param_dict['sample_Mr'        ] = sample_Mr
     param_dict['perf_str'         ] = perf_str
     param_dict['fig_idx'          ] = fig_idx
     param_dict['logrpmin'         ] = logrpmin
@@ -521,40 +524,92 @@ def directory_skeleton(param_dict, proj_dict):
         Dictionary with current and new paths to project directories
     """
     ### MCF Folder prefix
-    path_prefix = 'SDSS/{0}/{1}/Mr{2}/Frac_results/'.format(
-                        param_dict['catl_kind'],
-                        param_dict['catl_type'],
-                        param_dict['sample'   ])
-    ### ## Pickle directory (result from 1-halo MCF analysis results)
-    pickle_res = '{0}/processed/{1}/{2}/catl_pickle_files/{3}/'.format(
-                    proj_dict['data_dir'],
-                    path_prefix          ,
-                    param_dict['corr_type'],
-                    param_dict['param_str'])
+    # Data
+    path_prefix_data = os.path.join('SDSS',
+                                    'data',
+                                    param_dict['catl_type'],
+                                    param_dict['sample_Mr'],
+                                    'Frac_results')
+    # Mocks
+    path_prefix_mocks = os.path.join('SDSS',
+                                'mocks',
+                                'halos_{0}'.format(param_dict['halotype']),
+                                'hod_model_{0}'.format(param_dict['hod_n']),
+                                'clf_method_{0}'.format(param_dict['clf_method']),
+                                param_dict['catl_type'],
+                                param_dict['sample_Mr'],
+                                'Frac_results')
+    ## Choosing `prefix`
+    if param_dict['catl_kind'] == 'data':
+        path_prefix = path_prefix_data
+    elif param_dict['catl_kind'] == 'mocks':
+        path_prefix = path_prefix_mocks
+    ##
+    ## Pickle directory (result from 1-halo MCF analysis results)
+    pickle_res = os.path.join(  proj_dict['data_dir'],
+                                'processed',
+                                path_prefix,
+                                'catl_pickle_files',
+                                param_dict['corr_type'],
+                                param_dict['param_str'])
     ###
     ### MCF Folder prefix -- Data
-    path_prefix_data = 'SDSS/{0}/{1}/Mr{2}/Frac_results'.format(
-                        'data',
-                        param_dict['catl_type'],
-                        param_dict['sample'   ])
-    ### Pickle directory (results for `data`)
-    pickle_data = '{0}/processed/{1}/{2}/catl_pickle_files/{3}/'.format(
-                    proj_dict['data_dir'],
-                    path_prefix_data          ,
-                    param_dict['corr_type'],
-                    param_dict['param_str'].replace('mocks','data'))
+    pickle_data = os.path.join( proj_dict['data_dir'],
+                                'processed',
+                                path_prefix_data,
+                                'catl_pickle_files',
+                                param_dict['corr_type'],
+                                param_dict['param_str'])
     ###
     ### Figure out directory
-    figure_dir  = '{0}/SDSS/{1}/{2}/Mr{3}/conformity_output/'
-    figure_dir += 'Frac_figures/{4}/{5}'
-    figure_dir  = figure_dir.format(*[  proj_dict['plot_dir'],
-                                        param_dict['catl_kind'],
-                                        param_dict['catl_type'],
-                                        param_dict['sample'],
-                                        param_dict['corr_type'],
-                                        param_dict['param_str'] ])
+    figure_dir = os.path.join(  proj_dict['plot_dir'],
+                                'SDSS',
+                                param_dict['catl_kind'],
+                                param_dict['catl_type'],
+                                param_dict['sample_Mr'],
+                                'conformity_output',
+                                'Frac_figures',
+                                param_dict['corr_type'],
+                                param_dict['param_str'])
     ## Figure - Paper directory
-    fig_paper_dir = '{0}/SDSS/Paper_Figures/'.format(proj_dict['plot_dir'])
+    fig_paper_dir = os.path.join(   proj_dict['plot_dir'],
+                                    'SDSS',
+                                    'Paper_Figures')+'/'
+    ### MCF Folder prefix
+    # path_prefix = 'SDSS/{0}/{1}/Mr{2}/Frac_results/'.format(
+    #                     param_dict['catl_kind'],
+    #                     param_dict['catl_type'],
+    #                     param_dict['sample'   ])
+    # ### ## Pickle directory (result from 1-halo MCF analysis results)
+    # pickle_res = '{0}/processed/{1}/{2}/catl_pickle_files/{3}/'.format(
+    #                 proj_dict['data_dir'],
+    #                 path_prefix          ,
+    #                 param_dict['corr_type'],
+    #                 param_dict['param_str'])
+    ###
+    ### MCF Folder prefix -- Data
+    # path_prefix_data = 'SDSS/{0}/{1}/Mr{2}/Frac_results'.format(
+    #                     'data',
+    #                     param_dict['catl_type'],
+    #                     param_dict['sample'   ])
+    ### Pickle directory (results for `data`)
+    # pickle_data = '{0}/processed/{1}/{2}/catl_pickle_files/{3}/'.format(
+    #                 proj_dict['data_dir'],
+    #                 path_prefix_data          ,
+    #                 param_dict['corr_type'],
+    #                 param_dict['param_str'].replace('mocks','data'))
+    ###
+    ### Figure out directory
+    # figure_dir  = '{0}/SDSS/{1}/{2}/Mr{3}/conformity_output/'
+    # figure_dir += 'Frac_figures/{4}/{5}'
+    # figure_dir  = figure_dir.format(*[  proj_dict['plot_dir'],
+    #                                     param_dict['catl_kind'],
+    #                                     param_dict['catl_type'],
+    #                                     param_dict['sample'],
+    #                                     param_dict['corr_type'],
+    #                                     param_dict['param_str'] ])
+    # ## Figure - Paper directory
+    # fig_paper_dir = '{0}/SDSS/Paper_Figures/'.format(proj_dict['plot_dir'])
     ##
     ## Checking if `pickle_res` exists
     if os.path.exists(pickle_res):
