@@ -168,6 +168,13 @@ def get_parser():
                         type=str,
                         choices=['mr'],
                         default='mr')
+    ## Random Seed for CLF
+    parser.add_argument('-clf_seed',
+                        dest='clf_seed',
+                        help='Random seed to be used for CLF',
+                        type=int,
+                        metavar='[0-4294967295]',
+                        default=0)
     ## Program message
     parser.add_argument('-progmsg',
                         dest='Prog_msg',
@@ -285,6 +292,7 @@ def directory_skeleton(param_dict, proj_dict):
                                         catl_kind,
                                         'halos_{0}'.format(param_dict['halotype']),
                                         'hod_model_{0}'.format(param_dict['hod_n']),
+                                        'clf_seed_{0}'.format(param_dict['clf_seed']),
                                         'clf_method_{0}'.format(param_dict['clf_method']),
                                         param_dict['catl_type'],
                                         param_dict['sample_Mr'])
@@ -343,12 +351,13 @@ def download_directory(param_dict, proj_dict, cut_dirs=8):
                                         catl_kind,
                                         'halos_{0}'.format(param_dict['halotype']),
                                         'hod_model_{0}'.format(param_dict['hod_n']),
+                                        'clf_seed_{0}'.format(param_dict['clf_seed']),
                                         'clf_method_{0}'.format(param_dict['clf_method']),
                                         param_dict['catl_type'],
                                         param_dict['sample_Mr'],
                                         'member_galaxy_catalogues/')
             # Number of directories to cut
-            cut_dirs = 11
+            cut_dirs = 12
         ## Checking if URL exists
         url_checker(calt_kind_url)
         ## String to be executed
