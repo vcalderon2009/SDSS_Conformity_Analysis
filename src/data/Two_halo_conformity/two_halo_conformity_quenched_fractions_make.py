@@ -188,6 +188,13 @@ def get_parser():
                         type=int,
                         metavar='[0-4294967295]',
                         default=1)
+    ## Random Seed for CLF
+    parser.add_argument('-clf_seed',
+                        dest='clf_seed',
+                        help='Random seed to be used for CLF',
+                        type=int,
+                        metavar='[0-4294967295]',
+                        default=0)
     ## Parsing Objects
     args = parser.parse_args()
 
@@ -239,6 +246,7 @@ def get_analysis_params(param_dict):
                                 ('frac_stat'      ,'-frac_stat'    ,'diff'),
                                 ('verbose'        ,'-v'            ,'False'),
                                 ('seed'           ,'-seed'         ,1     ),
+                                ('clf_seed'       ,'-clf_seed'     ,1235   ),
                                 ('shuffle_type'   ,'-shuffle_type' ,'normal')])
     #
     # Variables for Plotting
@@ -265,7 +273,8 @@ def get_analysis_params(param_dict):
                                 ('mg_max'         ,'-mg_max'       ,13.2),
                                 ('verbose'        ,'-v'            ,'False'),
                                 ('pimax'          ,'-pimax'        ,20.  ),
-                                ('frac_stat'      ,'-frac_stat'    ,'diff')])
+                                ('frac_stat'      ,'-frac_stat'    ,'diff'),
+                                ('clf_seed'       ,'-clf_seed'     ,1235   ),])
     ##
     ## Converting to pandas DataFrame
     colnames = ['Name','Flag','Value']
@@ -316,6 +325,8 @@ def get_analysis_params(param_dict):
     params_pd.loc[params_pd['Name']=='halotype','Value'] = param_dict['halotype']
     ## Method for assigning galaxy properties to mock galaxies
     params_pd.loc[params_pd['Name']=='clf_method','Value'] = param_dict['clf_method']
+    ## Random seed used during CLF
+    params_pd.loc[params_pd['Name']=='clf_seed','Value'] = param_dict['clf_seed']
 
     return params_pd
 

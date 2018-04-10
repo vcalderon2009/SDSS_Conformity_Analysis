@@ -212,6 +212,13 @@ def get_parser():
                         help='Program message to use throught the script',
                         type=str,
                         default=cu.Program_Msg(__file__))
+    ## Random Seed for CLF
+    parser.add_argument('-clf_seed',
+                        dest='clf_seed',
+                        help='Random seed to be used for CLF',
+                        type=int,
+                        metavar='[0-4294967295]',
+                        default=0)
     ## Parsing Objects
     args = parser.parse_args()
 

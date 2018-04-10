@@ -294,6 +294,13 @@ def get_parser():
                         help='Option to print out project parameters',
                         type=_str2bool,
                         default=False)
+    ## Random Seed for CLF
+    parser.add_argument('-clf_seed',
+                        dest='clf_seed',
+                        help='Random seed to be used for CLF',
+                        type=int,
+                        metavar='[0-4294967295]',
+                        default=0)
     ## Maximum mass bin to show
     ## Parsing Objects
     args = parser.parse_args()
@@ -511,6 +518,7 @@ def directory_skeleton(param_dict, proj_dict):
                                     param_dict['catl_kind'],
                                     'halos_{0}'.format(param_dict['halotype']),
                                     'hod_model_{0}'.format(param_dict['hod_n']),
+                                    'clf_seed_{0}'.format(param_dict['clf_seed']),
                                     'clf_method_{0}'.format(param_dict['clf_method']),
                                     param_dict['catl_type'],
                                     param_dict['sample_Mr'],
@@ -553,6 +561,7 @@ def directory_skeleton(param_dict, proj_dict):
                                     param_dict['catl_kind'],
                                     'halos_{0}'.format(param_dict['halotype']),
                                     'hod_model_{0}'.format(param_dict['hod_n']),
+                                    'clf_seed_{0}'.format(param_dict['clf_seed']),
                                     'clf_method_{0}'.format(param_dict['clf_method']),
                                     param_dict['catl_type'],
                                     param_dict['sample_Mr'],

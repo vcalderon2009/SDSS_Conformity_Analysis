@@ -162,6 +162,13 @@ def get_parser():
                         type=int,
                         metavar='[0-4294967295]',
                         default=1)
+    ## Random Seed for CLF
+    parser.add_argument('-clf_seed',
+                        dest='clf_seed',
+                        help='Random seed to be used for CLF',
+                        type=int,
+                        metavar='[0-4294967295]',
+                        default=0)
     ## Parsing Objects
     args = parser.parse_args()
 
@@ -204,7 +211,8 @@ def get_analysis_params(param_dict):
                                 ('remove_files'   ,'-remove'     ,'False'),
                                 ('type_sigma'     ,'-sigma'      ,'std'),
                                 ('frac_stat'      ,'-frac_stat'  ,'diff'  ),
-                                ('seed'           ,'-seed'       ,1     )])
+                                ('seed'           ,'-seed'       ,1     ),
+                                ('clf_seed'       ,'-clf_seed'   ,1235     )])
     #
     # Variables for plotting
     if param_dict['analysis_type']=='plots':
@@ -222,7 +230,8 @@ def get_analysis_params(param_dict):
                                 ('catl_finish'    ,'-catl_finish',100),
                                 ('perf_opt'       ,'-perf'       ,'False'),
                                 ('type_sigma'     ,'-sigma'      ,'std'),
-                                ('frac_stat'      ,'-frac_stat'  ,'diff'  )])
+                                ('frac_stat'      ,'-frac_stat'  ,'diff'  ),
+                                ('clf_seed'       ,'-clf_seed'   ,1235     )])
     ##
     ## Converting to pandas DataFrame
     colnames = ['Name','Flag','Value']
@@ -259,6 +268,8 @@ def get_analysis_params(param_dict):
     params_pd.loc[params_pd['Name']=='halotype','Value'] = param_dict['halotype']
     ## Method for assigning galaxy properties to mock galaxies
     params_pd.loc[params_pd['Name']=='clf_method','Value'] = param_dict['clf_method']
+    ## Random seed used during CLF
+    params_pd.loc[params_pd['Name']=='clf_seed','Value'] = param_dict['clf_seed']
 
     return params_pd
 
