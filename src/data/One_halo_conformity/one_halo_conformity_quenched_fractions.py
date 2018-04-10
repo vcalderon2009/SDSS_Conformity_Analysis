@@ -23,7 +23,7 @@ sys.path.insert(0, os.path.realpath(git_root_dir(__file__)))
 # Importing Modules
 import src.data.utilities_python as cu
 import numpy as num
-import math©
+import math
 import pandas as pd
 import pickle
 #sns.set()
