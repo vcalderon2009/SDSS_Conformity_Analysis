@@ -23,7 +23,7 @@ sys.path.insert(0, os.path.realpath(git_root_dir(__file__)))
 # Importing Modules
 import src.data.utilities_python as cu
 import numpy as num
-import math
+import math©
 import pandas as pd
 import pickle
 #sns.set()
@@ -892,7 +892,7 @@ def main():
                                     halotype=param_dict['halotype'],
                                     clf_method=param_dict['clf_method'],
                                     hod_n=param_dict['hod_n'],
-                                    clf_seed=param_dict['clf_seed']
+                                    clf_seed=param_dict['clf_seed'],
                                     print_filedir=False)
     ##
     ## Only reading desired number of catalogues
