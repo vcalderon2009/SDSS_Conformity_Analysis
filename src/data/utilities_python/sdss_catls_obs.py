@@ -27,7 +27,7 @@ from . import get_path       as gp
 from   collections import Counter
 
 def catl_sdss_dir(catl_kind='data', catl_type='mr', sample_s='19',
-    catl_info='members', halotype='fof', clf_method=3, hod_n=0,
+    catl_info='members', halotype='fof', clf_method=3, hod_n=0, clf_seed=1235,
     perf_opt=False, print_filedir=True, Program_Msg=fd.Program_Msg(__file__)):
     """
     Extracts the path to the catalogues
@@ -80,6 +80,9 @@ def catl_sdss_dir(catl_kind='data', catl_type='mr', sample_s='19',
         HOD model to use.
         Only relevant when "catl_kind == `mocks`".
 
+    clf_seed: int, optional (default = 1235)
+        Seed used for the CLF random seed
+
     perf_opt: boolean, optional (default = False)
         option for choosing 'perfect' catalogues
         Options:
@@ -131,6 +134,7 @@ def catl_sdss_dir(catl_kind='data', catl_type='mr', sample_s='19',
                                 catl_kind,
                                 'halos_{0}'.format(halotype),
                                 'hod_model_{0}'.format(hod_n),
+                                'clf_seed_{0}'.format(clf_seed),
                                 'clf_method_{0}'.format(clf_method),
                                 catl_type,
                                 'Mr'+sample_s,
@@ -147,7 +151,7 @@ def catl_sdss_dir(catl_kind='data', catl_type='mr', sample_s='19',
 
 def extract_catls(catl_kind='data', catl_type='mr', sample_s='19',
     datatype='.hdf5', catl_info='members', 
-    halotype='fof', clf_method=3, hod_n=0, perf_opt=False, 
+    halotype='fof', clf_method=3, hod_n=0, clf_seed=1235, perf_opt=False, 
     return_len=False, print_filedir=True,
     Program_Msg=fd.Program_Msg(__file__)):
     """
@@ -204,6 +208,9 @@ def extract_catls(catl_kind='data', catl_type='mr', sample_s='19',
         HOD model to use.
         Only relevant when "catl_kind == `mocks`".
 
+    clf_seed: int, optional (default = 1235)
+        Seed used for the CLF random seed
+
     perf_opt: boolean, optional (default = False)
         option for choosing 'perfect' catalogues
         Options:
@@ -233,6 +240,7 @@ def extract_catls(catl_kind='data', catl_type='mr', sample_s='19',
                             halotype=halotype,
                             clf_method=clf_method,
                             hod_n=hod_n,
+                            clf_seed=clf_seed,
                             perf_opt=perf_opt,
                             print_filedir=print_filedir)
     ## Converting to numpy arrays
