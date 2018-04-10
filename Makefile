@@ -99,31 +99,31 @@ endif
 ## Figures
 plot_figures:
 	# 1-halo
-	@python $(ONE_HALO_DIR)/one_halo_conformity_quenched_fractions_make.py -a plots -hod_model_n $(HOD_N) -halotype $(HALOTYPE) -clf_method $(CLF_METHOD)
-	@python $(ONE_HALO_DIR)/one_halo_mark_correlation_make.py -a plots -hod_model_n $(HOD_N) -halotype $(HALOTYPE) -clf_method $(CLF_METHOD)
+	@python $(ONE_HALO_DIR)/one_halo_conformity_quenched_fractions_make.py -a plots -hod_model_n $(HOD_N) -halotype $(HALOTYPE) -clf_method $(CLF_METHOD) -clf_seed $(CLF_SEED)
+	@python $(ONE_HALO_DIR)/one_halo_mark_correlation_make.py -a plots -hod_model_n $(HOD_N) -halotype $(HALOTYPE) -clf_method $(CLF_METHOD) -clf_seed $(CLF_SEED)
 	# 2-halo
-	@python $(TWO_HALO_DIR)/two_halo_conformity_quenched_fractions_make.py -a plots -hod_model_n $(HOD_N) -halotype $(HALOTYPE) -clf_method $(CLF_METHOD)
-	@python $(TWO_HALO_DIR)/two_halo_mark_correlation_make.py -a plots -hod_model_n $(HOD_N) -halotype $(HALOTYPE) -clf_method $(CLF_METHOD)
+	@python $(TWO_HALO_DIR)/two_halo_conformity_quenched_fractions_make.py -a plots -hod_model_n $(HOD_N) -halotype $(HALOTYPE) -clf_method $(CLF_METHOD) -clf_seed $(CLF_SEED)
+	@python $(TWO_HALO_DIR)/two_halo_mark_correlation_make.py -a plots -hod_model_n $(HOD_N) -halotype $(HALOTYPE) -clf_method $(CLF_METHOD) -clf_seed $(CLF_SEED)
 
 ## 1-halo Quenched Fractions - Calculations
 1_halo_fracs_calc: download_dataset
 	# 1-halo
-	@python $(ONE_HALO_DIR)/one_halo_conformity_quenched_fractions_make.py -a calc -cpu_frac $(CPU_FRAC) -remove $(REMOVE_FILES) -hod_model_n $(HOD_N) -halotype $(HALOTYPE) -clf_method $(CLF_METHOD)
+	@python $(ONE_HALO_DIR)/one_halo_conformity_quenched_fractions_make.py -a calc -cpu_frac $(CPU_FRAC) -remove $(REMOVE_FILES) -hod_model_n $(HOD_N) -halotype $(HALOTYPE) -clf_method $(CLF_METHOD) -clf_seed $(CLF_SEED)
 
 ## 1-halo Marked Correlation Function - Calculations
 1_halo_mcf_calc: download_dataset
 	# 1-halo
-	@python $(ONE_HALO_DIR)/one_halo_mark_correlation_make.py -a calc -cpu_frac $(CPU_FRAC) -remove $(REMOVE_FILES) -remove-wp $(REMOVE_WP) -hod_model_n $(HOD_N) -halotype $(HALOTYPE) -clf_method $(CLF_METHOD)
+	@python $(ONE_HALO_DIR)/one_halo_mark_correlation_make.py -a calc -cpu_frac $(CPU_FRAC) -remove $(REMOVE_FILES) -remove-wp $(REMOVE_WP) -hod_model_n $(HOD_N) -halotype $(HALOTYPE) -clf_method $(CLF_METHOD) -clf_seed $(CLF_SEED)
 
 ## 2-halo Quenched Fractions - Calculations
 2_halo_fracs_calc: download_dataset
 	# 2-halo
-	@python $(TWO_HALO_DIR)/two_halo_conformity_quenched_fractions_make.py -a calc -cpu_frac $(CPU_FRAC) -remove $(REMOVE_FILES) -shuffle_type $(SHUFFLE_TYPE_CENS) -remove-wp $(REMOVE_WP) -hod_model_n $(HOD_N) -halotype $(HALOTYPE) -clf_method $(CLF_METHOD)
+	@python $(TWO_HALO_DIR)/two_halo_conformity_quenched_fractions_make.py -a calc -cpu_frac $(CPU_FRAC) -remove $(REMOVE_FILES) -shuffle_type $(SHUFFLE_TYPE_CENS) -remove-wp $(REMOVE_WP) -hod_model_n $(HOD_N) -halotype $(HALOTYPE) -clf_method $(CLF_METHOD) -clf_seed $(CLF_SEED)
 
 ## 2-halo Marked Correlation Function - Calculations
 2_halo_mcf_calc: download_dataset
 	# 2-halo
-	@python $(TWO_HALO_DIR)/two_halo_mark_correlation_make.py -a calc -cpu_frac $(CPU_FRAC) -remove $(REMOVE_FILES) -remove-wp $(REMOVE_WP) -hod_model_n $(HOD_N) -halotype $(HALOTYPE) -clf_method $(CLF_METHOD)
+	@python $(TWO_HALO_DIR)/two_halo_mark_correlation_make.py -a calc -cpu_frac $(CPU_FRAC) -remove $(REMOVE_FILES) -remove-wp $(REMOVE_WP) -hod_model_n $(HOD_N) -halotype $(HALOTYPE) -clf_method $(CLF_METHOD) -clf_seed $(CLF_SEED)
 
 ## Remove Plot screen session
 remove_plot_screens:
@@ -142,7 +142,7 @@ remove_calc_screens:
 ## Download required Dataset
 download_dataset:
 	# Downloading dataset
-	@python $(SRC_DIR)/download_dataset.py -hod_model_n $(HOD_N) -halotype $(HALOTYPE) -clf_method $(CLF_METHOD)
+	@python $(SRC_DIR)/download_dataset.py -hod_model_n $(HOD_N) -halotype $(HALOTYPE) -clf_method $(CLF_METHOD) -clf_seed $(CLF_SEED)
 
 ## Remove downloaded catalogues
 remove_catalogues:
