@@ -1299,11 +1299,13 @@ def projected_wp_plot(act_pd_data, pas_pd_data, wp_act_stats, wp_pas_stats,
 #### --------- 2-halo Distributions --------- ####
 
 ## 2-halo - Distributions of Primaries around Secondaries
-def two_halo_mcf_distr_secondaries(param_dict, proj_dict):
-    """
-    Plots the distribution of the secondaries around primaries for a given 
-    galaxy property and group mass bin.
-    """
+# def two_halo_mcf_distr_secondaries(param_dict, proj_dict,
+#     analysis_type='cencen'):
+#     """
+#     Plots the distribution of the secondaries around primaries for a given 
+#     galaxy property and group mass bin.
+#     """
+    
 
 #### --------- Main Function --------- ####
 
