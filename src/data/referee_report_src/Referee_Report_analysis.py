@@ -204,22 +204,6 @@ def get_parser():
                         help='Value for `pimax` for the proj. corr. function',
                         type=_check_pos_val,
                         default=20.)
-    ## CLF/CSMF method of assigning galaxy properties
-    parser.add_argument('-clf_method',
-                        dest='clf_method',
-                        help="""
-                        Method for assigning galaxy properties to mock 
-                        galaxies. Options:
-                        (1) = Independent assignment of (g-r), sersic, logssfr
-                        (2) = (g-r) decides active/passive designation and 
-                        draws values independently.
-                        (3) (g-r) decides active/passive designation, and 
-                        assigns other galaxy properties for that given 
-                        galaxy.
-                        """,
-                        type=int,
-                        choices=[1,2,3],
-                        default=1)
     ## Option for removing file
     parser.add_argument('-shade',
                         dest='shade_opt',
