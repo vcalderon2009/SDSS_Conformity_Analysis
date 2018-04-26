@@ -409,8 +409,9 @@ def file_construction_and_execution(params_pd, param_dict):
         out_f.write(b"""    source $home_dir/.bash_profile\n""")
         out_f.write(b"""fi\n""")
         out_f.write(b"""# Activating Environment\n""")
-        out_f.write(b"""activate=`which activate`\n""")
-        out_f.write(b"""source $activate ${ENV_NAME}\n""")
+        # out_f.write(b"""activate=`which activate`\n""")
+        # out_f.write(b"""source $activate ${ENV_NAME}\n""")
+        out_f.write(b"""source activate ${ENV_NAME}\n""")
         out_f.write(b"""###\n""")
         out_f.write(b"""### --- Python Strings\n""")
         out_f.write( """MCF_data="{0}"\n""".format(string_dict['data']).encode())
@@ -433,7 +434,7 @@ def file_construction_and_execution(params_pd, param_dict):
         out_f.write(b"""screen -S ${WINDOW_NAME} -p ${WINDOW_MOCKS} -X stuff $"source $activate ${ENV_NAME};"\n""")
         out_f.write(b"""screen -S ${WINDOW_NAME} -p ${WINDOW_MOCKS} -X stuff $"${MCF_mocks}"\n""")
         out_f.write(b"""screen -S ${WINDOW_NAME} -p ${WINDOW_MOCKS} -X stuff $'\\n'\n""")
-        out_f.write(b"""\n""")
+        # out_f.write(b"""\n""")
     ##
     ## Check if File exists
     if os.path.isfile(outfile_path):
