@@ -562,7 +562,7 @@ def directory_skeleton(param_dict, proj_dict):
     ## Pickle dictionary
     # Mocks
     path_prefix = os.path.join( 'SDSS',
-                                param_dict['catl_kind'],
+                                'mocks',
                                 'halos_{0}'.format(param_dict['halotype']),
                                 'hod_model_{0}'.format(param_dict['hod_n']),
                                 'clf_seed_{0}'.format(param_dict['clf_seed']),
@@ -641,9 +641,16 @@ def loading_catls(param_dict, proj_dict):
             data_cl_pd.loc[:, col_kk+'_normed'] = data_cl_pd[col_kk]/prop_lim[col_kk]
     ##
     ## Mocks
-    mocks_arr = cu.Index(   cu.catl_sdss_dir( 'mocks',
-                                param_dict['catl_type'],
-                                param_dict['sample_s']), '.hdf5')
+    mocks_arr = cu.Index(   cu.catl_sdss_dir(
+                                catl_kind='mocks',
+                                catl_type=param_dict['catl_type'],
+                                sample_s=param_dict['sample_s'],
+                                halotype=param_dict['halotype'],
+                                clf_method=param_dict['clf_method'],
+                                hod_n=param_dict['hod_n'],
+                                clf_seed=param_dict['clf_seed'],
+                                perf_opt=param_dict['perf_opt'],
+                                ), '.hdf5')
     n_mocks   = len(mocks_arr)
     # Saving mock data
     mocks_pd_arr = [[] for x in range(n_mocks)]
@@ -1417,6 +1424,7 @@ def projected_wp_plot(act_pd_data, pas_pd_data, wp_act_stats, wp_pas_stats,
 #### --------- 2-halo Distributions --------- ####
 
 ## 2-halo - Distributions of Primaries around Secondaries
+
 def two_halo_mcf_distr_secondaries(param_dict, proj_dict):
     """
     Plots the distribution of the secondaries around primaries for a given 
@@ -1573,7 +1581,31 @@ def two_halo_mcf_distr_secondaries_plot(prim_sec_dict, param_dict, proj_dict,
     plt.clf()
     plt.close()
 
+#### --------- Stellar to Halo Mass Relations --------- ####
 
+def shmr_model_galaxies(mocks_pd_arr, param_dict, proj_dict):
+    """
+    Plots the SHMR (or luminosity) for quenched and non-quenched galaxies
+    
+    Parameters
+    -----------
+    mocks_pd_arr: list, shape (n_mocks,)
+        list with pandas DataFrames for each mock catalogue being 
+        analyzed
+
+    param_dict: python dictionary
+        dictionary with `project` variables
+    
+    proj_dict: python dictionary
+        Dictionary with current and new paths to project directories
+    
+    Returns
+    -----------
+    """
+    ## Constants
+    n_catl  = len(mocks_pd_arr)
+    ## Pick random mock catalogue
+    catl_pd = mocks_pd_arr[num.random.randint(n_catl)]
 
 
 
