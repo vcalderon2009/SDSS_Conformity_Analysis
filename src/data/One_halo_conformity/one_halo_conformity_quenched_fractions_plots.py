@@ -17,11 +17,9 @@ Script that plots the 1-halo MCF results for `data` and `mocks`
 import os
 import sys
 import git
-from path_variables import git_root_dir
-sys.path.insert(0, os.path.realpath(git_root_dir(__file__)))
 
 # Importing Modules
-import src.data.utilities_python as cu
+import custom_utilities_lss as cu
 import numpy as num
 import math
 import os

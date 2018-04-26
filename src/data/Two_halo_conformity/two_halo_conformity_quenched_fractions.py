@@ -17,11 +17,8 @@ Computes the 2-halo Quenched Fractions function for SDSS DR7
 import os
 import sys
 import git
-from path_variables import git_root_dir
-# sys.path.insert(0, os.path.realpath(git_root_dir(__file__)))
 
 # Importing Modules
-# import src.data.utilities_python as cu
 import custom_utilities_lss as cu
 import numpy as num
 import math
@@ -1447,7 +1444,7 @@ def main(args):
             print('{0} `{1}`: {2}'.format(Prog_msg, key, key_val))
     print('\n'+50*'='+'\n')
     ## Running analysis
-    
+
     # Reading catalogues
     catl_arr_all = cu.extract_catls(catl_kind=param_dict['catl_kind'],
                                     catl_type=param_dict['catl_type'],

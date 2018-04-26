@@ -18,11 +18,8 @@ Downloads the necessary galaxy catalogues from the web to perform the
 import os
 import sys
 import git
-# from path_variables import git_root_dir
-# sys.path.insert(0, os.path.realpath(git_root_dir(__file__)))
 
 # Importing Modules
-# import src.data.utilities_python as cu
 import custom_utilities_lss as cu
 import numpy as num
 import os
