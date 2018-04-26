@@ -194,7 +194,7 @@ def get_parser():
                         help='Random seed to be used for CLF',
                         type=int,
                         metavar='[0-4294967295]',
-                        default=0)
+                        default=1235)
     ## Parsing Objects
     args = parser.parse_args()
 
