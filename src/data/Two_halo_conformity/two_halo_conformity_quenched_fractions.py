@@ -344,7 +344,7 @@ def get_parser():
                         help='Random seed to be used for CLF',
                         type=int,
                         metavar='[0-4294967295]',
-                        default=0)
+                        default=1235)
     ## Parsing Objects
     args = parser.parse_args()
 
@@ -1447,6 +1447,7 @@ def main(args):
             print('{0} `{1}`: {2}'.format(Prog_msg, key, key_val))
     print('\n'+50*'='+'\n')
     ## Running analysis
+    
     # Reading catalogues
     catl_arr_all = cu.extract_catls(catl_kind=param_dict['catl_kind'],
                                     catl_type=param_dict['catl_type'],
