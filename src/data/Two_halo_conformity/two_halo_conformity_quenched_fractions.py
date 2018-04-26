@@ -262,7 +262,7 @@ def get_parser():
                         help='Delete pickle file containing pair counts from wp',
                         type=_str2bool,
                         default=False)
-    ## Type of correlation funciton to perform
+    ## Type of correlation function to perform
     parser.add_argument('-corrtype',
                         dest='corr_type',
                         help='Type of correlation function to perform',

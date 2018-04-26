@@ -199,12 +199,12 @@ def get_parser():
                         dest='rpmin',
                         help='Minimum value for projected distance `rp`',
                         type=_check_pos_val,
-                        default=0.01)
+                        default=0.09)
     parser.add_argument('-rpmax',
                         dest='rpmax',
                         help='Maximum value for projected distance `rp`',
                         type=_check_pos_val,
-                        default=10.)
+                        default=20.)
     ## Number of `rp` bins
     parser.add_argument('-nrp',
                         dest='nrpbins',
@@ -251,6 +251,13 @@ def get_parser():
                         type=str,
                         choices=['diff', 'ratio'],
                         default='diff')
+    ## Type of correlation function to perform
+    parser.add_argument('-corrtype',
+                        dest='corr_type',
+                        help='Type of correlation function to perform',
+                        type=str,
+                        choices=['cencen'],
+                        default='cencen')
     ## Type of error estimation
     parser.add_argument('-sigma',
                         dest='type_sigma',
@@ -301,7 +308,7 @@ def get_parser():
                         help='Random seed to be used for CLF',
                         type=int,
                         metavar='[0-4294967295]',
-                        default=0)
+                        default=1235)
     ## Parsing Objects
     args = parser.parse_args()
 
@@ -467,6 +474,7 @@ def add_to_dict(param_dict):
     param_dict['url_rand'    ] = url_rand
     param_dict['prop_lim'    ] = prop_lim
     param_dict['prop_keys'   ] = prop_keys
+    param_dict['param_str'   ] = param_str
 
     return param_dict
 
@@ -567,7 +575,13 @@ def directory_skeleton(param_dict, proj_dict):
                                     'processed',
                                     path_prefix,
                                     'catl_pickle_files',
-                                    'cencen')
+                                    param_dict['corr_type'],
+                                    param_dict['param_str'])
+    ## Make sure directory exists
+    if not os.path.exists(pickdir_mocks):
+        msg = '{0} `pickdir_mocks` ({1}) does not exist! Exiting...'
+        msg = msg.format(param_dict['Prog_msg'], pickdir_mocks)
+        raise ValueError
     ## Creating directories
     cu.Path_Folder(figdir  )
     cu.Path_Folder(rand_dir)
@@ -575,11 +589,12 @@ def directory_skeleton(param_dict, proj_dict):
     cu.Path_Folder(wp_mocks_dir)
     ##
     ## Adding to dictionary
-    proj_dict['figdir'      ] = figdir
-    proj_dict['rand_dir'    ] = rand_dir
-    proj_dict['wp_rp_dir'   ] = wp_rp_dir
-    proj_dict['wp_data_dir' ] = wp_data_dir
-    proj_dict['wp_mocks_dir'] = wp_mocks_dir
+    proj_dict['figdir'       ] = figdir
+    proj_dict['rand_dir'     ] = rand_dir
+    proj_dict['wp_rp_dir'    ] = wp_rp_dir
+    proj_dict['wp_data_dir'  ] = wp_data_dir
+    proj_dict['wp_mocks_dir' ] = wp_mocks_dir
+    proj_dict['pickdir_mocks'] = pickdir_mocks
 
     return proj_dict
 
@@ -1402,8 +1417,7 @@ def projected_wp_plot(act_pd_data, pas_pd_data, wp_act_stats, wp_pas_stats,
 #### --------- 2-halo Distributions --------- ####
 
 ## 2-halo - Distributions of Primaries around Secondaries
-def two_halo_mcf_distr_secondaries(param_dict, proj_dict,
-    analysis_type='cencen'):
+def two_halo_mcf_distr_secondaries(param_dict, proj_dict):
     """
     Plots the distribution of the secondaries around primaries for a given 
     galaxy property and group mass bin.
@@ -1415,18 +1429,155 @@ def two_halo_mcf_distr_secondaries(param_dict, proj_dict,
     
     proj_dict: python dictionary
         Dictionary with current and new paths to project directories
-
-    analysis_type : string, optional (default = 'cencen')
-        Type of analysis to perform.
-
-        Options:
-            - `galgal` : 1-halo conformity
-            - `cencen` : 2-halo conformity
     
     Returns
     ----------
+    prim_sec_dict : python dictionary
+        dictionary with counts for each `mg_val` and `rp_val`
     """
-    ### Path to 
+    ### Constants
+    mg_val = '11.60_12.00'
+    rp_val = 5
+    prop_keys = param_dict['prop_keys']
+    ### Reading in parameters
+    catl_p_arr = cu.Index(proj_dict['pickdir_mocks'], '.p')
+    ##
+    ## Initializing dictionary
+    prim_sec_arr  = ['prim_act_sec_act', 'prim_act_sec_pas',
+                     'prim_pas_sec_act', 'prim_pas_sec_pas']
+    prim_sec_dict = {}
+    # Looping over galaxy properties
+    for prop_zz in prop_keys:
+        prim_sec_dict[prop_zz] = {}
+        for prim_sec_jj in prim_sec_arr:
+            prim_sec_dict[prop_zz][prim_sec_jj] = num.zeros(1)
+    ## Looping over catalogues
+    for jj, catl_jj in tqdm(enumerate(catl_p_arr)):
+        ## Reading in pickle file
+        (   param_dict_jj  ,
+            proj_dict_jj   ,
+            GM_prop_dict_jj,
+            catl_name_jj   ,
+            GM_arr_jj      ) = pickle.load(open(catl_jj, 'rb'))
+        ## Looping over galaxy propertyes
+        for zz, prop_zz in enumerate(prop_keys):
+            ## Selecting data for `mg_val` and `rp_val`
+            mg_prop_dict = GM_prop_dict_jj[mg_val][prop_zz][0]
+            ## Saving values to arrays
+            # Looping over `prim_sec` keys
+            for prim_sec_kk in prim_sec_arr:
+                # Saving data
+                prim_sec_dict[prop_zz][prim_sec_kk] = array_insert(
+                    prim_sec_dict[prop_zz][prim_sec_kk],
+                    mg_prop_dict[prim_sec_kk][rp_val], axis=0)
+
+    return prim_sec_dict
+
+def two_halo_mcf_distr_secondaries_plot(prim_sec_dict, param_dict, proj_dict,
+    fig_fmt='pdf', figsize_2=(7.,10.)):
+    """
+    Plots the distributions of secondaries around different primaries
+
+    Parameters
+    -----------
+    prim_sec_dict : python dictionary
+        dictionary with counts for each `mg_val` and `rp_val`
+
+    param_dict: python dictionary
+        dictionary with `project` variables
+    
+    proj_dict: python dictionary
+        Dictionary with current and new paths to project directories
+    """
+    Prog_msg     = param_dict['Prog_msg']
+    ## Galaxy properties
+    prop_keys    = param_dict['prop_keys']
+    prim_sec_arr = list(prim_sec_dict[prop_keys[0]].keys())
+    ## Matplotlib option
+    matplotlib.rcParams['axes.linewidth'] = 2.5
+    matplotlib.rcParams['text.latex.unicode']=True
+    matplotlib.rcParams['text.usetex']=True
+    ## Figure name
+    fname = os.path.join(   proj_dict['figdir'],
+                            'two_halo_frac_prim_sec_distr_{0}.{1}'.format(
+                                param_dict['clf_method'], fig_fmt))
+    ##
+    ## Figure details
+    figsize = figsize_2
+    size_label  = 20
+    size_legend = 10
+    size_text   = 14
+    color_prop_dict = { 'prim_act_sec_act' :'blue',
+                        'prim_act_sec_pas' :'red' ,
+                        'prim_pas_sec_act' :'green',
+                        'prim_pas_sec_pas' :'lightgreen'}
+    # Labels
+    prim_sec_labels = { 'prim_act_sec_act' : 'Primary Act. | Sec.: Act',
+                        'prim_act_sec_pas' : 'Primary Act. | Sec.: Pas',
+                        'prim_pas_sec_act' : 'Primary pas. | Sec.: Act',
+                        'prim_pas_sec_pas' : 'Primary Pas. | Sec.: Pas'}
+    #
+    # Figure
+    plt.clf()
+    plt.close()
+    propssfr = dict(boxstyle='round', facecolor='white', alpha=0.7)
+    cm_dict  = {'logssfr':'red', 'sersic':'royalblue', 'g_r':'green'}
+    fig, axes = plt.subplots(3,2, sharex=True, sharey=False, figsize=figsize,
+        facecolor='white')
+    # Flatten axes
+    axes_flat = axes.flatten()
+    ## Looping over axes
+    for jj, prop_jj in enumerate(prop_keys):
+        ## Looping over `prim_sec` variables
+        for kk, prim_sec_kk in enumerate(prim_sec_arr):
+            if jj == 0:
+                prim_sec_label_kk = prim_sec_labels[prim_sec_kk]
+            else:
+                prim_sec_label_kk = None
+            # Plotting
+            sns.distplot(   prim_sec_dict[prop_jj][prim_sec_kk],
+                            color=color_prop_dict[prim_sec_kk],
+                            label=prim_sec_label_kk,
+                            norm_hist=True,
+                            ax=axes_flat[jj],
+                            kde=False,
+                            hist_kws={'alpha':0.2})
+            # Plotting mean
+            axes_flat[jj].axvline(  prim_sec_dict[prop_jj][prim_sec_kk].mean(),
+                                    color=color_prop_dict[prim_sec_kk])
+        ##
+        ## Galaxy property text
+        axes_flat[jj].text(0.05, 0.80, prop_jj.replace('_',''),
+                            transform=axes_flat[jj].transAxes,
+                            verticalalignment='top',
+                            color=cm_dict[prop_jj],
+                            bbox=propssfr,
+                            weight='bold',
+                            fontsize=size_text)
+    ##
+    ## Legend
+    axes_flat[0].legend( loc='upper right', prop={'size':size_legend})
+    ##
+    ## Limits
+    axes_flat[0].set_xlim(0,2)
+    ##
+    ## Spacings
+    plt.subplots_adjust(hspace=0.05)
+    ##
+    ## Saving figure
+    if fig_fmt=='pdf':
+        plt.savefig(fname, bbox_inches='tight')
+    else:
+        plt.savefig(fname, bbox_inches='tight', dpi=400)
+    print('{0} Figure saved as: {1}'.format(Prog_msg, fname))
+    plt.clf()
+    plt.close()
+
+
+
+
+
+
 
     
 
@@ -1484,6 +1635,11 @@ def main(args):
     ##
     ## Distributions of Galaxy Properties
     galprop_distr_main(data_cl_pd, mocks_pd_arr[5], param_dict, proj_dict)
+    ##
+    ## Distribution of Secondaries around primaries
+    prim_sec_dict = two_halo_mcf_distr_secondaries(param_dict, proj_dict)
+    # Plotting
+    two_halo_mcf_distr_secondaries_plot(prim_sec_dict, param_dict, proj_dict)
     ##
     ## End time for running the catalogues
     end_time   = datetime.now()
