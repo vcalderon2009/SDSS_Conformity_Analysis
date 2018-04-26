@@ -159,7 +159,7 @@ def get_parser():
                         """,
                         type=int,
                         choices=[1,2,3],
-                        default=3)
+                        default=1)
     ## SDSS Sample
     parser.add_argument('-sample',
                         dest='sample',
