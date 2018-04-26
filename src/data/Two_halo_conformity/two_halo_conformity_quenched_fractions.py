@@ -881,10 +881,22 @@ def Quenched_Fracs_rp(prop, df_bin_org_cen, group_idx_arr, rpbins_npairs_tot,
                             for kk in range(len(group_idx_arr))]
     ##
     ## Statistics for galaxies with `active` and `passive` centrals
+    ## Passive Secondaries
     gals_pas_c_act = [prop_pairs_rp_c_act[kk][prop_pairs_rp_c_act[kk][:,1] > 1,:] \
                         for kk in range(len(group_idx_arr))]
     gals_pas_c_pas = [prop_pairs_rp_c_pas[kk][prop_pairs_rp_c_pas[kk][:,1] > 1,:]\
                         for kk in range(len(group_idx_arr))]
+    # `Active` Secondaries
+    gals_act_c_act = [prop_pairs_rp_c_act[kk][prop_pairs_rp_c_act[kk][:,1] < 1,:] \
+                        for kk in range(len(group_idx_arr))]
+    gals_act_c_pas = [prop_pairs_rp_c_pas[kk][prop_pairs_rp_c_pas[kk][:,1] < 1,:]\
+                        for kk in range(len(group_idx_arr))]
+    ##
+    ## Value of `prop` for secondaries around `active` and `passive` primaries
+    prim_act_sec_act = [gals_act_c_act[kk].T[1] for kk in range(len(group_idx_arr))]
+    prim_act_sec_pas = [gals_pas_c_act[kk].T[1] for kk in range(len(group_idx_arr))]
+    prim_pas_sec_act = [gals_act_c_pas[kk].T[1] for kk in range(len(group_idx_arr))]
+    prim_pas_sec_pas = [gals_pas_c_pas[kk].T[1] for kk in range(len(group_idx_arr))]
     ##
     ## Total fraction of Quenched Galaxies
     # Quenched fraction for galaxies with `active` centrals
@@ -1034,6 +1046,10 @@ def Quenched_Fracs_rp(prop, df_bin_org_cen, group_idx_arr, rpbins_npairs_tot,
     frac_stat_dict['sigma'            ] = sigma_dict
     frac_stat_dict['frac_stat_sh'     ] = frac_stat_sh_tot
     frac_stat_dict['npairs_tot'       ] = npairs_tot
+    frac_stat_dict['prim_act_sec_act' ] = prim_act_sec_act
+    frac_stat_dict['prim_act_sec_pas' ] = prim_act_sec_pas
+    frac_stat_dict['prim_pas_sec_act' ] = prim_pas_sec_act
+    frac_stat_dict['prim_pas_sec_pas' ] = prim_pas_sec_pas
 
     return frac_stat_dict
 
@@ -1147,9 +1163,7 @@ def prop_sh_two_halo(df_bin_org, prop, GM_str, param_dict, proj_dict,
                 sigma_arr          = num.zeros(2*param_dict['nrpbins']).reshape(
                                         2, param_dict['nrpbins'])
                 sigma_arr[:]       = num.nan
-                sigma1_arr         = sigma_arr.copy()
-                sigma2_arr         = sigma_arr.copy()
-                sigma3_arr         = sigma_arr.copy()
+                prim_sec_arr       = [num.zeros(1)*num.nan for x in range(param_dict['nrpbins'])]
                 # Converting sigma's to dictionary
                 sigma_dict = {}
                 for jj in range(3):
@@ -1163,6 +1177,10 @@ def prop_sh_two_halo(df_bin_org, prop, GM_str, param_dict, proj_dict,
                 frac_stat_dict['sigma'            ] = sigma_dict
                 frac_stat_dict['frac_stat_sh'     ] = corrfunc_sh_tot
                 frac_stat_dict['npairs_tot'       ] = npairs_tot
+                frac_stat_dict['prim_act_sec_act' ] = prim_sec_arr
+                frac_stat_dict['prim_act_sec_pas' ] = prim_sec_arr
+                frac_stat_dict['prim_pas_sec_act' ] = prim_sec_arr
+                frac_stat_dict['prim_pas_sec_pas' ] = prim_sec_arr
 
                 return frac_stat_dict, ngroups
     else:
@@ -1191,6 +1209,7 @@ def prop_sh_two_halo(df_bin_org, prop, GM_str, param_dict, proj_dict,
             sigma_arr          = num.zeros(2*param_dict['nrpbins']).reshape(
                                     2, param_dict['nrpbins'])
             sigma_arr[:]       = num.nan
+            prim_sec_arr       = [num.zeros(1)*num.nan for x in range(param_dict['nrpbins'])]
             # Converting sigma's to dictionary
             sigma_dict = {}
             for jj in range(3):
@@ -1204,6 +1223,11 @@ def prop_sh_two_halo(df_bin_org, prop, GM_str, param_dict, proj_dict,
             frac_stat_dict['sigma'            ] = sigma_dict
             frac_stat_dict['frac_stat_sh'     ] = corrfunc_sh_tot
             frac_stat_dict['npairs_tot'       ] = npairs_tot
+            frac_stat_dict['prim_act_sec_act' ] = prim_sec_arr
+            frac_stat_dict['prim_act_sec_pas' ] = prim_sec_arr
+            frac_stat_dict['prim_pas_sec_act' ] = prim_sec_arr
+            frac_stat_dict['prim_pas_sec_pas' ] = prim_sec_arr
+
 
             return frac_stat_dict, ngroups
     ###
