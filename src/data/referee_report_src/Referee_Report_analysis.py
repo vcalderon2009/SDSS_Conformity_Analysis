@@ -181,6 +181,19 @@ def get_parser():
                         type=str,
                         choices=['mr'],
                         default='mr')
+    ## Correlation Pair Type
+    parser.add_argument('-pairtype',
+                        dest='corr_pair_type',
+                        help='Types of galaxy pairs to keep for the MFC and ',
+                        type=str,
+                        choices=['cen_cen'],
+                        default='cen_cen')
+    ## Shuffling Marks
+    parser.add_argument('-shuffle',
+                        dest='shuffle_marks',
+                        help='Option for shuffling marks of Cens. and Sats.',
+                        choices=['cen_sh'],
+                        default='cen_sh')
     ## Rpmin and Rpmax
     parser.add_argument('-rpmin',
                         dest='rpmin',
@@ -198,12 +211,59 @@ def get_parser():
                         help='Number of bins for projected distance `rp`',
                         type=int,
                         default=10)
+    ## Total number of Iterations
+    parser.add_argument('-itern',
+                        dest='itern_tot',
+                        help='Total number of iterations to perform on the `shuffled` scenario',
+                        type=int,
+                        choices=range(10,10000),
+                        metavar='[10-10000]',
+                        default=1000)
+    ## Minimum Number of Galaxies in 1 group
+    parser.add_argument('-nmin',
+                        dest='ngals_min',
+                        help='Minimum number of galaxies in a galaxy group',
+                        type=int,
+                        default=1)
     ## Pimax
     parser.add_argument('-pimax',
                         dest='pimax',
                         help='Value for `pimax` for the proj. corr. function',
                         type=_check_pos_val,
                         default=20.)
+    ## Logarithm of the galaxy property
+    parser.add_argument('-log',
+                        dest='prop_log',
+                        help='Use `log` or `non-log` units for `M*` and `sSFR`',
+                        type=str,
+                        choices=['log', 'nonlog'],
+                        default='log')
+    ## Bin in Group mass
+    parser.add_argument('-mg',
+                        dest='Mg_bin',
+                        help='Bin width for the group masses',
+                        type=_check_pos_val,
+                        default=0.4)
+    ## Statistics for evaluating conformity
+    parser.add_argument('-frac_stat',
+                        dest='frac_stat',
+                        help='Statistics to use to evaluate the conformity signal',
+                        type=str,
+                        choices=['diff', 'ratio'],
+                        default='diff')
+    ## Type of error estimation
+    parser.add_argument('-sigma',
+                        dest='type_sigma',
+                        help='Type of error to use. Percentiles or St. Dev.',
+                        type=str,
+                        choices=['std','perc'],
+                        default='std')
+    ## `Perfect Catalogue` Option
+    parser.add_argument('-perf',
+                        dest='perf_opt',
+                        help='Option for using a `Perfect` catalogue',
+                        type=_str2bool,
+                        default=False)
     ## Option for removing file
     parser.add_argument('-shade',
                         dest='shade_opt',
@@ -352,6 +412,8 @@ def add_to_dict(param_dict):
     """
     ### Sample - Int
     sample_s = str(param_dict['sample'])
+    ### Sample - Mr
+    sample_Mr = 'Mr{0}'.format(param_dict['sample'])
     ### Projected distance `rp` bins
     logrpmin    = num.log10(param_dict['rpmin'])
     logrpmax    = num.log10(param_dict['rpmax'])
@@ -370,9 +432,32 @@ def add_to_dict(param_dict):
                 'sersic' :  3.,
                 'g_r'    :  0.75}
     prop_keys = num.sort(list(prop_lim.keys()))
+    ##
+    ## Prefix Name
+    if param_dict['perf_opt']:
+        perf_str = 'haloperf'
+    else:
+        perf_str = ''
+    # Main Prefix
+    param_str_arr = [   param_dict['rpmin']         , param_dict['rpmax']    ,
+                        param_dict['nrpbins']       , param_dict['Mg_bin']   ,
+                        param_dict['pimax' ]        , param_dict['itern_tot'],
+                        param_dict['corr_pair_type'], param_dict['prop_log'] ,
+                        param_dict['shuffle_marks'] , param_dict['frac_stat'],
+                        param_dict['ngals_min']     , param_dict['type_sigma'],
+                        perf_str ]
+    param_str  = 'rpmin_{0}_rpmax_{1}_nrpbins_{2}_Mgbin_{3}_pimax_{4}_'
+    param_str += 'itern_{5}_corrpair_type_{6}_proplog_{7}_shuffle_{8}_'
+    param_str += 'fracstat_{9}_nmin_{10}_type_sigma_{11}'
+    if param_dict['perf_opt']:
+        param_str += '_perf_opt_str_{12}/'
+    else:
+        param_str += '{12}/'
+    param_str  = param_str.format(*param_str_arr)
     ###
     ### To dictionary
     param_dict['sample_s'    ] = sample_s
+    param_dict['sample_Mr'   ] = sample_Mr
     param_dict['logrpmin'    ] = logrpmin
     param_dict['logrpmax'    ] = logrpmax
     param_dict['dlogrp'      ] = dlogrp
@@ -465,6 +550,24 @@ def directory_skeleton(param_dict, proj_dict):
                                     'mocks',
                                     'clf_method_{0}'.format(
                                         param_dict['clf_method']))
+    ##
+    ## Pickle dictionary
+    # Mocks
+    path_prefix = os.path.join( 'SDSS',
+                                param_dict['catl_kind'],
+                                'halos_{0}'.format(param_dict['halotype']),
+                                'hod_model_{0}'.format(param_dict['hod_n']),
+                                'clf_seed_{0}'.format(param_dict['clf_seed']),
+                                'clf_method_{0}'.format(param_dict['clf_method']),
+                                param_dict['catl_type'],
+                                param_dict['sample_Mr'],
+                                'Frac_results')
+    # Dictionary of 2-halo
+    pickdir_mocks = os.path.join(   proj_dict['data_dir'],
+                                    'processed',
+                                    path_prefix,
+                                    'catl_pickle_files',
+                                    'cencen')
     ## Creating directories
     cu.Path_Folder(figdir  )
     cu.Path_Folder(rand_dir)
@@ -1299,12 +1402,32 @@ def projected_wp_plot(act_pd_data, pas_pd_data, wp_act_stats, wp_pas_stats,
 #### --------- 2-halo Distributions --------- ####
 
 ## 2-halo - Distributions of Primaries around Secondaries
-# def two_halo_mcf_distr_secondaries(param_dict, proj_dict,
-#     analysis_type='cencen'):
-#     """
-#     Plots the distribution of the secondaries around primaries for a given 
-#     galaxy property and group mass bin.
-#     """
+def two_halo_mcf_distr_secondaries(param_dict, proj_dict,
+    analysis_type='cencen'):
+    """
+    Plots the distribution of the secondaries around primaries for a given 
+    galaxy property and group mass bin.
+
+    Parameters
+    ----------
+    param_dict: python dictionary
+        dictionary with `project` variables
+    
+    proj_dict: python dictionary
+        Dictionary with current and new paths to project directories
+
+    analysis_type : string, optional (default = 'cencen')
+        Type of analysis to perform.
+
+        Options:
+            - `galgal` : 1-halo conformity
+            - `cencen` : 2-halo conformity
+    
+    Returns
+    ----------
+    """
+    ### Path to 
+
     
 
 #### --------- Main Function --------- ####
