@@ -1451,8 +1451,9 @@ def two_halo_mcf_distr_secondaries(param_dict, proj_dict):
     catl_p_arr = cu.Index(proj_dict['pickdir_mocks'], '.p')
     ##
     ## Initializing dictionary
-    prim_sec_arr  = ['prim_act_sec_act', 'prim_act_sec_pas',
-                     'prim_pas_sec_act', 'prim_pas_sec_pas']
+    prim_sec_arr  = ['gals_c_act', 'gals_c_pas']
+    # prim_sec_arr  = ['prim_act_sec_act', 'prim_act_sec_pas',
+    #                  'prim_pas_sec_act', 'prim_pas_sec_pas']
     prim_sec_dict = {}
     # Looping over galaxy properties
     for prop_zz in prop_keys:
@@ -1515,15 +1516,20 @@ def two_halo_mcf_distr_secondaries_plot(prim_sec_dict, param_dict, proj_dict,
     size_label  = 20
     size_legend = 10
     size_text   = 14
-    color_prop_dict = { 'prim_act_sec_act' :'blue',
-                        'prim_act_sec_pas' :'red' ,
-                        'prim_pas_sec_act' :'green',
-                        'prim_pas_sec_pas' :'lightgreen'}
+    color_prop_dict = { 'gals_c_act' :'blue',
+                        'gals_c_pas' :'red' }
     # Labels
-    prim_sec_labels = { 'prim_act_sec_act' : 'Primary Act. | Sec.: Act',
-                        'prim_act_sec_pas' : 'Primary Act. | Sec.: Pas',
-                        'prim_pas_sec_act' : 'Primary pas. | Sec.: Act',
-                        'prim_pas_sec_pas' : 'Primary Pas. | Sec.: Pas'}
+    prim_sec_labels = { 'gals_c_act' : 'Primary Act.',
+                        'gals_c_pas' : 'Primary Pas.'}
+    # color_prop_dict = { 'prim_act_sec_act' :'blue',
+    #                     'prim_act_sec_pas' :'red' ,
+    #                     'prim_pas_sec_act' :'green',
+    #                     'prim_pas_sec_pas' :'lightgreen'}
+    # # Labels
+    # prim_sec_labels = { 'prim_act_sec_act' : 'Primary Act. | Sec.: Act',
+    #                     'prim_act_sec_pas' : 'Primary Act. | Sec.: Pas',
+    #                     'prim_pas_sec_act' : 'Primary pas. | Sec.: Act',
+    #                     'prim_pas_sec_pas' : 'Primary Pas. | Sec.: Pas'}
     #
     # Figure
     plt.clf()
@@ -1583,7 +1589,8 @@ def two_halo_mcf_distr_secondaries_plot(prim_sec_dict, param_dict, proj_dict,
 
 #### --------- Stellar to Halo Mass Relations --------- ####
 
-def shmr_model_galaxies(mocks_pd_arr, param_dict, proj_dict):
+def shmr_model_galaxies(mocks_pd_arr, param_dict, proj_dict,
+    fig_fmt='pdf', figsize_2=(5.,5.)):
     """
     Plots the SHMR (or luminosity) for quenched and non-quenched galaxies
     
@@ -1604,8 +1611,114 @@ def shmr_model_galaxies(mocks_pd_arr, param_dict, proj_dict):
     """
     ## Constants
     n_catl  = len(mocks_pd_arr)
+    ## Galaxy properties
+    prop_keys    = param_dict['prop_keys']
     ## Pick random mock catalogue
     catl_pd = mocks_pd_arr[num.random.randint(n_catl)]
+    ## Declaring arrays
+    prop_dict = {}
+    prop_dict = {   'Quenched'     : {'mean':[], 'y1':[], 'y2':[]},
+                    'Non_quenched' : {'mean':[], 'y1':[], 'y2':[]}}
+    catl_prop_dict = {}
+    ## Looping over galaxy properties
+    for jj, prop_jj in enumerate(prop_keys):
+        catl_prop_dict[prop_jj] = copy.deepcopy(prop_dict)
+        # Normalized `prop_jj`
+        prop_jj_n = prop_jj + '_normed'
+        # Halo and Luminosity
+        col_arr = ['M_r', 'M_h']
+        # Separating quenched and non-quenched
+        prop_quenched = catl_pd.loc[(catl_pd[prop_jj_n] > 1) & (catl_pd['galtype'] == 1), col_arr]
+        # Calculating statistics
+        (   x_mean,
+            y_mean,
+            y_std ,
+            y_std_err ) = cu.Mean_Std_calculations_One_array(   prop_quenched['M_r'].values,
+                                                                prop_quenched['M_h'].values,
+                                                                base=param_dict['Mg_bin'],
+                                                                arr_len=10,
+                                                                statfunction=num.nanmean,
+                                                                bin_statval='average')
+        # Fill-between
+        y1 = y_mean - y_std
+        y2 = y_mean + y_std
+        # Saving to dictioanry
+        catl_prop_dict[prop_jj]['Quenched']['x'] = x_mean
+        catl_prop_dict[prop_jj]['Quenched']['y'] = y_mean
+        catl_prop_dict[prop_jj]['Quenched']['y1'] = y1
+        catl_prop_dict[prop_jj]['Quenched']['y2'] = y2
+        ##
+        ## Non-quenched
+        prop_nonquenched = catl_pd.loc[(catl_pd[prop_jj_n] < 1) & (catl_pd['galtype'] == 1), col_arr]
+        # Calculating statistics
+        (   x_mean,
+            y_mean,
+            y_std ,
+            y_std_err ) = cu.Mean_Std_calculations_One_array(   prop_nonquenched['M_r'].values,
+                                                                prop_nonquenched['M_h'].values,
+                                                                base=param_dict['Mg_bin'],
+                                                                arr_len=10,
+                                                                statfunction=num.nanmean,
+                                                                bin_statval='average')
+        # Fill-between
+        y1 = y_mean - y_std
+        y2 = y_mean + y_std
+        # Saving to dictioanry
+        catl_prop_dict[prop_jj]['Non_quenched']['x'] = x_mean
+        catl_prop_dict[prop_jj]['Non_quenched']['y'] = y_mean
+        catl_prop_dict[prop_jj]['Non_quenched']['y1'] = y1
+        catl_prop_dict[prop_jj]['Non_quenched']['y2'] = y2
+    ##
+    matplotlib.rcParams['axes.linewidth'] = 2.5
+    matplotlib.rcParams['text.latex.unicode']=True
+    matplotlib.rcParams['text.usetex']=True
+    ## Figure name
+    fname = os.path.join(   proj_dict['figdir'],
+                            'mr_mgroup_active_passive_{0}.{1}'.format(
+                                param_dict['clf_method'], fig_fmt))
+    ## Figure details
+    size_legend= 14
+    plt.clf()
+    plt.close()
+    fig = plt.figure(figsize=figsize_2)
+    ax1 = fig.add_subplot(111, facecolor='white')
+    line_prop = dict(zip(prop_keys,['-',':','--']))
+    # Looping over properties
+    for jj, prop_jj in enumerate(prop_keys):
+        ax1.plot(catl_prop_dict[prop_jj]['Quenched']['y'],
+                    catl_prop_dict[prop_jj]['Quenched']['x'],
+                    color='r',
+                    linestyle=line_prop[prop_jj],
+                    label=prop_jj.replace('_',''))
+        ax1.plot(catl_prop_dict[prop_jj]['Non_quenched']['y'],
+                    catl_prop_dict[prop_jj]['Non_quenched']['x'],
+                    color='b',
+                    linestyle=line_prop[prop_jj])
+    ## Axes
+    ylabel = r'\boldmath $M_{r}$'
+    xlabel = r'\boldmath$\log \left(M_{\mathrm{group}}\right)\left[h^{-1}\ M_{\odot}\right]$'
+    # xlabel = r'\boldmath $M_{r}$'
+    # ylabel = r'\boldmath$\log \left(M_{\mathrm{group}}\right)\left[h^{-1}\ M_{\odot}\right]$'
+    ax1.set_xlabel(xlabel)
+    ax1.set_ylabel(ylabel)
+    # Reversing axes
+    ax1.invert_yaxis()
+    ax1.legend( loc='upper right', prop={'size':size_legend})
+    ##
+    ## Saving figure
+    plt.subplots_adjust(hspace=0.05)
+    ##
+    ## Saving figure
+    if fig_fmt=='pdf':
+        plt.savefig(fname, bbox_inches='tight')
+    else:
+        plt.savefig(fname, bbox_inches='tight', dpi=400)
+    print('{0} Figure saved as: {1}'.format(Prog_msg, fname))
+    plt.clf()
+    plt.close()
+
+
+
 
 
 
