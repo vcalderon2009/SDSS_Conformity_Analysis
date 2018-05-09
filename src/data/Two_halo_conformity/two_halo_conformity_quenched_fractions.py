@@ -878,6 +878,10 @@ def Quenched_Fracs_rp(prop, df_bin_org_cen, group_idx_arr, rpbins_npairs_tot,
                             for kk in range(len(group_idx_arr))]
     ##
     ## Statistics for galaxies with `active` and `passive` centrals
+    # Secondaries around `active` centrals
+    gals_c_act = [prop_pairs_rp_c_act[kk].T[1] for kk in range(len(group_idx_arr))]
+    # Secondaries around `passive` centrals
+    gals_c_pas = [prop_pairs_rp_c_pas[kk].T[1] for kk in range(len(group_idx_arr))]
     ## Passive Secondaries
     gals_pas_c_act = [prop_pairs_rp_c_act[kk][prop_pairs_rp_c_act[kk][:,1] > 1,:] \
                         for kk in range(len(group_idx_arr))]
@@ -1047,6 +1051,8 @@ def Quenched_Fracs_rp(prop, df_bin_org_cen, group_idx_arr, rpbins_npairs_tot,
     frac_stat_dict['prim_act_sec_pas' ] = prim_act_sec_pas
     frac_stat_dict['prim_pas_sec_act' ] = prim_pas_sec_act
     frac_stat_dict['prim_pas_sec_pas' ] = prim_pas_sec_pas
+    frac_stat_dict['gals_c_act'       ] = gals_c_act
+    frac_stat_dict['gals_c_pas'       ] = gals_c_pas
 
     return frac_stat_dict
 
@@ -1178,6 +1184,8 @@ def prop_sh_two_halo(df_bin_org, prop, GM_str, param_dict, proj_dict,
                 frac_stat_dict['prim_act_sec_pas' ] = prim_sec_arr
                 frac_stat_dict['prim_pas_sec_act' ] = prim_sec_arr
                 frac_stat_dict['prim_pas_sec_pas' ] = prim_sec_arr
+                frac_stat_dict['gals_c_act'       ] = prim_sec_arr
+                frac_stat_dict['gals_c_pas'       ] = prim_sec_arr
 
                 return frac_stat_dict, ngroups
     else:
@@ -1224,6 +1232,8 @@ def prop_sh_two_halo(df_bin_org, prop, GM_str, param_dict, proj_dict,
             frac_stat_dict['prim_act_sec_pas' ] = prim_sec_arr
             frac_stat_dict['prim_pas_sec_act' ] = prim_sec_arr
             frac_stat_dict['prim_pas_sec_pas' ] = prim_sec_arr
+            frac_stat_dict['gals_c_act'       ] = prim_sec_arr
+            frac_stat_dict['gals_c_pas'       ] = prim_sec_arr
 
 
             return frac_stat_dict, ngroups
