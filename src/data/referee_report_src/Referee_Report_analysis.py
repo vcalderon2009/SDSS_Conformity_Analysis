@@ -1445,7 +1445,7 @@ def two_halo_mcf_distr_secondaries(param_dict, proj_dict):
     """
     ### Constants
     mg_val = '11.60_12.00'
-    rp_val = 5
+    rp_val = 7
     prop_keys = param_dict['prop_keys']
     ### Reading in parameters
     catl_p_arr = cu.Index(proj_dict['pickdir_mocks'], '.p')
@@ -1536,7 +1536,7 @@ def two_halo_mcf_distr_secondaries_plot(prim_sec_dict, param_dict, proj_dict,
     plt.close()
     propssfr = dict(boxstyle='round', facecolor='white', alpha=0.7)
     cm_dict  = {'logssfr':'red', 'sersic':'royalblue', 'g_r':'green'}
-    fig, axes = plt.subplots(3,2, sharex=True, sharey=False, figsize=figsize,
+    fig, axes = plt.subplots(3,1, sharex=True, sharey=False, figsize=figsize,
         facecolor='white')
     # Flatten axes
     axes_flat = axes.flatten()
