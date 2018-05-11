@@ -27,4 +27,3 @@ dependencies:
     - sphinx_rtd_theme
     - tqdm
     - cosmo-utils
-    # - git+https://github.com/vcalderon2009/custom_utilities_lss
