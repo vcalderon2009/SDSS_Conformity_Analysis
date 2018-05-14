@@ -24,7 +24,7 @@ import sys
 import git
 
 # Importing Modules
-import custom_utilities_lss as cu
+import cosmo_utils as cu
 # import src.data.utilities_python as cu
 import numpy as num
 import math
