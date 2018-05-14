@@ -24,7 +24,9 @@ import sys
 import git
 
 # Importing Modules
-import cosmo_utils as cu
+from   cosmo_utils import utils as cutils
+from   cosmo_utils import mock_catalogues as cmocks
+
 # import src.data.utilities_python as cu
 import numpy as num
 import math
