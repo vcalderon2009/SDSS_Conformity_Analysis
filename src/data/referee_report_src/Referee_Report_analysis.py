@@ -1792,6 +1792,9 @@ def main(args):
     # Plotting
     two_halo_mcf_distr_secondaries_plot(prim_sec_dict, param_dict, proj_dict)
     ##
+    ## Stellar-to-Halo mass Relation for Blue and Red galaxies
+    shmr_model_galaxies(mocks_pd_arr, param_dict, proj_dict)
+    ##
     ## End time for running the catalogues
     end_time   = datetime.now()
     total_time = end_time - start_time
