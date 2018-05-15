@@ -28,3 +28,4 @@ dependencies:
     - sphinx_rtd_theme
     - tqdm
     - cosmo-utils
+    - tables
