@@ -19,7 +19,14 @@ import sys
 import git
 
 # Importing Modules
-import custom_utilities_lss as cu
+from cosmo_utils       import mock_catalogues as cm
+from cosmo_utils       import utils           as cu
+from cosmo_utils.utils import file_utils      as cfutils
+from cosmo_utils.utils import file_readers    as cfreaders
+from cosmo_utils.utils import work_paths      as cwpaths
+from cosmo_utils.utils import stats_funcs     as cstats
+from cosmo_utils.mock_catalogues import catls_utils as cmcu
+
 import numpy as num
 import math
 import pandas as pd
@@ -253,7 +260,7 @@ def get_parser():
                         dest='Prog_msg',
                         help='Program message to use throught the script',
                         type=str,
-                        default=cu.Program_Msg(__file__))
+                        default=cfutils.Program_Msg(__file__))
     ## Random Seed
     parser.add_argument('-seed',
                         dest='seed',
@@ -422,7 +429,7 @@ def directory_skeleton(param_dict, proj_dict):
                             param_dict['corr_type'],
                             param_dict['param_str'])
     # Creating Folders
-    cu.Path_Folder(pickdir)
+    cfutils.Path_Folder(pickdir)
     ## Adding to `proj_dict`
     proj_dict['pickdir'] = pickdir
 
@@ -724,17 +731,17 @@ def gm_fractions_calc(catl_pd, catl_name, param_dict, proj_dict):
     Prog_msg = param_dict['Prog_msg']
     ### Catalogue Variables
     # `Group mass`, `groupid`, and `galtype` keys
-    gm_key, id_key, galtype_key = cu.catl_keys(catl_kind=param_dict['catl_kind'],
+    gm_key, id_key, galtype_key = cmcu.catl_keys(catl_kind=param_dict['catl_kind'],
                                                 return_type='list',
                                                 perf_opt=param_dict['perf_opt'])
-    catl_keys_dict = cu.catl_keys(  catl_kind=param_dict['catl_kind'],
+    catl_keys_dict = cmcu.catl_keys(  catl_kind=param_dict['catl_kind'],
                                     return_type='dict',
                                     perf_opt=param_dict['perf_opt'])
     gm_key      = catl_keys_dict['gm_key']
     id_key      = catl_keys_dict['id_key']
     galtype_key = catl_keys_dict['galtype_key']
     # ssfr and mstar keys
-    ssfr_key, mstar_key = cu.catl_keys_prop(catl_kind=param_dict['catl_kind'], 
+    ssfr_key, mstar_key = cmcu.catl_keys_prop(catl_kind=param_dict['catl_kind'], 
                                                 catl_info='members')
     # Galaxy Properties
     if param_dict['catl_kind']=='data':
@@ -748,12 +755,12 @@ def gm_fractions_calc(catl_pd, catl_name, param_dict, proj_dict):
                 'g_r':0.75}
     param_dict['prop_lim'] = prop_lim
     # Cleaning catalogue with groups of N > `ngals_min`
-    catl_pd_clean = cu.sdss_catl_clean_nmin(catl_pd, param_dict['catl_kind'],
+    catl_pd_clean = cmcu.sdss_catl_clean_nmin(catl_pd, param_dict['catl_kind'],
         nmin=param_dict['ngals_min'])
     ### Mass limits
     GM_min  = catl_pd_clean[gm_key].min()
     GM_max  = catl_pd_clean[gm_key].max()
-    GM_arr  = cu.Bins_array_create([GM_min,GM_max], param_dict['Mg_bin'])
+    GM_arr  = cstats.Bins_array_create([GM_min,GM_max], param_dict['Mg_bin'])
     GM_bins = [[GM_arr[ii],GM_arr[ii+1]] for ii in range(GM_arr.shape[0]-1)]
     GM_bins = num.asarray(GM_bins)
     GM_keys = ['{0:.2f}_{1:.2f}'.format(GM_arr[xx],GM_arr[xx+1])\
@@ -846,7 +853,7 @@ def multiprocessing_catls(catl_arr, param_dict, proj_dict, memb_tuples_ii):
         ## Extracting `name` of the catalogue
         catl_name = os.path.splitext(os.path.split(catl_ii)[1])[0]
         ## Converting to pandas DataFrame
-        catl_pd   = cu.read_hdf5_file_to_pandas_DF(catl_ii)
+        catl_pd   = cfreaders.read_hdf5_file_to_pandas_DF(catl_ii)
         ## Quenched Fraction calculations
         gm_fractions_calc(catl_pd, catl_name, param_dict, proj_dict)
 
@@ -870,8 +877,8 @@ def main():
     Prog_msg = param_dict['Prog_msg']
     ##
     ## Creating Folder Structure
-    proj_dict  = directory_skeleton(param_dict, cu.cookiecutter_paths(__file__))
-    # proj_dict  = directory_skeleton(param_dict, cu.cookiecutter_paths('./'))
+    proj_dict  = directory_skeleton(param_dict, cwpaths.cookiecutter_paths(__file__))
+    # proj_dict  = directory_skeleton(param_dict, cwpaths.cookiecutter_paths('./'))
     ##
     ## Printing out project variables
     print('\n'+50*'='+'\n')
@@ -882,16 +889,16 @@ def main():
     ###
     ### ---- Analysis ---- ###
     ## Reading catalogues
-    catl_arr_all = cu.extract_catls(catl_kind=param_dict['catl_kind'],
-                                    catl_type=param_dict['catl_type'],
-                                    sample_s =param_dict['sample_s'],
-                                    perf_opt =param_dict['perf_opt'],
-                                    catl_info='members',
-                                    halotype=param_dict['halotype'],
-                                    clf_method=param_dict['clf_method'],
-                                    hod_n=param_dict['hod_n'],
-                                    clf_seed=param_dict['clf_seed'],
-                                    print_filedir=False)
+    catl_arr_all = cmcu.extract_catls(  catl_kind=param_dict['catl_kind'],
+                                        catl_type=param_dict['catl_type'],
+                                        sample_s =param_dict['sample_s'],
+                                        perf_opt =param_dict['perf_opt'],
+                                        catl_info='members',
+                                        halotype=param_dict['halotype'],
+                                        clf_method=param_dict['clf_method'],
+                                        hod_n=param_dict['hod_n'],
+                                        clf_seed=param_dict['clf_seed'],
+                                        print_filedir=False)
     ##
     ## Only reading desired number of catalogues
     catl_arr = catl_arr_all[param_dict['catl_start']:param_dict['catl_finish']]
@@ -907,7 +914,7 @@ def main():
         ## Extracting `name` of the catalogue
         catl_name = os.path.splitext(os.path.split(catl_ii)[1])[0]
         ## Converting to pandas DataFrame
-        catl_pd   = cu.read_hdf5_file_to_pandas_DF(catl_ii)
+        catl_pd   = cfreaders.read_hdf5_file_to_pandas_DF(catl_ii)
         ## Quenched Fraction calculations
         gm_fractions_calc(catl_pd, catl_name, param_dict, proj_dict)
     else:

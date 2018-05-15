@@ -20,7 +20,9 @@ import sys
 import git
 
 # Importing Modules
-import custom_utilities_lss as cu
+from cosmo_utils.utils import file_utils as cfutils
+from cosmo_utils.utils import work_paths as cwpaths
+
 import numpy as num
 import os
 import sys
@@ -178,7 +180,7 @@ def get_parser():
                         dest='Prog_msg',
                         help='Program message to use throught the script',
                         type=str,
-                        default=cu.Program_Msg(__file__))
+                        default=cfutils.Program_Msg(__file__))
     ## `Perfect Catalogue` Option
     parser.add_argument('-perf',
                         dest='perf_opt',
@@ -298,14 +300,14 @@ def directory_skeleton(param_dict, proj_dict):
         ## Extra folders
         # Member galaxy directory
         member_dir = os.path.join(catl_dir, 'member_galaxy_catalogues')
-        cu.Path_Folder(member_dir)
+        cfutils.Path_Folder(member_dir)
         proj_dict['{0}_out_memb'.format(catl_kind)] = member_dir
         ##
         ## Perfect galaxy directory
         if (catl_kind == 'mocks') and (param_dict['perf_opt']):
             perf_member_dir = os.path.join( catl_dir,
                                             'perfect_member_galaxy_catalogues')
-            cu.Path_Folder(perf_member_dir)
+            cfutils.Path_Folder(perf_member_dir)
             proj_dict['{0}_out_perf_memb'.format(catl_kind)] = perf_member_dir
 
     return proj_dict
@@ -415,8 +417,8 @@ def main(args):
     Prog_msg = param_dict['Prog_msg']
     ##
     ## Creating Folder Structure
-    # proj_dict  = directory_skeleton(param_dict, cu.cookiecutter_paths(__file__))
-    proj_dict  = directory_skeleton(param_dict, cu.cookiecutter_paths('./'))
+    # proj_dict  = directory_skeleton(param_dict, cwpaths.cookiecutter_paths(__file__))
+    proj_dict  = directory_skeleton(param_dict, cwpaths.cookiecutter_paths('./'))
     ##
     ## Printing out project variables
     print('\n'+50*'='+'\n')

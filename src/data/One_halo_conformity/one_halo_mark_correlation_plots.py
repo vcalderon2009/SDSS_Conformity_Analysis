@@ -19,7 +19,10 @@ import sys
 import git
 
 # Importing Modules
-import custom_utilities_lss as cu
+from cosmo_utils.utils import file_utils  as cfutils
+from cosmo_utils.utils import work_paths  as cwpaths
+from cosmo_utils.utils import stats_funcs as cstats
+
 import numpy as num
 import math
 import os
@@ -273,7 +276,7 @@ def get_parser():
                         dest='Prog_msg',
                         help='Program message to use throught the script',
                         type=str,
-                        default=cu.Program_Msg(__file__))
+                        default=cfutils.Program_Msg(__file__))
     ## Minimim mass bin to show
     parser.add_argument('-mg_min',
                         dest='mg_min',
@@ -624,8 +627,8 @@ def directory_skeleton(param_dict, proj_dict):
         raise ValueError(msg)
     ##
     ## Creating `figure_dir` folder
-    cu.Path_Folder(figure_dir)
-    cu.Path_Folder(fig_paper_dir)
+    cfutils.Path_Folder(figure_dir)
+    cfutils.Path_Folder(fig_paper_dir)
     ##
     ## Adding to main dictionary `proj_dict`
     proj_dict['pickle_res'   ] = pickle_res
@@ -826,7 +829,7 @@ def data_shuffles_extraction(param_dict, proj_dict, pickle_ext='.p'):
         dictionary with all the results from the 1-halo MCF for `data`
     """
     ## Reading in Catalogue
-    catl_arr = cu.Index(proj_dict['pickle_res'], pickle_ext)
+    catl_arr = cfutils.Index(proj_dict['pickle_res'], pickle_ext)
     ncatls   = len(catl_arr)
     ## Choosing catalogue
     if ncatls==1:
@@ -948,7 +951,7 @@ def mocks_data_extraction(param_dict, proj_dict, pickle_ext='.p'):
     ## -------------- ##
     ## ---- DATA ---- ##
     ## -------------- ##
-    catl_arr_data = cu.Index(proj_dict['pickle_data'], pickle_ext)
+    catl_arr_data = cfutils.Index(proj_dict['pickle_data'], pickle_ext)
     ncatls_data   = len(catl_arr_data)
     ## Choosing catalogue
     if ncatls_data==1:
@@ -1013,7 +1016,7 @@ def mocks_data_extraction(param_dict, proj_dict, pickle_ext='.p'):
     ## --------------- ##
     ## ---- MOCKS ---- ##
     ## --------------- ##
-    catl_arr_mocks = cu.Index(proj_dict['pickle_res'], pickle_ext)
+    catl_arr_mocks = cfutils.Index(proj_dict['pickle_res'], pickle_ext)
     catl_arr_mocks = catl_arr_mocks[param_dict['catl_start']:param_dict['catl_finish']]
     ncatls_mocks   = len(catl_arr_mocks)
     ##
@@ -1211,7 +1214,7 @@ def MCF_one_halo_plotting(prop_catl_dict, param_dict, proj_dict, fig_fmt='pdf',
     ##
     ## Group mass limits for Plotting
     Mg_lims = [param_dict['mg_min'],param_dict['mg_max']]
-    Mg_keys = cu.Bins_array_create(Mg_lims, param_dict['Mg_bin'])
+    Mg_keys = cstats.Bins_array_create(Mg_lims, param_dict['Mg_bin'])
     Mg_keys_str = ['{0:.2f}_{1:.2f}'.format(Mg_keys[xx], Mg_keys[xx+1]) \
         for xx in range(len(Mg_keys)-1)]
     Mg_keys_str = num.sort( num.array(Mg_keys_str) )
@@ -1573,8 +1576,8 @@ def main():
     Prog_msg = param_dict['Prog_msg']
     ##
     ## Creating Folder Structure
-    proj_dict  = directory_skeleton(param_dict, cu.cookiecutter_paths(__file__))
-    # proj_dict  = directory_skeleton(param_dict, cu.cookiecutter_paths('./'))
+    proj_dict  = directory_skeleton(param_dict, cwpaths.cookiecutter_paths(__file__))
+    # proj_dict  = directory_skeleton(param_dict, cwpaths.cookiecutter_paths('./'))
     ##
     ## Printing out project variables
     if param_dict['verbose']:

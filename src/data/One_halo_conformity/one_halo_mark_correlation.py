@@ -18,7 +18,14 @@ import sys
 import git
 
 # Importing Modules
-import custom_utilities_lss as cu
+from cosmo_utils       import mock_catalogues as cm
+from cosmo_utils.utils import file_utils      as cfutils
+from cosmo_utils.utils import file_readers    as cfreaders
+from cosmo_utils.utils import work_paths      as cwpaths
+from cosmo_utils.utils import stats_funcs     as cstats
+from cosmo_utils.utils import geometry        as cgeom
+from cosmo_utils.mock_catalogues import catls_utils as cmcu
+
 import numpy as num
 import math
 import os
@@ -146,7 +153,7 @@ def spherical_to_cart(catl_pd, cosmo_model, method='astropy',
         catl_pd.loc[:,'dist'] = gal_dist.value
         ## Spherical to Cartesian Coordinates
         ra_cen = dec_cen = dist_cen = 0.
-        sph_dict, gal_cart = cu.Coord_Transformation(   catl_pd['ra'],
+        sph_dict, gal_cart = cgeom.Coord_Transformation(catl_pd['ra'],
                                                         catl_pd['dec'],
                                                         catl_pd['dist'],
                                                         ra_cen,
@@ -467,7 +474,7 @@ def get_parser():
                         dest='Prog_msg',
                         help='Program message to use throught the script',
                         type=str,
-                        default=cu.Program_Msg(__file__))
+                        default=cfutils.Program_Msg(__file__))
     ## Type of error estimation
     parser.add_argument('-sigma',
                         dest='type_sigma',
@@ -698,8 +705,8 @@ def directory_skeleton(param_dict, proj_dict):
                             param_dict['corr_type'],
                             param_dict['param_str'])
     # Creating Folders
-    cu.Path_Folder(pickdir)
-    cu.Path_Folder(out_catl_p)
+    cfutils.Path_Folder(pickdir)
+    cfutils.Path_Folder(out_catl_p)
     ## Adding to `proj_dict`
     proj_dict['pickdir'   ] = pickdir
     proj_dict['out_catl_p'] = out_catl_p
@@ -729,7 +736,8 @@ def wp_idx_calc(group_df, param_dict):
     ### Converting to cartesian coordinates
     coord_1 = group_df[['x','y','z']].values
     ### 
-    rp_ith_arr = cu.pairwise_distance_rp(   coord_1,
+    rp_ith_arr = cm.pair_counters.pairwise_distance_rp(
+                                            coord_1,
                                             coord_1,
                                             rpmin=param_dict['rpmin'],
                                             rpmax=param_dict['rpmax'],
@@ -1488,17 +1496,17 @@ def halo_corr(catl_pd, catl_name, param_dict, proj_dict):
     Prog_msg = param_dict['Prog_msg']
     ### Catalogue Variables
     # `Group mass`, `groupid`, and `galtype` keys
-    gm_key, id_key, galtype_key = cu.catl_keys(catl_kind=param_dict['catl_kind'],
+    gm_key, id_key, galtype_key = cmcu.catl_keys(catl_kind=param_dict['catl_kind'],
                                                 return_type='list',
                                                 perf_opt=param_dict['perf_opt'])
-    catl_keys_dict = cu.catl_keys(  catl_kind=param_dict['catl_kind'],
+    catl_keys_dict = cmcu.catl_keys(  catl_kind=param_dict['catl_kind'],
                                     return_type='dict',
                                     perf_opt=param_dict['perf_opt'])
     gm_key      = catl_keys_dict['gm_key']
     id_key      = catl_keys_dict['id_key']
     galtype_key = catl_keys_dict['galtype_key']
     # ssfr and mstar keys
-    ssfr_key, mstar_key = cu.catl_keys_prop(catl_kind=param_dict['catl_kind'], 
+    ssfr_key, mstar_key = cmcu.catl_keys_prop(catl_kind=param_dict['catl_kind'], 
                                                 catl_info='members')
     # Galaxy Properties
     if param_dict['catl_kind']=='data':
@@ -1507,12 +1515,12 @@ def halo_corr(catl_pd, catl_name, param_dict, proj_dict):
         # pd_keys = ['logssfr']
         pd_keys     = ['logssfr', 'g_r', 'sersic']
     # Cleaning catalogue with groups of N > `ngals_min`
-    catl_pd_clean = cu.sdss_catl_clean_nmin(catl_pd, param_dict['catl_kind'],
+    catl_pd_clean = cmcu.sdss_catl_clean_nmin(catl_pd, param_dict['catl_kind'],
         nmin=param_dict['ngals_min'])
     ### Mass limits
     GM_min  = catl_pd_clean[gm_key].min()
     GM_max  = catl_pd_clean[gm_key].max()
-    GM_arr  = cu.Bins_array_create([GM_min,GM_max], param_dict['Mg_bin'])
+    GM_arr  = cstats.Bins_array_create([GM_min,GM_max], param_dict['Mg_bin'])
     GM_bins = [[GM_arr[ii],GM_arr[ii+1]] for ii in range(GM_arr.shape[0]-1)]
     GM_bins = num.asarray(GM_bins)
     ## Pickle file
@@ -1608,8 +1616,8 @@ def main(args):
     ## Program message
     Prog_msg = param_dict['Prog_msg']
     ## Creating Folder Structure
-    proj_dict  = directory_skeleton(param_dict, cu.cookiecutter_paths(__file__))
-    # proj_dict  = directory_skeleton(param_dict, cu.cookiecutter_paths('./'))
+    proj_dict  = directory_skeleton(param_dict, cwpaths.cookiecutter_paths(__file__))
+    # proj_dict  = directory_skeleton(param_dict, cwpaths.cookiecutter_paths('./'))
     ## Choosing cosmological model
     cosmo_model = cosmo_create(cosmo_choice=param_dict['cosmo_choice'])
     # Assigning the cosmological model to `param_dict`
@@ -1622,16 +1630,16 @@ def main(args):
     print('\n'+50*'='+'\n')
     ## Running analysis
     # Reading catalogues
-    catl_arr_all = cu.extract_catls(catl_kind=param_dict['catl_kind'],
-                                    catl_type=param_dict['catl_type'],
-                                    sample_s =param_dict['sample_s'],
-                                    perf_opt =param_dict['perf_opt'],
-                                    catl_info='members',
-                                    halotype=param_dict['halotype'],
-                                    clf_method=param_dict['clf_method'],
-                                    hod_n=param_dict['hod_n'],
-                                    clf_seed=param_dict['clf_seed'],
-                                    print_filedir=False)
+    catl_arr_all = cmcu.extract_catls(  catl_kind=param_dict['catl_kind'],
+                                        catl_type=param_dict['catl_type'],
+                                        sample_s =param_dict['sample_s'],
+                                        perf_opt =param_dict['perf_opt'],
+                                        catl_info='members',
+                                        halotype=param_dict['halotype'],
+                                        clf_method=param_dict['clf_method'],
+                                        hod_n=param_dict['hod_n'],
+                                        clf_seed=param_dict['clf_seed'],
+                                        print_filedir=False)
     ##
     ## Only reading desired number of catalogues
     catl_arr = catl_arr_all[param_dict['catl_start']:param_dict['catl_finish']]
@@ -1647,7 +1655,7 @@ def main(args):
         ## Extracting `name` of the catalogue
         catl_name = os.path.splitext(os.path.split(catl_ii)[1])[0]
         ## Converting to pandas DataFrame
-        catl_pd   = cu.read_hdf5_file_to_pandas_DF(catl_ii)
+        catl_pd   = cfreaders.read_hdf5_file_to_pandas_DF(catl_ii)
         ## Computing cartesian coordinates
         catl_pd = spherical_to_cart(catl_pd,
                                     param_dict['cosmo_model'],
@@ -1719,7 +1727,7 @@ def multiprocessing_catls(catl_arr, param_dict, proj_dict, memb_tuples_ii):
     for ii, catl_ii in enumerate(catl_arr[start_ii : end_ii]):
         print('{0} Analyzing `{1}`\n'.format(Prog_msg, catl_ii))
         catl_name = os.path.splitext(os.path.split(catl_ii)[1])[0]
-        catl_pd   = cu.read_hdf5_file_to_pandas_DF(catl_ii)
+        catl_pd   = cfreaders.read_hdf5_file_to_pandas_DF(catl_ii)
         ## Computing cartesian coordinates
         catl_pd = spherical_to_cart(catl_pd,
                                     param_dict['cosmo_model'], 

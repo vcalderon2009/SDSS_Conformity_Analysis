@@ -32,7 +32,6 @@ from cosmo_utils.utils import work_paths      as cwpaths
 from cosmo_utils.utils import stats_funcs     as cstats
 from cosmo_utils.mock_catalogues import catls_utils as cmcu
 
-# import src.data.utilities_python as cu
 import numpy as num
 import math
 import os
