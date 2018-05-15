@@ -24,8 +24,11 @@ import sys
 import git
 
 # Importing Modules
-from   cosmo_utils import utils as cutils
-from   cosmo_utils import mock_catalogues as cmocks
+from cosmo_utils.utils import file_utils   as cfutils
+from cosmo_utils.utils import file_readers as cfreaders
+from cosmo_utils.utils import work_paths   as cwpaths
+from cosmo_utils.utils import stats_funcs  as cstats
+from cosmo_utils.mock_catalogues import catls_utils as cmcu
 
 # import src.data.utilities_python as cu
 import numpy as num
@@ -303,7 +306,7 @@ def get_parser():
                         dest='Prog_msg',
                         help='Program message to use throught the script',
                         type=str,
-                        default=cu.Program_Msg(__file__))
+                        default=cfutils.Program_Msg(__file__))
     ## Random Seed for CLF
     parser.add_argument('-clf_seed',
                         dest='clf_seed',
@@ -435,7 +438,7 @@ def add_to_dict(param_dict):
     url_rand = os.path.join('http://lss.phy.vanderbilt.edu/groups/data_vc/DR7',
                             'mr-vollim-randoms',
                             'random_Mr{0}.rdcz'.format(sample_s))
-    # cu.url_checker(url_rand)
+    # cutils.web_utils.url_checker(url_rand)
     ## Galaxy properties - Limits
     prop_lim = {'logssfr':  -11,
                 'sersic' :  3.,
@@ -585,10 +588,10 @@ def directory_skeleton(param_dict, proj_dict):
         msg = msg.format(param_dict['Prog_msg'], pickdir_mocks)
         raise ValueError
     ## Creating directories
-    cu.Path_Folder(figdir  )
-    cu.Path_Folder(rand_dir)
-    cu.Path_Folder(wp_data_dir)
-    cu.Path_Folder(wp_mocks_dir)
+    cutils.file_utils.Path_Folder(figdir  )
+    cutils.file_utils.Path_Folder(rand_dir)
+    cutils.file_utils.Path_Folder(wp_data_dir)
+    cutils.file_utils.Path_Folder(wp_mocks_dir)
     ##
     ## Adding to dictionary
     proj_dict['figdir'       ] = figdir
@@ -631,11 +634,11 @@ def loading_catls(param_dict, proj_dict):
     prop_keys = param_dict['prop_keys']
     ## Loading data from `data` and `mock` catalogues
     # Data
-    data_pd = cu.read_hdf5_file_to_pandas_DF(
-                cu.extract_catls(   'data',
+    data_pd = cfreaders.read_hdf5_file_to_pandas_DF(
+                cmcu.extract_catls( 'data',
                                     param_dict['catl_type'],
                                     param_dict['sample_s'])[0])
-    data_cl_pd = cu.sdss_catl_clean(data_pd, 'data').copy()
+    data_cl_pd = cmcu.sdss_catl_clean(data_pd, 'data').copy()
     ##
     ## Normalizing Data
     for col_kk in prop_keys:
@@ -643,22 +646,22 @@ def loading_catls(param_dict, proj_dict):
             data_cl_pd.loc[:, col_kk+'_normed'] = data_cl_pd[col_kk]/prop_lim[col_kk]
     ##
     ## Mocks
-    mocks_arr = cu.Index(   cu.catl_sdss_dir(
-                                catl_kind='mocks',
-                                catl_type=param_dict['catl_type'],
-                                sample_s=param_dict['sample_s'],
-                                halotype=param_dict['halotype'],
-                                clf_method=param_dict['clf_method'],
-                                hod_n=param_dict['hod_n'],
-                                clf_seed=param_dict['clf_seed'],
-                                perf_opt=param_dict['perf_opt'],
-                                ), '.hdf5')
+    mocks_arr = cfutils.Index( cmcu.catl_sdss_dir(
+                                    catl_kind='mocks',
+                                    catl_type=param_dict['catl_type'],
+                                    sample_s=param_dict['sample_s'],
+                                    halotype=param_dict['halotype'],
+                                    clf_method=param_dict['clf_method'],
+                                    hod_n=param_dict['hod_n'],
+                                    clf_seed=param_dict['clf_seed'],
+                                    perf_opt=param_dict['perf_opt'],
+                                    ), '.hdf5')
     n_mocks   = len(mocks_arr)
     # Saving mock data
     mocks_pd_arr = [[] for x in range(n_mocks)]
     for ii, mock_ii in enumerate(tqdm(mocks_arr)):
         ## Extracting data
-        mock_ii_pd = cu.read_hdf5_file_to_pandas_DF(mock_ii)
+        mock_ii_pd = cfreaders.read_hdf5_file_to_pandas_DF(mock_ii)
         ## Normalizing data
         for col_kk in prop_keys:
             if col_kk in mock_ii_pd.columns.values:
@@ -946,8 +949,8 @@ def projected_wp_main(data_cl_pd, mocks_pd_arr, param_dict, proj_dict):
         ## Saving Data
         act_pd_data.to_hdf(act_data_file, 'gal')
         pas_pd_data.to_hdf(pas_data_file, 'gal')
-        cu.File_Exists(act_data_file)
-        cu.File_Exists(pas_data_file)
+        cutils.File_Exists(act_data_file)
+        cutils.File_Exists(pas_data_file)
     ###
     ### ------| Mock Catalogues |------ ###
     ###
@@ -1061,8 +1064,8 @@ def projected_wp_multiprocessing(memb_tuples_ii, mocks_pd_arr, rand_ii,
             ## Saving Data
             act_pd_ii.to_hdf(act_file_ii, 'gal')
             pas_pd_ii.to_hdf(pas_file_ii, 'gal')
-            cu.File_Exists(act_file_ii)
-            cu.File_Exists(pas_file_ii)
+            cfutils.File_Exists(act_file_ii)
+            cfutils.File_Exists(pas_file_ii)
 
 def projected_wp_mocks_range(param_dict, proj_dict, type_sigma='std'):
     """
@@ -1108,9 +1111,9 @@ def projected_wp_mocks_range(param_dict, proj_dict, type_sigma='std'):
     ## Looping over galaxy properties
     for ii in range(n_catls):
         # Active
-        catl_act_ii = cu.read_hdf5_file_to_pandas_DF(mocks_act_arr[ii])
+        catl_act_ii = cfreaders.read_hdf5_file_to_pandas_DF(mocks_act_arr[ii])
         # Passive
-        catl_pas_ii = cu.read_hdf5_file_to_pandas_DF(mocks_pas_arr[ii])
+        catl_pas_ii = cfreaders.read_hdf5_file_to_pandas_DF(mocks_pas_arr[ii])
         # Looping over galaxy properties
         for prop_zz in prop_keys:
             # Active
@@ -1450,7 +1453,7 @@ def two_halo_mcf_distr_secondaries(param_dict, proj_dict):
     rp_val = 7
     prop_keys = param_dict['prop_keys']
     ### Reading in parameters
-    catl_p_arr = cu.Index(proj_dict['pickdir_mocks'], '.p')
+    catl_p_arr = cfutils.Index(proj_dict['pickdir_mocks'], '.p')
     ##
     ## Initializing dictionary
     prim_sec_arr  = ['gals_c_act', 'gals_c_pas']
@@ -1635,12 +1638,12 @@ def shmr_model_galaxies(mocks_pd_arr, param_dict, proj_dict,
         (   x_mean,
             y_mean,
             y_std ,
-            y_std_err ) = cu.Mean_Std_calculations_One_array(   prop_quenched['M_r'].values,
-                                                                prop_quenched['M_h'].values,
-                                                                base=param_dict['Mg_bin'],
-                                                                arr_len=10,
-                                                                statfunction=num.nanmean,
-                                                                bin_statval='average')
+            y_std_err ) = cstats.Stats_one_arr( prop_quenched['M_r'].values,
+                                                prop_quenched['M_h'].values,
+                                                base=param_dict['Mg_bin'],
+                                                arr_len=10,
+                                                statfunction=num.nanmean,
+                                                bin_statval='average')
         # Fill-between
         y1 = y_mean - y_std
         y2 = y_mean + y_std
@@ -1656,12 +1659,12 @@ def shmr_model_galaxies(mocks_pd_arr, param_dict, proj_dict,
         (   x_mean,
             y_mean,
             y_std ,
-            y_std_err ) = cu.Mean_Std_calculations_One_array(   prop_nonquenched['M_r'].values,
-                                                                prop_nonquenched['M_h'].values,
-                                                                base=param_dict['Mg_bin'],
-                                                                arr_len=10,
-                                                                statfunction=num.nanmean,
-                                                                bin_statval='average')
+            y_std_err ) = cstats.Stats_one_arr( prop_nonquenched['M_r'].values,
+                                                prop_nonquenched['M_h'].values,
+                                                base=param_dict['Mg_bin'],
+                                                arr_len=10,
+                                                statfunction=num.nanmean,
+                                                bin_statval='average')
         # Fill-between
         y1 = y_mean - y_std
         y2 = y_mean + y_std
@@ -1748,8 +1751,8 @@ def main(args):
     Prog_msg = param_dict['Prog_msg']
     ##
     ## Creating Folder Structure
-    # proj_dict  = directory_skeleton(param_dict, cu.cookiecutter_paths(__file__))
-    proj_dict  = directory_skeleton(param_dict, cu.cookiecutter_paths('./'))
+    # proj_dict  = directory_skeleton(param_dict, cwpaths.cookiecutter_paths(__file__))
+    proj_dict  = directory_skeleton(param_dict, cwpaths.cookiecutter_paths('./'))
     ##
     ## Printing out project variables
     print('\n'+50*'='+'\n')
