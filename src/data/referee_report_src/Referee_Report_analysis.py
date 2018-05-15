@@ -24,10 +24,12 @@ import sys
 import git
 
 # Importing Modules
-from cosmo_utils.utils import file_utils   as cfutils
-from cosmo_utils.utils import file_readers as cfreaders
-from cosmo_utils.utils import work_paths   as cwpaths
-from cosmo_utils.utils import stats_funcs  as cstats
+from cosmo_utils       import mock_catalogues as cm
+from cosmo_utils       import utils           as cu
+from cosmo_utils.utils import file_utils      as cfutils
+from cosmo_utils.utils import file_readers    as cfreaders
+from cosmo_utils.utils import work_paths      as cwpaths
+from cosmo_utils.utils import stats_funcs     as cstats
 from cosmo_utils.mock_catalogues import catls_utils as cmcu
 
 # import src.data.utilities_python as cu
@@ -438,7 +440,7 @@ def add_to_dict(param_dict):
     url_rand = os.path.join('http://lss.phy.vanderbilt.edu/groups/data_vc/DR7',
                             'mr-vollim-randoms',
                             'random_Mr{0}.rdcz'.format(sample_s))
-    # cutils.web_utils.url_checker(url_rand)
+    # cf.web_utils.url_checker(url_rand)
     ## Galaxy properties - Limits
     prop_lim = {'logssfr':  -11,
                 'sersic' :  3.,
@@ -588,10 +590,10 @@ def directory_skeleton(param_dict, proj_dict):
         msg = msg.format(param_dict['Prog_msg'], pickdir_mocks)
         raise ValueError
     ## Creating directories
-    cutils.file_utils.Path_Folder(figdir  )
-    cutils.file_utils.Path_Folder(rand_dir)
-    cutils.file_utils.Path_Folder(wp_data_dir)
-    cutils.file_utils.Path_Folder(wp_mocks_dir)
+    cfutils.Path_Folder(figdir  )
+    cfutils.Path_Folder(rand_dir)
+    cfutils.Path_Folder(wp_data_dir)
+    cfutils.Path_Folder(wp_mocks_dir)
     ##
     ## Adding to dictionary
     proj_dict['figdir'       ] = figdir
@@ -949,8 +951,8 @@ def projected_wp_main(data_cl_pd, mocks_pd_arr, param_dict, proj_dict):
         ## Saving Data
         act_pd_data.to_hdf(act_data_file, 'gal')
         pas_pd_data.to_hdf(pas_data_file, 'gal')
-        cutils.File_Exists(act_data_file)
-        cutils.File_Exists(pas_data_file)
+        cfutils.File_Exists(act_data_file)
+        cfutils.File_Exists(pas_data_file)
     ###
     ### ------| Mock Catalogues |------ ###
     ###
