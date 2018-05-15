@@ -22,6 +22,7 @@ import git
 # Importing Modules
 from cosmo_utils.utils import file_utils as cfutils
 from cosmo_utils.utils import work_paths as cwpaths
+from cosmo_utils.utils import web_utils  as cweb
 
 import numpy as num
 import os
@@ -82,22 +83,6 @@ def _check_pos_val(val, val_min=0):
         raise argparse.ArgumentTypeError(msg)
 
     return ival
-
-def url_checker(url_str):
-    """
-    Checks if the `url_str` is a valid URL
-
-    Parameters
-    ----------
-    url_str: string
-        url of the website to probe
-    """
-    request = requests.get(url_str)
-    if request.status_code != 200:
-        msg = '`url_str` ({0}) does not exist'.format(url_str)
-        raise ValueError(msg)
-    else:
-        pass
 
 def is_tool(name):
     """Check whether `name` is on PATH and marked as executable."""
@@ -247,7 +232,7 @@ def add_to_dict(param_dict):
     ###
     ### URL to download catalogues
     url_catl = 'http://lss.phy.vanderbilt.edu/groups/data_vc/DR7/sdss_catalogues/'
-    url_checker(url_catl)
+    cweb.url_checker(url_catl)
     ###
     ### To dictionary
     param_dict['sample_s' ] = sample_s
@@ -359,7 +344,7 @@ def download_directory(param_dict, proj_dict, cut_dirs=8):
             # Number of directories to cut
             cut_dirs = 12
         ## Checking if URL exists
-        url_checker(calt_kind_url)
+        cweb.url_checker(calt_kind_url)
         ## String to be executed
         if param_dict['verbose']:
             cmd_dw = 'wget -m -nH -x -np -r -c --accept=*.hdf5 --cut-dirs={0} --reject="index.html*" {1}'
@@ -385,7 +370,7 @@ def download_directory(param_dict, proj_dict, cut_dirs=8):
                                         param_dict['catl_type'],
                                         'Mr'+param_dict['sample_s'],
                                         'perfect_member_galaxy_catalogues/')
-            url_checker(calt_kind_url)
+            cweb.url_checker(calt_kind_url)
             ## String to be executed
             cmd_dw = 'wget -r -nH -x -np -A *Mr{0}*.hdf5 --cut-dirs={1} -R "index.html*" {2}'
             cmd_dw = cmd_dw.format(param_dict['sample_s'], cut_dirs, calt_kind_url)
