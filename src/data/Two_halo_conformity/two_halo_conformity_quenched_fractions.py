@@ -938,7 +938,7 @@ def Quenched_Fracs_rp(prop, df_bin_org_cen, group_idx_arr, rpbins_npairs_tot,
     ##
     ## Looping over iterations to estimate the spread of the shuffles
     # ProgressBar properties
-    if param_dict['catl_kind'] == 'data':
+    if (param_dict['catl_kind'] == 'data') or (param_dict['catl_kind'] == 'mocks'):
         if param_dict['prog_bar']:
             widgets   = [Bar('>'), 'Q.Frac. 2-halo Itern: ', ETA(), ' ', ReverseBar('<')]
             pbar_mock = ProgressBar( widgets=widgets, maxval= 10 * itern).start()
@@ -1033,6 +1033,9 @@ def Quenched_Fracs_rp(prop, df_bin_org_cen, group_idx_arr, rpbins_npairs_tot,
         ## Populating `fake` arrays for mocks
         frac_stat_sh_tot    = num.zeros((param_dict['nrpbins'], itern+1))
         frac_stat_sh_tot[:] = num.nan
+    ## Populating `fake` arrays for mocks
+    frac_stat_sh_tot    = num.zeros((param_dict['nrpbins'], itern+1))
+    frac_stat_sh_tot[:] = num.nan
     ###
     ### ---| Statistics |--- ###
     ###
