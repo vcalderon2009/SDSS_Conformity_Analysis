@@ -938,104 +938,104 @@ def Quenched_Fracs_rp(prop, df_bin_org_cen, group_idx_arr, rpbins_npairs_tot,
     ##
     ## Looping over iterations to estimate the spread of the shuffles
     # ProgressBar properties
-    # if (param_dict['catl_kind'] != 'data') or (param_dict['catl_kind'] != 'mocks'):
-    #     if param_dict['prog_bar']:
-    #         widgets   = [Bar('>'), 'Q.Frac. 2-halo Itern: ', ETA(), ' ', ReverseBar('<')]
-    #         pbar_mock = ProgressBar( widgets=widgets, maxval= 10 * itern).start()
-    #     for ii in range(param_dict['itern_tot']):
-    #         ##
-    #         ## Copying default `prop` array and shuffling it
-    #         mark_sh_cen = copy.deepcopy(prop_orig_arr)
-    #         ##
-    #         ## Shuffling galaxy properties
-    #         if param_dict['shuffle_type'] == 'normal':
-    #             ## Shuffling `mark_sh_cen`
-    #             num.random.shuffle(mark_sh_cen)
-    #             ##
-    #             ## Populating array with galaxy properties
-    #             prop_pairs_rp_sh = [num.array([ mark_sh_cen[group_idx_arr[kk].T[0]],
-    #                                             mark_sh_cen[group_idx_arr[kk].T[1]]])\
-    #                                         for kk in range(len(group_idx_arr))]
-    #         ##
-    #         elif param_dict['shuffle_type'] == 'unique':
-    #             prop_pairs_rp_sh = [[] for x in range(len(group_idx_arr))]
-    #             ## Determining if galaxy is quenched or not
-    #             for kk in range(len(group_idx_arr)):
-    #                 ## Finding unique indices of 'i' and 'j'
-    #                 i_j_unq = num.unique(num.concatenate((group_idx_arr[kk].T[0],
-    #                                                     group_idx_arr[kk].T[1])))
-    #                 ## Galaxy properties for given unique indices
-    #                 prop_ij_rp_arr = mark_sh_cen[i_j_unq]
-    #                 ## Shuffling galaxy property array
-    #                 num.random.shuffle(prop_ij_rp_arr)
-    #                 ## Assigning gal. property value to each index
-    #                 prop_ij_dict = {}
-    #                 for hh, key_hh in enumerate(i_j_unq):
-    #                     prop_ij_dict[key_hh] = prop_ij_rp_arr[hh]
-    #                 ## Populating new set of galaxy properties pairs
-    #                 i_prop_sh = [prop_ij_dict[xx] for xx in group_idx_arr[kk].T[0]]
-    #                 j_prop_sh = [prop_ij_dict[xx] for xx in group_idx_arr[kk].T[1]]
-    #                 prop_pairs_rp_sh[kk] = num.vstack((i_prop_sh, j_prop_sh))
-    #         ##
-    #         elif param_dict['shuffle_type'] == 'not_unique':
-    #             prop_pairs_rp_sh = [[] for x in range(len(group_idx_arr))]
-    #             #### --- Shuffling within `rp` bin
-    #             for kk in range(len(group_idx_arr)):
-    #                 prop_i_j_arr = num.concatenate(
-    #                                     (   mark_sh_cen[group_idx_arr[kk].T[0]],
-    #                                         mark_sh_cen[group_idx_arr[kk].T[1]]))
-    #                 num.random.shuffle(prop_i_j_arr)
-    #                 prop_pairs_rp_sh[kk] = prop_i_j_arr.reshape((2,int(len(prop_i_j_arr)/2)))
-    #         #
-    #         # Galaxies with `active` centrals
-    #         prop_pairs_rp_c_act_sh = [prop_pairs_rp_sh[kk].T[prop_pairs_rp_sh[kk].T[:,0] <= 1]\
-    #                                 for kk in range(len(group_idx_arr))]
-    #         # Galaxies with `passive` centrals
-    #         prop_pairs_rp_c_pas_sh = [prop_pairs_rp_sh[kk].T[prop_pairs_rp_sh[kk].T[:,0] >  1]\
-    #                                 for kk in range(len(group_idx_arr))]
-    #         ##
-    #         ## Statistics for galaxies with `active` and `passive` centrals
-    #         gals_pas_c_act_sh = [prop_pairs_rp_c_act_sh[kk][prop_pairs_rp_c_act_sh[kk][:,1] > 1,:] \
-    #                             for kk in range(len(group_idx_arr))]
-    #         gals_pas_c_pas_sh = [prop_pairs_rp_c_pas_sh[kk][prop_pairs_rp_c_pas_sh[kk][:,1] > 1,:]\
-    #                             for kk in range(len(group_idx_arr))]
-    #         ##
-    #         ## Total fraction of Quenched Galaxies
-    #         # Quenched fraction for galaxies with `active` centrals
-    #         frac_g_pas_c_act_sh = num.array([( len(gals_pas_c_act_sh[kk]))/
-    #                                         len(prop_pairs_rp_c_act_sh[kk]) \
-    #                                         if len(prop_pairs_rp_c_act_sh[kk]) != 0 \
-    #                                         else num.nan \
-    #                                         for kk in range(len(group_idx_arr))])
-    #         # Quenched fraction for galaxies with `passive` centrals
-    #         frac_g_pas_c_pas_sh = num.array([( len(gals_pas_c_pas_sh[kk]))/
-    #                                         len(prop_pairs_rp_c_pas_sh[kk]) \
-    #                                         if len(prop_pairs_rp_c_pas_sh[kk]) != 0 \
-    #                                         else num.nan \
-    #                                         for kk in range(len(group_idx_arr))])
-    #         ##
-    #         ## Taking the difference of Quenched Fractions
-    #         if param_dict['frac_stat'] == 'diff':
-    #             frac_stat_sh = frac_g_pas_c_pas_sh - frac_g_pas_c_act_sh
-    #         elif param_dict['frac_stat'] == 'ratio':
-    #             frac_stat_sh = frac_g_pas_c_pas_sh / frac_g_pas_c_act_sh
-    #         ##
-    #         ## Appending to main `Quenched-Shuffles` array
-    #         frac_stat_sh_tot = num.insert(  frac_stat_sh_tot,
-    #                                         len(frac_stat_sh_tot.T),
-    #                                         frac_stat_sh,
-    #                                         1)
-    #         if param_dict['prog_bar']:
-    #             pbar_mock.update(10*ii)
-    #     if param_dict['prog_bar']:
-    #         pbar_mock.finish()
-    # else:
-    #     ## Populating `fake` arrays for mocks
-    #     frac_stat_sh_tot    = num.zeros((param_dict['nrpbins'], itern+1))
-    #     frac_stat_sh_tot[:] = num.nan
+    if (param_dict['catl_kind'] == 'data'):
+        if param_dict['prog_bar']:
+            widgets   = [Bar('>'), 'Q.Frac. 2-halo Itern: ', ETA(), ' ', ReverseBar('<')]
+            pbar_mock = ProgressBar( widgets=widgets, maxval= 10 * itern).start()
+        for ii in range(param_dict['itern_tot']):
+            ##
+            ## Copying default `prop` array and shuffling it
+            mark_sh_cen = copy.deepcopy(prop_orig_arr)
+            ##
+            ## Shuffling galaxy properties
+            if param_dict['shuffle_type'] == 'normal':
+                ## Shuffling `mark_sh_cen`
+                num.random.shuffle(mark_sh_cen)
+                ##
+                ## Populating array with galaxy properties
+                prop_pairs_rp_sh = [num.array([ mark_sh_cen[group_idx_arr[kk].T[0]],
+                                                mark_sh_cen[group_idx_arr[kk].T[1]]])\
+                                            for kk in range(len(group_idx_arr))]
+            ##
+            elif param_dict['shuffle_type'] == 'unique':
+                prop_pairs_rp_sh = [[] for x in range(len(group_idx_arr))]
+                ## Determining if galaxy is quenched or not
+                for kk in range(len(group_idx_arr)):
+                    ## Finding unique indices of 'i' and 'j'
+                    i_j_unq = num.unique(num.concatenate((group_idx_arr[kk].T[0],
+                                                        group_idx_arr[kk].T[1])))
+                    ## Galaxy properties for given unique indices
+                    prop_ij_rp_arr = mark_sh_cen[i_j_unq]
+                    ## Shuffling galaxy property array
+                    num.random.shuffle(prop_ij_rp_arr)
+                    ## Assigning gal. property value to each index
+                    prop_ij_dict = {}
+                    for hh, key_hh in enumerate(i_j_unq):
+                        prop_ij_dict[key_hh] = prop_ij_rp_arr[hh]
+                    ## Populating new set of galaxy properties pairs
+                    i_prop_sh = [prop_ij_dict[xx] for xx in group_idx_arr[kk].T[0]]
+                    j_prop_sh = [prop_ij_dict[xx] for xx in group_idx_arr[kk].T[1]]
+                    prop_pairs_rp_sh[kk] = num.vstack((i_prop_sh, j_prop_sh))
+            ##
+            elif param_dict['shuffle_type'] == 'not_unique':
+                prop_pairs_rp_sh = [[] for x in range(len(group_idx_arr))]
+                #### --- Shuffling within `rp` bin
+                for kk in range(len(group_idx_arr)):
+                    prop_i_j_arr = num.concatenate(
+                                        (   mark_sh_cen[group_idx_arr[kk].T[0]],
+                                            mark_sh_cen[group_idx_arr[kk].T[1]]))
+                    num.random.shuffle(prop_i_j_arr)
+                    prop_pairs_rp_sh[kk] = prop_i_j_arr.reshape((2,int(len(prop_i_j_arr)/2)))
+            #
+            # Galaxies with `active` centrals
+            prop_pairs_rp_c_act_sh = [prop_pairs_rp_sh[kk].T[prop_pairs_rp_sh[kk].T[:,0] <= 1]\
+                                    for kk in range(len(group_idx_arr))]
+            # Galaxies with `passive` centrals
+            prop_pairs_rp_c_pas_sh = [prop_pairs_rp_sh[kk].T[prop_pairs_rp_sh[kk].T[:,0] >  1]\
+                                    for kk in range(len(group_idx_arr))]
+            ##
+            ## Statistics for galaxies with `active` and `passive` centrals
+            gals_pas_c_act_sh = [prop_pairs_rp_c_act_sh[kk][prop_pairs_rp_c_act_sh[kk][:,1] > 1,:] \
+                                for kk in range(len(group_idx_arr))]
+            gals_pas_c_pas_sh = [prop_pairs_rp_c_pas_sh[kk][prop_pairs_rp_c_pas_sh[kk][:,1] > 1,:]\
+                                for kk in range(len(group_idx_arr))]
+            ##
+            ## Total fraction of Quenched Galaxies
+            # Quenched fraction for galaxies with `active` centrals
+            frac_g_pas_c_act_sh = num.array([( len(gals_pas_c_act_sh[kk]))/
+                                            len(prop_pairs_rp_c_act_sh[kk]) \
+                                            if len(prop_pairs_rp_c_act_sh[kk]) != 0 \
+                                            else num.nan \
+                                            for kk in range(len(group_idx_arr))])
+            # Quenched fraction for galaxies with `passive` centrals
+            frac_g_pas_c_pas_sh = num.array([( len(gals_pas_c_pas_sh[kk]))/
+                                            len(prop_pairs_rp_c_pas_sh[kk]) \
+                                            if len(prop_pairs_rp_c_pas_sh[kk]) != 0 \
+                                            else num.nan \
+                                            for kk in range(len(group_idx_arr))])
+            ##
+            ## Taking the difference of Quenched Fractions
+            if param_dict['frac_stat'] == 'diff':
+                frac_stat_sh = frac_g_pas_c_pas_sh - frac_g_pas_c_act_sh
+            elif param_dict['frac_stat'] == 'ratio':
+                frac_stat_sh = frac_g_pas_c_pas_sh / frac_g_pas_c_act_sh
+            ##
+            ## Appending to main `Quenched-Shuffles` array
+            frac_stat_sh_tot = num.insert(  frac_stat_sh_tot,
+                                            len(frac_stat_sh_tot.T),
+                                            frac_stat_sh,
+                                            1)
+            if param_dict['prog_bar']:
+                pbar_mock.update(10*ii)
+        if param_dict['prog_bar']:
+            pbar_mock.finish()
+    else:
+        ## Populating `fake` arrays for mocks
+        frac_stat_sh_tot    = num.zeros((param_dict['nrpbins'], itern+1))
+        frac_stat_sh_tot[:] = num.nan
     ## Populating `fake` arrays for mocks
-    frac_stat_sh_tot    = num.zeros((param_dict['nrpbins'], itern+1))
-    frac_stat_sh_tot[:] = num.nan
+    # frac_stat_sh_tot    = num.zeros((param_dict['nrpbins'], itern+1))
+    # frac_stat_sh_tot[:] = num.nan
     ###
     ### ---| Statistics |--- ###
     ###
