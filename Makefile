@@ -36,6 +36,19 @@ else
 HAS_CONDA=True
 endif
 
+##############################################################################
+# VARIABLES FOR COMMANDS                                                     #
+##############################################################################
+src_pip_install:=pip install -e .
+
+src_pip_uninstall:= pip uninstall --yes src
+
+cosmo_utils_pip_install:=pip install cosmo-utils
+
+cosmo_utils_pip_upgrade:= pip install --upgrade cosmo-utils
+
+cosmo_utils_pip_uninstall:= pip uninstall cosmo-utils
+
 #################################################################################
 # COMMANDS                                                                      #
 #################################################################################
@@ -69,24 +82,6 @@ clean-test:
 lint:
 	flake8 --exclude=lib/,bin/,docs/conf.py .
 
-## Set up python interpreter environment
-create_environment:
-ifeq (True,$(HAS_CONDA))
-		@echo ">>> Detected conda, creating conda environment."
-ifeq (3,$(findstring 3,$(PYTHON_INTERPRETER)))
-	conda create --name $(PROJECT_NAME) python=3
-else
-	conda create --name $(PROJECT_NAME) python=2.7
-endif
-		@echo ">>> New conda env created. Activate with:\nsource activate $(PROJECT_NAME)"
-else
-	@pip install -q virtualenv virtualenvwrapper
-	@echo ">>> Installing virtualenvwrapper if not already intalled.\nMake sure the following lines are in shell startup file\n\
-	export WORKON_HOME=$$HOME/.virtualenvs\nexport PROJECT_HOME=$$HOME/Devel\nsource /usr/local/bin/virtualenvwrapper.sh\n"
-	@bash -c "source `which virtualenvwrapper.sh`;mkvirtualenv $(PROJECT_NAME) --python=$(PYTHON_INTERPRETER)"
-	@echo ">>> New virtualenv created. Activate with:\nworkon $(PROJECT_NAME)"
-endif
-
 ## Test python environment is setup correctly
 test_environment:
 	$(PYTHON_INTERPRETER) test_environment.py
@@ -97,22 +92,53 @@ ifeq (True,$(HAS_CONDA))
 		@echo ">>> Detected conda, creating conda environment."
 		# conda config --add channels conda-forge
 		conda env create -f $(ENVIRONMENT_FILE)
+		$(cosmo_utils_pip_install)
 endif
+	$(src_pip_install)
 
 ## Update python interpreter environment
 update_environment:
 ifeq (True,$(HAS_CONDA))
 		@echo ">>> Detected conda, creating conda environment."
 		conda env update -f $(ENVIRONMENT_FILE)
-		pip install --upgrade cosmo-utils
+		$(cosmo_utils_pip_upgrade)
 endif
+	$(src_pip_uninstall)
+	$(src_pip_install)
 
 ## Delete python interpreter environment
 remove_environment:
 ifeq (True,$(HAS_CONDA))
 		@echo ">>> Detected conda, removing conda environment"
-		conda env remove -n $(PROJECT_NAME)
+		conda env remove -n $(ENVIRONMENT_NAME)
+		$(cosmo_utils_pip_uninstall)
 endif
+	$(src_pip_uninstall)
+
+## Import local source directory package
+src_env:
+	$(src_pip_install)
+
+## Updated local source directory package
+src_update:
+	$(src_pip_uninstall)
+	$(src_pip_install)
+
+## Remove local source directory package
+src_remove:
+	$(src_pip_uninstall)
+
+## Installing cosmo-utils
+cosmo_utils_install:
+	$(cosmo_utils_pip_install)
+
+## Upgrading cosmo-utils
+cosmo_utils_upgrade:
+	$(cosmo_utils_pip_upgrade)
+
+## Removing cosmo-utils
+cosmo_utils_remove:
+	$(cosmo_utils_pip_uninstall)
 
 #################################################################################
 # PROJECT FUNCTIONS                                                                 #
