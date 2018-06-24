@@ -13,7 +13,6 @@ dependencies:
   - pandas
   - scipy
   - seaborn
-  - progressbar
   - pip
   - pip:
     - GitPython
@@ -30,3 +29,4 @@ dependencies:
     - tqdm
     - cosmo-utils
     - tables
+    - progressbar2
