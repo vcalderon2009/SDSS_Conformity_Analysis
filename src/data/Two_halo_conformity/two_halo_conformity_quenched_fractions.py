@@ -1052,19 +1052,21 @@ def Quenched_Fracs_rp(prop, df_bin_org_cen, group_idx_arr, rpbins_npairs_tot,
     ## --| Saving everything to a dictionary
     ##
     frac_stat_dict = {}
-    frac_stat_dict['frac_stat'        ] = frac_stat
-    frac_stat_dict['frac_stat_sh_mean'] = frac_stat_sh_mean
-    frac_stat_dict['frac_stat_sh_std' ] = frac_stat_sh_std
-    frac_stat_dict['sigma'            ] = sigma_dict
-    frac_stat_dict['frac_stat_sh'     ] = frac_stat_sh_tot
-    frac_stat_dict['npairs_tot'       ] = npairs_tot
-    frac_stat_dict['prim_act_sec_act' ] = prim_act_sec_act
-    frac_stat_dict['prim_act_sec_pas' ] = prim_act_sec_pas
-    frac_stat_dict['prim_pas_sec_act' ] = prim_pas_sec_act
-    frac_stat_dict['prim_pas_sec_pas' ] = prim_pas_sec_pas
-    frac_stat_dict['gals_c_act'       ] = gals_c_act
-    frac_stat_dict['gals_c_pas'       ] = gals_c_pas
-    frac_stat_dict['prop_pairs_rp'    ] = prop_pairs_rp
+    frac_stat_dict['frac_stat'          ] = frac_stat
+    frac_stat_dict['frac_stat_sh_mean'  ] = frac_stat_sh_mean
+    frac_stat_dict['frac_stat_sh_std'   ] = frac_stat_sh_std
+    frac_stat_dict['sigma'              ] = sigma_dict
+    frac_stat_dict['frac_stat_sh'       ] = frac_stat_sh_tot
+    frac_stat_dict['npairs_tot'         ] = npairs_tot
+    frac_stat_dict['prim_act_sec_act'   ] = prim_act_sec_act
+    frac_stat_dict['prim_act_sec_pas'   ] = prim_act_sec_pas
+    frac_stat_dict['prim_pas_sec_act'   ] = prim_pas_sec_act
+    frac_stat_dict['prim_pas_sec_pas'   ] = prim_pas_sec_pas
+    frac_stat_dict['gals_c_act'         ] = gals_c_act
+    frac_stat_dict['gals_c_pas'         ] = gals_c_pas
+    frac_stat_dict['prop_pairs_rp'      ] = prop_pairs_rp
+    frac_stat_dict['prop_pairs_rp_c_act'] = prop_pairs_rp_c_act
+    frac_stat_dict['prop_pairs_rp_c_pas'] = prop_pairs_rp_c_pas
 
     return frac_stat_dict
 
