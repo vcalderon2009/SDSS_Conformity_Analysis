@@ -1064,6 +1064,7 @@ def Quenched_Fracs_rp(prop, df_bin_org_cen, group_idx_arr, rpbins_npairs_tot,
     frac_stat_dict['prim_pas_sec_pas' ] = prim_pas_sec_pas
     frac_stat_dict['gals_c_act'       ] = gals_c_act
     frac_stat_dict['gals_c_pas'       ] = gals_c_pas
+    frac_stat_dict['prop_pairs_rp'    ] = prop_pairs_rp
 
     return frac_stat_dict
 
