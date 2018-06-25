@@ -1188,18 +1188,21 @@ def prop_sh_two_halo(df_bin_org, prop, GM_str, param_dict, proj_dict,
                 ## Converting to dictionaries
                 # Conformity Only
                 frac_stat_dict = {}
-                frac_stat_dict['frac_stat'        ] = frac_stat
-                frac_stat_dict['frac_stat_sh_mean'] = mark_nanmean
-                frac_stat_dict['frac_stat_sh_std' ] = mark_nanstd
-                frac_stat_dict['sigma'            ] = sigma_dict
-                frac_stat_dict['frac_stat_sh'     ] = corrfunc_sh_tot
-                frac_stat_dict['npairs_tot'       ] = npairs_tot
-                frac_stat_dict['prim_act_sec_act' ] = prim_sec_arr
-                frac_stat_dict['prim_act_sec_pas' ] = prim_sec_arr
-                frac_stat_dict['prim_pas_sec_act' ] = prim_sec_arr
-                frac_stat_dict['prim_pas_sec_pas' ] = prim_sec_arr
-                frac_stat_dict['gals_c_act'       ] = prim_sec_arr
-                frac_stat_dict['gals_c_pas'       ] = prim_sec_arr
+                frac_stat_dict['frac_stat'          ] = frac_stat
+                frac_stat_dict['frac_stat_sh_mean'  ] = mark_nanmean
+                frac_stat_dict['frac_stat_sh_std'   ] = mark_nanstd
+                frac_stat_dict['sigma'              ] = sigma_dict
+                frac_stat_dict['frac_stat_sh'       ] = corrfunc_sh_tot
+                frac_stat_dict['npairs_tot'         ] = npairs_tot
+                frac_stat_dict['prim_act_sec_act'   ] = prim_sec_arr
+                frac_stat_dict['prim_act_sec_pas'   ] = prim_sec_arr
+                frac_stat_dict['prim_pas_sec_act'   ] = prim_sec_arr
+                frac_stat_dict['prim_pas_sec_pas'   ] = prim_sec_arr
+                frac_stat_dict['gals_c_act'         ] = prim_sec_arr
+                frac_stat_dict['gals_c_pas'         ] = prim_sec_arr
+                frac_stat_dict['prop_pairs_rp'      ] = prim_sec_arr
+                frac_stat_dict['prop_pairs_rp_c_act'] = prim_sec_arr
+                frac_stat_dict['prop_pairs_rp_c_pas'] = prim_sec_arr
 
                 return frac_stat_dict, ngroups
     else:
@@ -1236,18 +1239,21 @@ def prop_sh_two_halo(df_bin_org, prop, GM_str, param_dict, proj_dict,
             ## Converting to dictionaries
             # Conformity Only
             frac_stat_dict = {}
-            frac_stat_dict['frac_stat'        ] = frac_stat
-            frac_stat_dict['frac_stat_sh_mean'] = mark_nanmean
-            frac_stat_dict['frac_stat_sh_std' ] = mark_nanstd
-            frac_stat_dict['sigma'            ] = sigma_dict
-            frac_stat_dict['frac_stat_sh'     ] = corrfunc_sh_tot
-            frac_stat_dict['npairs_tot'       ] = npairs_tot
-            frac_stat_dict['prim_act_sec_act' ] = prim_sec_arr
-            frac_stat_dict['prim_act_sec_pas' ] = prim_sec_arr
-            frac_stat_dict['prim_pas_sec_act' ] = prim_sec_arr
-            frac_stat_dict['prim_pas_sec_pas' ] = prim_sec_arr
-            frac_stat_dict['gals_c_act'       ] = prim_sec_arr
-            frac_stat_dict['gals_c_pas'       ] = prim_sec_arr
+            frac_stat_dict['frac_stat'          ] = frac_stat
+            frac_stat_dict['frac_stat_sh_mean'  ] = mark_nanmean
+            frac_stat_dict['frac_stat_sh_std'   ] = mark_nanstd
+            frac_stat_dict['sigma'              ] = sigma_dict
+            frac_stat_dict['frac_stat_sh'       ] = corrfunc_sh_tot
+            frac_stat_dict['npairs_tot'         ] = npairs_tot
+            frac_stat_dict['prim_act_sec_act'   ] = prim_sec_arr
+            frac_stat_dict['prim_act_sec_pas'   ] = prim_sec_arr
+            frac_stat_dict['prim_pas_sec_act'   ] = prim_sec_arr
+            frac_stat_dict['prim_pas_sec_pas'   ] = prim_sec_arr
+            frac_stat_dict['gals_c_act'         ] = prim_sec_arr
+            frac_stat_dict['gals_c_pas'         ] = prim_sec_arr
+            frac_stat_dict['prop_pairs_rp'      ] = prim_sec_arr
+            frac_stat_dict['prop_pairs_rp_c_act'] = prim_sec_arr
+            frac_stat_dict['prop_pairs_rp_c_pas'] = prim_sec_arr
 
 
             return frac_stat_dict, ngroups
