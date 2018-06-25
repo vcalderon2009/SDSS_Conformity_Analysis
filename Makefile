@@ -29,6 +29,10 @@ HALOTYPE          = 'fof'
 HOD_N             = 0
 PERF_OPT          = "False"
 SAMPLE            = "19"
+DV                = 1.0
+VERBOSE           = "False"
+CATL_TYPE         = "mr"
+
 
 ifeq (,$(shell which conda))
 HAS_CONDA=False
@@ -212,7 +216,9 @@ remove_calc_screens:
 download_dataset:
 	# Downloading dataset
 	@python $(SRC_DIR)/download_dataset.py -hod_model_n $(HOD_N) \
-	-halotype $(HALOTYPE) -clf_method $(CLF_METHOD) -clf_seed $(CLF_SEED)
+	-halotype $(HALOTYPE) -clf_method $(CLF_METHOD) -clf_seed $(CLF_SEED) \
+	-dv $(DV) -sample $(SAMPLE) -abopt $(CATL_TYPE) \
+	-perf $(PERF_OPT) -v $(VERBOSE)
 
 ## Remove downloaded catalogues
 remove_catalogues:
