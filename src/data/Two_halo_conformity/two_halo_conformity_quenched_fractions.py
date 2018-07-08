@@ -862,6 +862,14 @@ def Quenched_Fracs_rp(prop, df_bin_org_cen, group_idx_arr, rpbins_npairs_tot,
     if (prop in nonlog_arr) and (param_dict['prop_log']=='nonlog'):
         df_bin.loc[:,prop] = 10**df_bin[prop].values
     ##
+    ## Indices of `Centrals` and `Satellites`
+    cen_idx = df_bin.loc[df_bin[galtype_key] == Cens].index.values
+    sat_idx = df_bin.loc[df_bin[galtype_key] == Sats].index.values
+    ##
+    ## Obtaining the mean of `Centrals` and `Satellites`
+    cens_prop_mean = df_bin.loc[cen_idx, prop].mean()
+    sats_prop_mean = df_bin.loc[sat_idx, prop].mean()
+    ##
     ## Normalizing `prop` by the `prop_lim`
     df_bin.loc[:,prop] /= param_dict['prop_lim'][prop]
     ##
@@ -1052,19 +1060,24 @@ def Quenched_Fracs_rp(prop, df_bin_org_cen, group_idx_arr, rpbins_npairs_tot,
     ## --| Saving everything to a dictionary
     ##
     frac_stat_dict = {}
-    frac_stat_dict['frac_stat'          ] = frac_stat
-    frac_stat_dict['frac_stat_sh_mean'  ] = frac_stat_sh_mean
-    frac_stat_dict['frac_stat_sh_std'   ] = frac_stat_sh_std
-    frac_stat_dict['sigma'              ] = sigma_dict
-    frac_stat_dict['frac_stat_sh'       ] = frac_stat_sh_tot
-    frac_stat_dict['npairs_tot'         ] = npairs_tot
-    frac_stat_dict['prim_act_sec_act'   ] = prim_act_sec_act
-    frac_stat_dict['prim_act_sec_pas'   ] = prim_act_sec_pas
-    frac_stat_dict['prim_pas_sec_act'   ] = prim_pas_sec_act
-    frac_stat_dict['prim_pas_sec_pas'   ] = prim_pas_sec_pas
-    frac_stat_dict['gals_c_act'         ] = gals_c_act
-    frac_stat_dict['gals_c_pas'         ] = gals_c_pas
-    frac_stat_dict['prop_pairs_rp'      ] = prop_pairs_rp
+    frac_stat_dict['frac_stat'        ] = frac_stat
+    frac_stat_dict['frac_stat_sh_mean'] = frac_stat_sh_mean
+    frac_stat_dict['frac_stat_sh_std' ] = frac_stat_sh_std
+    frac_stat_dict['sigma'            ] = sigma_dict
+    frac_stat_dict['frac_stat_sh'     ] = frac_stat_sh_tot
+    frac_stat_dict['npairs_tot'       ] = npairs_tot
+    frac_stat_dict['prim_act_sec_act' ] = prim_act_sec_act
+    frac_stat_dict['prim_act_sec_pas' ] = prim_act_sec_pas
+    frac_stat_dict['prim_pas_sec_act' ] = prim_pas_sec_act
+    frac_stat_dict['prim_pas_sec_pas' ] = prim_pas_sec_pas
+    frac_stat_dict['gals_c_act'       ] = gals_c_act
+    frac_stat_dict['gals_c_pas'       ] = gals_c_pas
+    frac_stat_dict['prop_pairs_rp'    ] = prop_pairs_rp
+    frac_stat_dict['cens_prop_mean'   ] = cens_prop_mean
+    frac_stat_dict['sats_prop_mean'   ] = sats_prop_mean
+    frac_stat_dict['prop_lim'         ] = param_dict['prop_lim'][prop]
+
+
     # frac_stat_dict['prop_pairs_rp_c_act'] = prop_pairs_rp_c_act
     # frac_stat_dict['prop_pairs_rp_c_pas'] = prop_pairs_rp_c_pas
 
