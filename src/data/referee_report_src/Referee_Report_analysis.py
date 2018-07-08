@@ -583,10 +583,27 @@ def directory_skeleton(param_dict, proj_dict):
                                     'catl_pickle_files',
                                     param_dict['corr_type'],
                                     param_dict['param_str'])
+    # Dictionary of 2-halo - Data
+    pickdir_data = os.path.join(    proj_dict['data_dir'],
+                                    'processed',
+                                    'SDSS',
+                                    'data',
+                                    param_dict['catl_type'],
+                                    param_dict['sample_Mr'],
+                                    'Frac_results',
+                                    'catl_pickle_files',
+                                    param_dict['corr_type'],
+                                    param_dict['param_str'])
     ## Make sure directory exists
+    # Mocks
     if not os.path.exists(pickdir_mocks):
         msg = '{0} `pickdir_mocks` ({1}) does not exist! Exiting...'
         msg = msg.format(param_dict['Prog_msg'], pickdir_mocks)
+        raise ValueError
+    # Data
+    if not os.path.exists(pickdir_data):
+        msg = '{0} `pickdir_data` ({1}) does not exist! Exiting...'
+        msg = msg.format(param_dict['Prog_msg'], pickdir_data)
         raise ValueError
     ## Creating directories
     cfutils.Path_Folder(figdir  )
@@ -601,6 +618,7 @@ def directory_skeleton(param_dict, proj_dict):
     proj_dict['wp_data_dir'  ] = wp_data_dir
     proj_dict['wp_mocks_dir' ] = wp_mocks_dir
     proj_dict['pickdir_mocks'] = pickdir_mocks
+    proj_dict['pickdir_data' ] = pickdir_data
 
     return proj_dict
 
@@ -1454,10 +1472,12 @@ def two_halo_mcf_distr_secondaries(param_dict, proj_dict):
     rp_val = 7
     prop_keys = param_dict['prop_keys']
     ### Reading in parameters
-    catl_p_arr = cfutils.Index(proj_dict['pickdir_mocks'], '.p')
+    catl_p_arr = cfutils.Index(proj_dict['pickdir_data'], '.p')
     ##
     ## Initializing dictionary
-    prim_sec_arr  = ['gals_c_act', 'gals_c_pas']
+    prim_sec_arr  = [   'gals_c_act',
+                        'gals_c_pas',
+                        'prop_pairs_rp']
     # prim_sec_arr  = ['prim_act_sec_act', 'prim_act_sec_pas',
     #                  'prim_pas_sec_act', 'prim_pas_sec_pas']
     prim_sec_dict = {}
@@ -1465,7 +1485,10 @@ def two_halo_mcf_distr_secondaries(param_dict, proj_dict):
     for prop_zz in prop_keys:
         prim_sec_dict[prop_zz] = {}
         for prim_sec_jj in prim_sec_arr:
-            prim_sec_dict[prop_zz][prim_sec_jj] = num.zeros(1)
+            if (prim_sec_jj in ['gals_c_act', 'gals_c_pas']):
+                prim_sec_dict[prop_zz][prim_sec_jj] = num.zeros(1)
+            else:
+                prim_sec_dict[prop_zz][prim_sec_jj] = num.zeros((1,2))
     ## Looping over catalogues
     for jj, catl_jj in tqdm(enumerate(catl_p_arr)):
         ## Reading in pickle file
@@ -1482,9 +1505,14 @@ def two_halo_mcf_distr_secondaries(param_dict, proj_dict):
             # Looping over `prim_sec` keys
             for prim_sec_kk in prim_sec_arr:
                 # Saving data
-                prim_sec_dict[prop_zz][prim_sec_kk] = array_insert(
-                    prim_sec_dict[prop_zz][prim_sec_kk],
-                    mg_prop_dict[prim_sec_kk][rp_val], axis=0)
+                if (prim_sec_kk in ['gals_c_act', 'gals_c_pas']):
+                    prim_sec_dict[prop_zz][prim_sec_kk] = array_insert(
+                        prim_sec_dict[prop_zz][prim_sec_kk],
+                        mg_prop_dict[prim_sec_kk][rp_val], axis=0)
+                else:
+                    prim_sec_dict[prop_zz][prim_sec_kk] = num.concatenate(
+                        (prim_sec_dict[prop_zz][prim_sec_kk],
+                            mg_prop_dict[prim_sec_kk][rp_val].T))
 
     return prim_sec_dict
 
@@ -1507,7 +1535,8 @@ def two_halo_mcf_distr_secondaries_plot(prim_sec_dict, param_dict, proj_dict,
     Prog_msg     = param_dict['Prog_msg']
     ## Galaxy properties
     prop_keys    = param_dict['prop_keys']
-    prim_sec_arr = list(prim_sec_dict[prop_keys[0]].keys())
+    # prim_sec_arr = list(prim_sec_dict[prop_keys[0]].keys())
+    prim_sec_arr = ['gals_c_act', 'gals_c_pas']
     ## Matplotlib option
     matplotlib.rcParams['axes.linewidth'] = 2.5
     matplotlib.rcParams['text.latex.unicode']=True
@@ -1560,7 +1589,7 @@ def two_halo_mcf_distr_secondaries_plot(prim_sec_dict, param_dict, proj_dict,
                             label=prim_sec_label_kk,
                             norm_hist=True,
                             ax=axes_flat[jj],
-                            kde=False,
+                            kde=True,
                             hist_kws={'alpha':0.2})
             # Plotting mean
             axes_flat[jj].axvline(  prim_sec_dict[prop_jj][prim_sec_kk].mean(),
@@ -1592,6 +1621,226 @@ def two_halo_mcf_distr_secondaries_plot(prim_sec_dict, param_dict, proj_dict,
     print('{0} Figure saved as: {1}'.format(Prog_msg, fname))
     plt.clf()
     plt.close()
+
+## 2-halo - Distribution of the Product of primaries and secondaries
+def two_halo_mcf_distr_product(param_dict, proj_dict):
+    """
+    Plots the distribution of the secondaries around primaries for a given 
+    galaxy property and group mass bin.
+
+    Parameters
+    ----------
+    param_dict: python dictionary
+        dictionary with `project` variables
+    
+    proj_dict: python dictionary
+        Dictionary with current and new paths to project directories
+    
+    Returns
+    ----------
+    prim_sec_main_dict : python dictionary
+        dictionary with counts for each `mg_val` and `rp_val`
+    """
+    ### Constants
+    mg_val = '11.60_12.00'
+    rp_val = 7
+    prop_keys = param_dict['prop_keys']
+    # Reading in parameters
+    # Data
+    catl_p_dict = {}
+    catl_p_dict['data'] = cfutils.Index(proj_dict['pickdir_data'] , '.p')
+    # Mocks
+    catl_p_dict['mocks'] = cfutils.Index(proj_dict['pickdir_mocks'] , '.p')
+    #
+    # Initializing dictionaries
+    prim_sec_arr       = ['prop_pairs_rp']
+    prim_sec_main_dict = {}
+    # Looping over types of catalogues
+    for catl_kind in ['data', 'mocks']:
+        # Initializing dictionary
+        prim_sec_main_dict[catl_kind] = {}
+        # Looping over catalogues
+        for jj, catl_jj in tqdm(enumerate(catl_p_dict[catl_kind])):
+            # Reading in pickle file
+            (   param_dict_jj  ,
+                proj_dict_jj   ,
+                GM_prop_dict_jj,
+                catl_name_jj   ,
+                GM_arr_jj      ) = pickle.load(open(catl_jj, 'rb'))
+            # Group mass dictionary
+            mg_dict = GM_prop_dict_jj[mg_val]
+            # Looping over galaxy properties
+            for kk, prop_kk in enumerate(prop_keys):
+                # Initializing dictionary
+                if (jj == 0):
+                    prim_sec_main_dict[catl_kind][prop_kk] = {}
+                # Selecting data for `mg_val` and `rp_val`
+                mg_prop_dict = mg_dict[prop_kk][0]
+                # `Centrals` and `Satellites` mean statistics
+                cens_prop_mean = mg_prop_dict['cens_prop_mean']
+                sats_prop_mean = mg_prop_dict['sats_prop_mean']
+                # Looping over `primary` and `secondary` keys
+                for prim_key_zz in prim_sec_arr:
+                    # Saving data
+                    if (jj == 0):
+                        arr1 = mg_prop_dict[prim_key_zz][rp_val].T
+                    else:
+                        arr1 = prim_sec_main_dict[catl_kind][prop_kk][prim_key_zz]
+                        arr2 = mg_prop_dict[prim_key_zz][rp_val].T
+                        # Concatenating arrays
+                        arr1 = num.concatenate((arr1, arr2))
+                    #
+                    # Saving to dictionary
+                    prim_sec_main_dict[catl_kind][prop_kk][prim_key_zz] = arr1
+        #
+        # Computing products of `primaries` and secondaries
+        prim_sec_prod_dict = {}
+        # Looping over galaxy property
+        for kk, prop_kk in enumerate(prop_keys):
+            prim_sec_prod_dict[prop_kk] = {}
+            # Primaries and secondaries arrays
+            for prim_key_zz in prim_sec_arr:
+                prim_sec_vals = prim_sec_main_dict[catl_kind][prop_kk][prim_key_zz]
+                prim_arr = prim_sec_vals.T[0]
+                sec_arr  = prim_sec_vals.T[1]
+                # Product
+                prod_data = prim_arr * sec_arr
+                # Random Draws
+                prim_sh_arr  = num.random.choice(prim_arr, len(prim_arr))
+                sec_sh_arr   = num.random.choice(sec_arr , len(sec_arr))
+                prod_sh      = prim_sh_arr * sec_sh_arr
+                #
+                # Saving data
+                prim_sec_prod_dict[prop_kk]['data'] = prod_data
+                prim_sec_prod_dict[prop_kk]['rand'] = prod_sh
+        #
+        # Saving to main dictionary
+        prim_sec_main_dict[catl_kind]['prod'] = prim_sec_prod_dict
+
+    return prim_sec_main_dict
+
+def two_halo_mcf_distr_product_plot(prim_sec_main_dict, param_dict, proj_dict,
+    fig_fmt='pdf', figsize_2=(7.,10.)):
+    """
+    Plots the distributions of secondaries around different primaries
+
+    Parameters
+    -----------
+    prim_sec_main_dict : python dictionary
+        dictionary with counts for each `mg_val` and `rp_val`
+
+    param_dict: python dictionary
+        dictionary with `project` variables
+    
+    proj_dict: python dictionary
+        Dictionary with current and new paths to project directories
+    """
+    Prog_msg       = param_dict['Prog_msg']
+    ## Galaxy properties
+    prop_keys      = param_dict['prop_keys']
+    # Types of catalogues
+    catl_kind_keys = list(prim_sec_main_dict.keys())
+    # Matplotlib options
+    matplotlib.rcParams['axes.linewidth'] = 2.5
+    matplotlib.rcParams['text.latex.unicode']=True
+    matplotlib.rcParams['text.usetex']=True
+    ## Figure name
+    fname = os.path.join(   proj_dict['figdir'],
+                            'two_halo_mcf_prod_distr_{0}_2.{1}'.format(
+                                param_dict['clf_method'], fig_fmt))
+    ##
+    ## Figure details
+    figsize     = figsize_2
+    size_label  = 20
+    size_legend = 10
+    size_text   = 14
+    color_prop_dict = { 'rand' :'blue',
+                        'data' :'red',
+                        'mocks': 'green'}
+    # Labels
+    prim_sec_labels = { 'rand' : 'SDSS - Random',
+                        'data' : 'SDSS',
+                        'mocks': 'Mocks'}
+    #
+    # Figure
+    plt.clf()
+    plt.close()
+    propssfr = dict(boxstyle='round', facecolor='white', alpha=0.7)
+    cm_dict  = {'logssfr':'red', 'sersic':'royalblue', 'g_r':'green'}
+    fig, axes = plt.subplots(3,1, sharex=True, sharey=False, figsize=figsize,
+        facecolor='white')
+    # Flatten axes
+    axes_flat = axes.flatten()
+    ## Looping over axes
+    for jj, prop_jj in tqdm(enumerate(prop_keys)):
+        ax = axes_flat[jj]
+        ## Extracting information
+        # -- SDSS --
+        data_arr = prim_sec_main_dict['data']['prod'][prop_jj]['data']
+        # -- Mocks --
+        mocks_arr = prim_sec_main_dict['mocks']['prod'][prop_jj]['data']
+        # -- Mocks - Random --
+        mocks_rand_arr = prim_sec_main_dict['data']['prod'][prop_jj]['rand']
+        ##
+        ## -- Distribution plots
+        # - SDSS
+        sns.distplot(   data_arr,
+                        color=color_prop_dict['data'],
+                        label=prim_sec_labels['data'],
+                        norm_hist=True,
+                        ax=ax,
+                        kde=True,
+                        hist_kws={'alpha':0.2})
+        # Plotting mean
+        ax.axvline(data_arr.mean(), color=color_prop_dict['data'])
+        # - Mocks
+        sns.distplot(   mocks_arr,
+                        color=color_prop_dict['mocks'],
+                        label=prim_sec_labels['mocks'],
+                        norm_hist=True,
+                        ax=ax,
+                        kde=True,
+                        hist_kws={'alpha':0.2})
+        # Plotting mean
+        ax.axvline(mocks_arr.mean(), color=color_prop_dict['mocks'])
+        # - Mocks - Random
+        sns.distplot(   mocks_rand_arr,
+                        color=color_prop_dict['rand'],
+                        label=prim_sec_labels['rand'],
+                        norm_hist=True,
+                        ax=ax,
+                        kde=True,
+                        hist_kws={'alpha':0.2})
+        ##
+        ## Galaxy property text
+        ax.text(0.05, 0.80, prop_jj.replace('_',''),
+                            transform=ax.transAxes,
+                            verticalalignment='top',
+                            color='black',
+                            bbox=propssfr,
+                            weight='bold',
+                            fontsize=size_text)
+        # Plotting mean
+        ax.axvline(mocks_rand_arr.mean(), color=color_prop_dict['rand'])
+    #
+    # Legend
+    axes_flat[0].legend( loc='upper right', prop={'size':size_legend})
+    ##
+    ## Limits
+    axes_flat[0].set_xlim(0,2)
+    ##
+    ## Spacings
+    plt.subplots_adjust(hspace=0.05)
+    ##
+    ## Saving figure
+    if fig_fmt=='pdf':
+        plt.savefig(fname, bbox_inches='tight')
+    else:
+        plt.savefig(fname, bbox_inches='tight', dpi=400)
+    print('{0} Figure saved as: {1}'.format(Prog_msg, fname))
+    plt.clf()
+    plt.close()
+
 
 #### --------- Stellar to Halo Mass Relations --------- ####
 
@@ -1787,10 +2036,15 @@ def main(args):
     ## Distributions of Galaxy Properties
     galprop_distr_main(data_cl_pd, mocks_pd_arr[5], param_dict, proj_dict)
     ##
-    ## Distribution of Secondaries around primaries
+    ## -------- Distribution of Secondaries around primaries -------- ##
     prim_sec_dict = two_halo_mcf_distr_secondaries(param_dict, proj_dict)
     # Plotting
     two_halo_mcf_distr_secondaries_plot(prim_sec_dict, param_dict, proj_dict)
+    ##
+    ## -------- Distribution of Products of Primaries and Secondaries ----- ##
+    prim_sec_main_dict = two_halo_mcf_distr_product(param_dict, proj_dict)
+    # Plotting
+    two_halo_mcf_distr_product_plot(prim_sec_main_dict, param_dict, proj_dict)
     ##
     ## Stellar-to-Halo mass Relation for Blue and Red galaxies
     shmr_model_galaxies(mocks_pd_arr, param_dict, proj_dict)

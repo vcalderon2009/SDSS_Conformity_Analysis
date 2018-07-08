@@ -714,7 +714,7 @@ def directory_skeleton(param_dict, proj_dict):
 
     return proj_dict
 
-def wp_idx_calc(group_df, param_dict):
+def wp_idx_calc(group_df, param_dict, double_count=False, return_pd=False):
     """
     Counts the pairs in each `rp` bins for each galaxy-pairs
 
@@ -725,6 +725,14 @@ def wp_idx_calc(group_df, param_dict):
 
     param_dict: python dictionary
         dictionary with project variables
+
+    double_count: boolean, optional (default = False)
+        option to decide whether or not to double count each galaxy pairs.
+        Useful for the `2-halo Quenched Fractions` calculations
+
+    return_pd: boolean, optional (default = False)
+        option to return the pandas DataFrame `rp_ith_pd`, which contains 
+        the `< rp i j >` values for each galaxy pair
     
     Returns
     ----------
@@ -733,6 +741,11 @@ def wp_idx_calc(group_df, param_dict):
 
     rp_npairs: array_like, shape (len(param_dict['nrpbins']), [])
         array of the number of pairs in each `rp`-bin
+
+    rp_ith_pd: pandas DataFrame (optional)
+        pandas DataFrame `rp_ith_pd`, which contains the `< rp i j >` 
+        values for each galaxy pair.
+        Only returned if `return_pd == True`.
     """
     ### Converting to cartesian coordinates
     coord_1 = group_df[['x','y','z']].values
@@ -743,7 +756,8 @@ def wp_idx_calc(group_df, param_dict):
                                             rpmin=param_dict['rpmin'],
                                             rpmax=param_dict['rpmax'],
                                             nrpbins=param_dict['nrpbins'],
-                                            pimax=param_dict['pimax'])
+                                            pimax=param_dict['pimax'],
+                                            double_count=double_count)
     ### Converting to pandas DataFrame
     rp_ith_pd = pd.DataFrame(rp_ith_arr, columns=['rp','i','j'])
     ### Unique `rp` bins
@@ -753,7 +767,10 @@ def wp_idx_calc(group_df, param_dict):
     ## Array of total number of pairs in `rp`-bins
     rp_npairs = num.array([len(xx) for xx in rp_idx])
 
-    return rp_idx, rp_npairs
+    if return_pd:
+        return rp_idx, rp_npairs, rp_ith_pd
+    else:
+        return rp_idx, rp_npairs
 
 def MCF_conf(prop, df_bin_org_cen, group_idx_arr, rpbins_npairs_tot, 
     param_dict, catl_keys_dict):
@@ -1048,9 +1065,13 @@ def prop_sh_two_halo(df_bin_org, prop, GM_str, param_dict, proj_dict,
                 Prog_msg, catl_idx_file))
             ##
             ## Running `DDrppi(rp)` for pair counting on `Central-Central`
-            group_idx_arr, rpbins_npairs_tot = wp_idx_calc(df_bin_org_cen, param_dict)
+
+            (   group_idx_arr,
+                rpbins_npairs_tot) = wp_idx_calc(   df_bin_org_cen,
+                                                    param_dict,
+                                                    double_count=False)
             ##
-            ## Savin indices into a Pickle file if file does not exist
+            ## Saving indices into a Pickle file if file does not exist
             if num.sum(rpbins_npairs_tot) != 0:
                 pickle.dump([group_idx_arr, rpbins_npairs_tot],
                     open(catl_idx_file,'wb'))
