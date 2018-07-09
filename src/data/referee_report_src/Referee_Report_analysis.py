@@ -1643,7 +1643,8 @@ def two_halo_mcf_distr_product(param_dict, proj_dict):
     """
     ### Constants
     mg_val = '11.60_12.00'
-    rp_val = 7
+    # mg_val = '11.20_11.60'
+    rp_val = 5
     prop_keys = param_dict['prop_keys']
     # Reading in parameters
     # Data
@@ -1655,10 +1656,17 @@ def two_halo_mcf_distr_product(param_dict, proj_dict):
     # Initializing dictionaries
     prim_sec_arr       = ['prop_pairs_rp']
     prim_sec_main_dict = {}
+    prop_mcf_dict      = {}
     # Looping over types of catalogues
     for catl_kind in ['data', 'mocks']:
         # Initializing dictionary
         prim_sec_main_dict[catl_kind] = {}
+        # MCF Result
+        prop_mcf_dict[catl_kind] = {}
+        prop_mcf_dict[catl_kind]['MCF'] = {}
+        zeros_arr = num.zeros(len(catl_p_dict[catl_kind]))
+        prop_mcf_dict[catl_kind]['MCF'] = dict(zip(prop_keys,
+                    [copy.deepcopy(zeros_arr) for x in range(len(prop_keys))]))
         # Looping over catalogues
         for jj, catl_jj in tqdm(enumerate(catl_p_dict[catl_kind])):
             # Reading in pickle file
@@ -1679,19 +1687,28 @@ def two_halo_mcf_distr_product(param_dict, proj_dict):
                 # `Centrals` and `Satellites` mean statistics
                 cens_prop_mean = mg_prop_dict['cens_prop_mean']
                 sats_prop_mean = mg_prop_dict['sats_prop_mean']
+                prop_lim       = mg_prop_dict['prop_lim']
                 # Looping over `primary` and `secondary` keys
                 for prim_key_zz in prim_sec_arr:
                     # Saving data
                     if (jj == 0):
                         arr1 = mg_prop_dict[prim_key_zz][rp_val].T
+                        arr1 *= (prop_lim / cens_prop_mean)
+                        # MCF Result
+                        mcf_val = num.mean(arr1.T[0] * arr1.T[1])
                     else:
                         arr1 = prim_sec_main_dict[catl_kind][prop_kk][prim_key_zz]
                         arr2 = mg_prop_dict[prim_key_zz][rp_val].T
+                        arr2 *= (prop_lim / cens_prop_mean)
                         # Concatenating arrays
                         arr1 = num.concatenate((arr1, arr2))
+                        # MCF Result
+                        mcf_val = num.mean(arr2.T[0] * arr2.T[1])
                     #
                     # Saving to dictionary
                     prim_sec_main_dict[catl_kind][prop_kk][prim_key_zz] = arr1
+                    # Saving to dictionary - MCF Result
+                    prop_mcf_dict[catl_kind]['MCF'][prop_kk][jj] = mcf_val
         #
         # Computing products of `primaries` and secondaries
         prim_sec_prod_dict = {}
@@ -1705,6 +1722,8 @@ def two_halo_mcf_distr_product(param_dict, proj_dict):
                 sec_arr  = prim_sec_vals.T[1]
                 # Product
                 prod_data = prim_arr * sec_arr
+                # MCF Result
+                # mcf_val   = num.mean(prod_data)
                 # Random Draws
                 prim_sh_arr  = num.random.choice(prim_arr, len(prim_arr))
                 sec_sh_arr   = num.random.choice(sec_arr , len(sec_arr))
@@ -1713,6 +1732,9 @@ def two_halo_mcf_distr_product(param_dict, proj_dict):
                 # Saving data
                 prim_sec_prod_dict[prop_kk]['data'] = prod_data
                 prim_sec_prod_dict[prop_kk]['rand'] = prod_sh
+                # MCF Value
+                prim_sec_prod_dict[prop_kk]['MCF'] = prop_mcf_dict[catl_kind]['MCF'][prop_kk]
+                # prim_sec_prod_dict[prop_kk]['mcf' ] = mcf_val
         #
         # Saving to main dictionary
         prim_sec_main_dict[catl_kind]['prod'] = prim_sec_prod_dict
@@ -1774,44 +1796,74 @@ def two_halo_mcf_distr_product_plot(prim_sec_main_dict, param_dict, proj_dict,
     ## Looping over axes
     for jj, prop_jj in tqdm(enumerate(prop_keys)):
         ax = axes_flat[jj]
+        ax.set_facecolor('white')
         ## Extracting information
         # -- SDSS --
         data_arr = prim_sec_main_dict['data']['prod'][prop_jj]['data']
+        # -- Data - Random --
+        data_rand_arr = prim_sec_main_dict['data']['prod'][prop_jj]['rand']
+        # -- Data - MCF --
+        data_mcf = prim_sec_main_dict['data']['prod'][prop_jj]['MCF'].mean()
         # -- Mocks --
         mocks_arr = prim_sec_main_dict['mocks']['prod'][prop_jj]['data']
-        # -- Mocks - Random --
-        mocks_rand_arr = prim_sec_main_dict['data']['prod'][prop_jj]['rand']
+        # -- Mocks --
+        mocks_mcf = prim_sec_main_dict['mocks']['prod'][prop_jj]['MCF'].mean()
+        mocks_mcf_err = prim_sec_main_dict['mocks']['prod'][prop_jj]['MCF'].std()
+        ##
+        ## Labels
+        if (jj == 0):
+            data_label  = prim_sec_labels['data']
+            mocks_label = prim_sec_labels['mocks']
+            rand_label  = prim_sec_labels['rand']
+        else:
+            data_label  = None
+            mocks_label = None
+            rand_label  = None
+
         ##
         ## -- Distribution plots
         # - SDSS
         sns.distplot(   data_arr,
                         color=color_prop_dict['data'],
-                        label=prim_sec_labels['data'],
+                        label=data_label,
                         norm_hist=True,
                         ax=ax,
                         kde=True,
                         hist_kws={'alpha':0.2})
-        # Plotting mean
-        ax.axvline(data_arr.mean(), color=color_prop_dict['data'])
+        # Plotting Data - MCF signal
+        ax.axvline(data_mcf, color=color_prop_dict['data'], linestyle='--',
+                    label='SDSS MCF: {0:.4}'.format(data_mcf))
         # - Mocks
         sns.distplot(   mocks_arr,
                         color=color_prop_dict['mocks'],
-                        label=prim_sec_labels['mocks'],
+                        label=mocks_label,
                         norm_hist=True,
                         ax=ax,
                         kde=True,
                         hist_kws={'alpha':0.2})
-        # Plotting mean
-        ax.axvline(mocks_arr.mean(), color=color_prop_dict['mocks'])
+        # Plotting Mocks - MCF signal
+        ax.axvline(mocks_mcf, color=color_prop_dict['mocks'], linestyle='--',
+                    label='Mocks MCF: {0:.4}'.format(mocks_mcf))
+        # Spanning with error
+        ax.axvspan(mocks_mcf - mocks_mcf_err,
+                    mocks_mcf + mocks_mcf_err,
+                    color=color_prop_dict['mocks'],
+                    alpha=0.2)
+        # # Plotting mean
+        # ax.axvline(mocks_arr.mean(), color=color_prop_dict['mocks'])
         # - Mocks - Random
-        sns.distplot(   mocks_rand_arr,
-                        color=color_prop_dict['rand'],
-                        label=prim_sec_labels['rand'],
-                        norm_hist=True,
-                        ax=ax,
-                        kde=True,
-                        hist_kws={'alpha':0.2})
+        # sns.distplot(   data_rand_arr,
+        #                 color=color_prop_dict['rand'],
+        #                 label=rand_label,
+        #                 norm_hist=True,
+        #                 ax=ax,
+        #                 kde=True,
+        #                 hist_kws={'alpha':0.2})
         ##
+        # # Plotting mean
+        # ax.axvline(data_rand_arr.mean(), color=color_prop_dict['rand'],
+        #             label='SDSS - Random: {0:.4}'.format(
+        #                 data_rand_arr.mean()))
         ## Galaxy property text
         ax.text(0.05, 0.80, prop_jj.replace('_',''),
                             transform=ax.transAxes,
@@ -1820,14 +1872,18 @@ def two_halo_mcf_distr_product_plot(prim_sec_main_dict, param_dict, proj_dict,
                             bbox=propssfr,
                             weight='bold',
                             fontsize=size_text)
-        # Plotting mean
-        ax.axvline(mocks_rand_arr.mean(), color=color_prop_dict['rand'])
+        # Axis legend
+        ax.legend( loc='upper right', prop={'size':size_legend})
     #
     # Legend
-    axes_flat[0].legend( loc='upper right', prop={'size':size_legend})
+    # axes_flat[0].legend( loc='upper right', prop={'size':size_legend})
     ##
     ## Limits
     axes_flat[0].set_xlim(0,2)
+    #
+    # Axes labels
+    xlabel = r'Primary $\times$ Secondary'
+    axes_flat[-1].set_xlabel(xlabel, fontsize=size_label)
     ##
     ## Spacings
     plt.subplots_adjust(hspace=0.05)
@@ -1840,6 +1896,82 @@ def two_halo_mcf_distr_product_plot(prim_sec_main_dict, param_dict, proj_dict,
     print('{0} Figure saved as: {1}'.format(Prog_msg, fname))
     plt.clf()
     plt.close()
+
+## 2-halo Distribution of the Product of Primaries and Secondaries
+## Combined image of secondaries and products of MCF
+def two_halo_mcf_sec_plot(prim_sec_dict, prim_sec_main_dict, param_dict,
+    proj_dict, fig_fmt='pdf', figsize_2=(7.,10.)):
+    """
+    Plots the distributions of:
+        - Secondaries around different primaries
+        - Product of Primaries and secondaries as in the MCF calculations
+
+    Parameters
+    -----------
+    prim_sec_dict : python dictionary
+        dictionary with counts for each `mg_val` and `rp_val`
+
+    prim_sec_main_dict : python dictionary
+        dictionary with counts for each `mg_val` and `rp_val`
+
+    param_dict: python dictionary
+        dictionary with `project` variables
+    
+    proj_dict: python dictionary
+        Dictionary with current and new paths to project directories
+    """
+    Prog_msg       = param_dict['Prog_msg']
+    ## Galaxy properties
+    prop_keys      = param_dict['prop_keys']
+    # Types of catalogues
+    catl_kind_keys = list(prim_sec_main_dict.keys())
+    # Matplotlib options
+    matplotlib.rcParams['axes.linewidth'] = 2.5
+    matplotlib.rcParams['text.latex.unicode']=True
+    matplotlib.rcParams['text.usetex']=True
+    ## Figure name
+    fname = os.path.join(   proj_dict['figdir'],
+                            'two_halo_mcf_prod_sec_frac_distr_{0}.{1}'.format(
+                                param_dict['clf_method'], fig_fmt))
+    ##
+    ## Figure details
+    figsize     = figsize_2
+    size_label  = 20
+    size_legend = 10
+    size_text   = 14
+    color_prop_dict = { 'rand' :'blue',
+                        'data' :'red',
+                        'mocks': 'green'}
+    # Labels
+    prim_sec_labels = { 'rand' : 'SDSS - Random',
+                        'data' : 'SDSS',
+                        'mocks': 'Mocks',
+                        'gals_c_act': 'Primary Act.',
+                        'gals_c_pas': 'Primary Pas.'}
+    #
+    # Figure
+    plt.clf()
+    plt.close()
+    propssfr = dict(boxstyle='round', facecolor='white', alpha=0.7)
+    cm_dict  = {'logssfr':'red', 'sersic':'royalblue', 'g_r':'green'}
+    fig, axes = plt.subplots(3,2, sharex=True, sharey=False, figsize=figsize,
+        facecolor='white')
+    # Looping over rows and columns
+    for ii, (ax_sec, ax_mcf) in enumerate(axes):
+        ## Background
+        ax_sec.set_facecolor('white')
+        ax_mcf.set_facecolor('white')
+        ## Galaxy property
+        prop_ii = prop_keys[ii]
+        ###
+        ### --- Distribution of Secondaries
+        for kk, prim_sec_kk in enumerate(['gals_c_act', 'gals_c_pas']):
+            if (ii == 0):
+                sec_label_kk = 
+        ###
+        ### --- Product of Primaries and Secondaries
+
+
 
 
 #### --------- Stellar to Halo Mass Relations --------- ####
