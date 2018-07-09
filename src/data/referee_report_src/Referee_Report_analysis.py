@@ -1965,9 +1965,9 @@ def two_halo_mcf_sec_plot(prim_sec_dict, prim_sec_main_dict, param_dict,
         prop_ii = prop_keys[ii]
         ###
         ### --- Distribution of Secondaries
-        for kk, prim_sec_kk in enumerate(['gals_c_act', 'gals_c_pas']):
-            if (ii == 0):
-                sec_label_kk = 
+        # for kk, prim_sec_kk in enumerate(['gals_c_act', 'gals_c_pas']):
+        #     if (ii == 0):
+        #         sec_label_kk = 
         ###
         ### --- Product of Primaries and Secondaries
 
