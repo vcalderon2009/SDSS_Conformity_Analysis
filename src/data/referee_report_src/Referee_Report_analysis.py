@@ -2062,8 +2062,9 @@ def two_halo_mcf_sec_plot(prim_sec_dict, prim_sec_main_dict, param_dict,
         ax_mcf.legend(  loc='upper right', prop={'size': size_legend})
         #
         # Axes labels
-        ax_sec.set_xlabel(sec_xlabel, fontsize=size_label)
-        ax_mcf.set_xlabel(mcf_xlabel, fontsize=size_label)
+        if (ii == len(axes)):
+            ax_sec.set_xlabel(sec_xlabel, fontsize=size_label)
+            ax_mcf.set_xlabel(mcf_xlabel, fontsize=size_label)
     #
     # Spacings
     plt.subplots_adjust(hspace=0.05)
