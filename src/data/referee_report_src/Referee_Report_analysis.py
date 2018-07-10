@@ -1941,13 +1941,19 @@ def two_halo_mcf_sec_plot(prim_sec_dict, prim_sec_main_dict, param_dict,
     size_text   = 14
     color_prop_dict = { 'rand' :'blue',
                         'data' :'red',
-                        'mocks': 'green'}
+                        'mocks': 'green',
+                        'gals_c_act' :'blue',
+                        'gals_c_pas' :'red'}
     # Labels
     prim_sec_labels = { 'rand' : 'SDSS - Random',
                         'data' : 'SDSS',
                         'mocks': 'Mocks',
                         'gals_c_act': 'Primary Act.',
                         'gals_c_pas': 'Primary Pas.'}
+    ##
+    ## Labels
+    sec_xlabel = 'Secondaries'
+    mcf_xlabel = r'Primaries $\times$ Secondaries'
     #
     # Figure
     plt.clf()
@@ -1965,11 +1971,111 @@ def two_halo_mcf_sec_plot(prim_sec_dict, prim_sec_main_dict, param_dict,
         prop_ii = prop_keys[ii]
         ###
         ### --- Distribution of Secondaries
-        # for kk, prim_sec_kk in enumerate(['gals_c_act', 'gals_c_pas']):
-        #     if (ii == 0):
-        #         sec_label_kk = 
+        for kk, prim_sec_kk in enumerate(['gals_c_act', 'gals_c_pas']):
+            if (ii == 0):
+                sec_label_kk = prim_sec_labels[prim_sec_kk]
+            else:
+                sec_label_kk = None
+            # Plotting Distributions
+            sns.distplot(   prim_sec_dict[prop_ii][prim_sec_kk],
+                            color=color_prop_dict[prim_sec_kk],
+                            norm_hist=True,
+                            ax=ax_sec,
+                            kde=True,
+                            hist_kws={'alpha':0.2})
+            # Plotting Mean
+            ax_sec.axvline( prim_sec_dict[prop_ii][prim_sec_kk].mean(),
+                            color=color_prop_dict[prim_sec_kk])
+        # Galaxy Property text
+        ax_sec.text(0.05, 0.80, prop_ii.replace('_','-'),
+                    transform=ax_sec.transAxes,
+                    verticalalignment=cm_dict[prop_ii],
+                    bbox=propssfr,
+                    weight='bold',
+                    fontsize=size_text)
         ###
         ### --- Product of Primaries and Secondaries
+        # Extracting information
+        # -- SDSS Data
+        data_arr = prim_sec_main_dict['data']['prod'][prop_ii]['data']
+        # -- SDSS Data - Random
+        data_rand_arr = prim_sec_main_dict['data']['prod'][prop_ii]['rand']
+        # -- SDSS Data - MCF
+        data_mcf = prim_sec_main_dict['data']['prod'][prop_ii]['MCF'].mean()
+        # -- Mocks Data
+        mocks_arr = prim_sec_main_dict['mocks']['prod'][prop_ii]['data']
+        # -- Mocks MCF
+        mocks_mcf = prim_sec_main_dict['mocks']['prod'][prop_ii]['MCF'].mean()
+        mocks_mcf_err = prim_sec_main_dict['mocks']['prod'][prop_ii]['MCF'].std()
+        #
+        # Labels
+        if (ii == 0):
+            data_label  = prim_sec_labels['data']
+            mocks_label = prim_sec_labels['mocks']
+            rand_label  = prim_sec_labels['rand']
+        else:
+            data_label  = None
+            mocks_label = None
+            rand_label  = None
+        ##
+        ## Distribution plots
+        # -- SDSS
+        # Data
+        sns.distplot(   data_arr,
+                        color=color_prop_dict['data'],
+                        label=data_label,
+                        norm_hist=True,
+                        ax=ax_mcf,
+                        kde=True,
+                        hist_kws={'alpha': 0.2})
+        # MCF Signal
+        ax.axvline(data_mcf, color=color_prop_dict['data'],
+                    linestyle='--', linewidth=2,
+                    label='SDSS - MCF: {0:.4}'.format(data_mcf))
+        # -- Mocks
+        # Data
+        sns.distplot(   mocks_arr,
+                        color=color_prop_dict['mocks'],
+                        label=mocks_label,
+                        norm_hist=True,
+                        ax=ax_mcf,
+                        kde=True,
+                        hist_kws={'alpha': 0.2})
+        # MCF Signal
+        ax_mcf.axvline(mocks_mcf, color=color_prop_dict['mocks'],
+                    linestyle='--',
+                    label='Mocks - MCF: {0:.4}'.format(mocks_mcf))
+        # MCF Error
+        ax_mcf.axvspan( mocks_mcf - mocks_mcf_err,
+                        mocks_mcf + mocks_mcf_err,
+                        color=color_prop_dict['mocks'],
+                        alpha=0.2)
+        # Galaxy Property Text
+        ax_mcf.text(0.05, 0.80, prop_ii.replace('_','-'),
+                    transform=ax_mcf.transAxes,
+                    verticalalignment=cm_dict[prop_ii],
+                    bbox=propssfr,
+                    weight='bold',
+                    fontsize=size_text)
+        # Axes legends
+        ax_sec.legend(  loc='upper right', prop={'size': size_legend})
+        ax_mcf.legend(  loc='upper right', prop={'size': size_legend})
+        #
+        # Axes labels
+        ax_sec.set_xlabel(sec_xlabel, fontsize=size_label)
+        ax_mcf.set_xlabel(mcf_xlabel, fontsize=size_label)
+    #
+    # Spacings
+    plt.subplots_adjust(hspace=0.05)
+    ##
+    ## Saving figure
+    if fig_fmt=='pdf':
+        plt.savefig(fname, bbox_inches='tight')
+    else:
+        plt.savefig(fname, bbox_inches='tight', dpi=400)
+    print('{0} Figure saved as: {1}'.format(Prog_msg, fname))
+    plt.clf()
+    plt.close()
 
 
 
