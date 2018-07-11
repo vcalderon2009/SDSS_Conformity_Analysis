@@ -1989,7 +1989,8 @@ def two_halo_mcf_sec_plot(prim_sec_dict, prim_sec_main_dict, param_dict,
         # Galaxy Property text
         ax_sec.text(0.05, 0.80, prop_ii.replace('_','-'),
                     transform=ax_sec.transAxes,
-                    verticalalignment=cm_dict[prop_ii],
+                    verticalalignment='top',
+                    color=cm_dict[prop_ii],
                     bbox=propssfr,
                     weight='bold',
                     fontsize=size_text)
@@ -2029,7 +2030,7 @@ def two_halo_mcf_sec_plot(prim_sec_dict, prim_sec_main_dict, param_dict,
                         kde=True,
                         hist_kws={'alpha': 0.2})
         # MCF Signal
-        ax.axvline(data_mcf, color=color_prop_dict['data'],
+        ax_mcf.axvline(data_mcf, color=color_prop_dict['data'],
                     linestyle='--', linewidth=2,
                     label='SDSS - MCF: {0:.4}'.format(data_mcf))
         # -- Mocks
@@ -2053,7 +2054,8 @@ def two_halo_mcf_sec_plot(prim_sec_dict, prim_sec_main_dict, param_dict,
         # Galaxy Property Text
         ax_mcf.text(0.05, 0.80, prop_ii.replace('_','-'),
                     transform=ax_mcf.transAxes,
-                    verticalalignment=cm_dict[prop_ii],
+                    verticalalignment='top',
+                    color=cm_dict[prop_ii],
                     bbox=propssfr,
                     weight='bold',
                     fontsize=size_text)
