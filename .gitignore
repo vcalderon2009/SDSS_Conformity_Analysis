@@ -87,3 +87,5 @@ Synch_files.sh
 
 # Folders
 reports/figures
+reports/figures_clf/
+src/data/one_two_conformity_analysis.py
