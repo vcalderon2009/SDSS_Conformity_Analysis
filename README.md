@@ -1,4 +1,4 @@
-[![Documentation Status](https://readthedocs.org/projects/sdss-conformity-analysis/badge/?version=latest)](http://sdss-conformity-analysis.readthedocs.io/en/latest/?badge=latest)
+[![Documentation Status](https://readthedocs.org/projects/galactic-conformity-in-sdss-dr7/badge/?version=latest)](https://galactic-conformity-in-sdss-dr7.readthedocs.io/en/latest/?badge=latest)
 [![Documentation Status](https://img.shields.io/badge/Paper-arXiv-red.svg)](https://arxiv.org/abs/1712.02797)
 [![Documentation Status](https://img.shields.io/badge/Paper-MNRAS-orange.svg)](https://academic.oup.com/mnras/article/480/2/2031/5059600)
 
