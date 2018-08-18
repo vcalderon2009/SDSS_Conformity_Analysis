@@ -1900,7 +1900,7 @@ def two_halo_mcf_distr_product_plot(prim_sec_main_dict, param_dict, proj_dict,
 ## 2-halo Distribution of the Product of Primaries and Secondaries
 ## Combined image of secondaries and products of MCF
 def two_halo_mcf_sec_plot(prim_sec_dict, prim_sec_main_dict, param_dict,
-    proj_dict, fig_fmt='pdf', figsize_2=(7.,10.)):
+    proj_dict, fig_fmt='pdf', figsize_2=(10.,10.)):
     """
     Plots the distributions of:
         - Secondaries around different primaries
@@ -1982,6 +1982,7 @@ def two_halo_mcf_sec_plot(prim_sec_dict, prim_sec_main_dict, param_dict,
                             norm_hist=True,
                             ax=ax_sec,
                             kde=True,
+                            label=sec_label_kk,
                             hist_kws={'alpha':0.2})
             # Plotting Mean
             ax_sec.axvline( prim_sec_dict[prop_ii][prim_sec_kk].mean(),
@@ -2060,13 +2061,17 @@ def two_halo_mcf_sec_plot(prim_sec_dict, prim_sec_main_dict, param_dict,
                     weight='bold',
                     fontsize=size_text)
         # Axes legends
-        ax_sec.legend(  loc='upper right', prop={'size': size_legend})
+        if (ii == 0):
+            ax_sec.legend(  loc='upper right', prop={'size': size_legend})
         ax_mcf.legend(  loc='upper right', prop={'size': size_legend})
         #
         # Axes labels
-        if (ii == len(axes)):
+        if (ii == (len(axes) - 1)):
             ax_sec.set_xlabel(sec_xlabel, fontsize=size_label)
             ax_mcf.set_xlabel(mcf_xlabel, fontsize=size_label)
+            # X-limints
+        ax_sec.set_xlim(0, 2)
+        ax_mcf.set_xlim(0, 2)
     #
     # Spacings
     plt.subplots_adjust(hspace=0.05)
