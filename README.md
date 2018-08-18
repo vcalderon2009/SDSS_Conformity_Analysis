@@ -1,19 +1,21 @@
-SDSS Conformity
-==============================
+[![Documentation Status](https://readthedocs.org/projects/sdss-conformity-analysis/badge/?version=latest)](http://sdss-conformity-analysis.readthedocs.io/en/latest/?badge=latest)
+[![Documentation Status](https://img.shields.io/badge/Paper-arXiv-red.svg)](https://arxiv.org/abs/1712.02797)
+[![Documentation Status](https://img.shields.io/badge/Paper-MNRAS-orange.svg)](https://academic.oup.com/mnras/article/480/2/2031/5059600)
 
-Repository for Analysis on Galactic Conformity in SDSS catalogues
+Small- and Large-Scale Galactic Conformity in SDSS DR7
+========================================================
+
+Repository for the analysis on **galactic conformity** in SDSS DR7
 
 **Author**: Victor Calderon ([victor.calderon@vanderbilt.edu](mailto:victor.calderon@vanderbilt.edu))
 
-**Date**  : 2017-11-30
-
-[![Documentation Status](https://readthedocs.org/projects/sdss-conformity-analysis/badge/?version=latest)](http://sdss-conformity-analysis.readthedocs.io/en/latest/?badge=latest)
+**Date**  : 2018-08-17
 
 ---
 
 ### Analysis for the signature of galactic conformity in the Sloan Digital Sky Survey (SDSS) Data Release 7 (DR7).
 
-The documentation details the codes used in Calderon et al. (2017) for the analysis of 1- and 2-halo galactic conformity using a set of different statistics on SDSS DR7 and synthetic catalogues.
+The documentation details the codes used in [Calderon et al. (2018)](https://academic.oup.com/mnras/article/480/2/2031/5059600) for the analysis of **1- and 2-halo galactic conformity** using a set of different statistics on SDSS DR7 and synthetic catalogues.
 
 ### Documentation
 
@@ -28,7 +30,7 @@ Victor C.
 ---
 
 ### Note
-The scripts have default values that were used in Calderon et al. (2017). If one wishes to perform the analyses using a different set of parameters, these can be changed in the files the end with *\*make.py* in the `src/data/One_halo_conformitiy` and `src/data/Two_halo_conformitiy`.
+The scripts have default values that were used in [Calderon et al. (2018)](https://academic.oup.com/mnras/article/480/2/2031/5059600). If one wishes to perform the analyses using a different set of parameters, these can be changed in the **Makefile**.
 
 
 Project Organization
