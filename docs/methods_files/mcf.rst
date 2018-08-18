@@ -16,8 +16,8 @@ The MCF has the format of
 
 
 where :math:`\xi(r_{p})` is the usual two-point correlation function with pairs
-summed up in bins of projected separation, :math:`r_{p}`, and :math:`W (r_{p})` is
-the same except that galaxy pairs are weighted by the product of their marks.
+summed up in bins of projected separation, :math:`r_{p}`, and :math:`W (r_{p})`
+is the same except that galaxy pairs are weighted by the product of their marks.
 The estimator used in the equation can also be written as :math:`WW/DD`,
 where :math:`DD` is the raw number of galaxy pairs separated by :math:`r_{p}`
 and :math:`WW` is the weighted number of pairs.

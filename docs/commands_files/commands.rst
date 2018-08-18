@@ -29,11 +29,8 @@ One can run these two analyses by running the following commands:
 
 .. code::
 
-    make 1_halo_fracs_calc
-
-.. code::
-
-    make 1_halo_mcf_calc
+  make 1_halo_fracs_calc
+  make 1_halo_mcf_calc
 
 .. _two-halo:
 
@@ -51,15 +48,13 @@ One can run these two analyses by running the following commands:
 .. code::
 
     make 2_halo_fracs_calc
-
-.. code::
-
     make 2_halo_mcf_calc
 
 .. note::
     These functions make use of a fraction of your CPU, so it is better
     to run them **one by one**. One can modify the allowed fraction of
-    the CPU in the Makefile.
+    the CPU in the Makefile by setting the ``CPU_FRAC`` variable to be
+    from 0 to 1.
 
 
 .. _plotting:
@@ -83,7 +78,9 @@ The figures will be saved in:
 
 .. note::
     The scripts have default values that were used in
-    `Calderon et al. (2017)`. If one wishes to perform the analyses
-    using a different set of parameters, these can be changed in the files
-    that end with **/*_make.py** in the ``src/data/One_halo_conformtiy`` and
-    ``src/data/Two_halo_conformtiy`` directories.
+    `Calderon et al. (2018)
+    <https://academic.oup.com/mnras/article/480/2/2031/5059600>`_.
+    If one wishes to perform the analyses
+    using a different set of parameters, these can be changed in **Makefiles**,
+    or be given as input variables to the Makefile. Take into account that
+    not all combinations of parameters are allowed for the analysis.

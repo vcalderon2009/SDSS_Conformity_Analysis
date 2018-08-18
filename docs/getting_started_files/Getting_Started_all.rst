@@ -15,8 +15,6 @@ repository from Github:
 This will download all of the necessary scripts to run the analysis on the
 SDSS DR7 catalogues.
 
-
-
 .. _env-dependencies:
 
 -------------------------------------
@@ -35,6 +33,13 @@ The package counts with a **Makefile** with useful functions.
 You must use this Makefile to ensure that you have all the necessary
 *dependencies*, as well as the correct **conda environment**.
 
+Once Anaconda has been installed, you can use the **Makefile**
+to
+
+- Install the Anaconda environment ``conformity``.
+- Update the project environment ``conformity``.
+- Install the ``src`` package via `pip`.
+
 ^^^^^^^^^^^^^^^^^^
 Makefile functions
 ^^^^^^^^^^^^^^^^^^
@@ -45,23 +50,30 @@ Makefile functions
 
     $: 	make show-help
 
-        Available rules:
-
-        1_halo_fracs_calc   1-halo Quenched Fractions - Calculations
-        1_halo_mcf_calc     1-halo Marked Correlation Function - Calculations
-        2_halo_fracs_calc   2-halo Quenched Fractions - Calculations
-        2_halo_mcf_calc     2-halo Marked Correlation Function - Calculations
-        clean               Delete all compiled Python files
-        create_environment  Set up python interpreter environment
-        download_dataset    Download required Dataset
-        environment         Set up python interpreter environment - Using environment.yml
-        lint                Lint using flake8
-        plot_figures        Figures
-        remove_calc_screens Remove Calc. screen session
-        remove_environment  Delete python interpreter environment
-        remove_plot_screens Remove Plot screen session
-        test_environment    Test python environment is setup correctly
-        update_environment  Update python interpreter environment
+      1_halo_fracs_calc   1-halo Quenched Fractions - Calculations
+      1_halo_mcf_calc     1-halo Marked Correlation Function - Calculations
+      2_halo_fracs_calc   2-halo Quenched Fractions - Calculations
+      2_halo_mcf_calc     2-halo Marked Correlation Function - Calculations
+      clean               Deletes all build, test, coverage, and Python artifacts
+      clean-build         Remove build artifacts
+      clean-pyc           Removes Python file artifacts
+      clean-test          Remove test and coverage artifacts
+      cosmo_utils_install Installing cosmo-utils
+      cosmo_utils_remove  Removing cosmo-utils
+      cosmo_utils_upgrade Upgrading cosmo-utils
+      download_dataset    Download required Dataset
+      environment         Set up python interpreter environment - Using environment.yml
+      lint                Lint using flake8
+      plot_figures        Figures
+      remove_calc_screens Remove Calc. screen session
+      remove_catalogues   Remove downloaded catalogues
+      remove_environment  Delete python interpreter environment
+      remove_plot_screens Remove Plot screen session
+      src_env             Import local source directory package
+      src_remove          Remove local source directory package
+      src_update          Updated local source directory package
+      test_environment    Test python environment is setup correctly
+      update_environment  Update python interpreter environment
 
 * **Create** the environment from the `environment.yml` file:
 
@@ -112,12 +124,16 @@ command from the main directory and using the *Makefile*:
 This command will download the required catalogues for the analysis to
 the ``data/external/`` directory.
 
+Depending on the variables used for the analysis, one can download different
+sets of catalogues, depending on what kind of catalogues they want to use it
+for.
+
 .. note::
     In order to make use of this commands, one will need
     `wget <https://www.gnu.org/software/wget/>`_. If `wget` is not
     available, one can download the files from
-    `<http://lss.phy.vanderbilt.edu/groups/data_vc/DR7/>`_ and put
-    them in ``/data/external/SDSS``.
+    `<http://lss.phy.vanderbilt.edu/groups/data_vc/DR7/sdss_catalogues/>`_
+    and put them in ``/data/external/SDSS``.
 
 .. _steps-commands:
 
@@ -126,7 +142,8 @@ Steps and Commands
 -------------------
 
 By running the following commands, one is able to replicate the
-results found in `Calderon et al. (2017)`.
+results found in `Calderon et al. (2018)
+<https://academic.oup.com/mnras/article/480/2/2031/5059600>`_.
 
 .. code-block:: bash
 
@@ -144,8 +161,15 @@ results found in `Calderon et al. (2017)`.
     open /reports/figures/SDSS/Paper_Figures/
 
 This is the sequence of commands used to create the results shown in
-`Calderon et al. (2017).` The scripts already have default values.
-If one wishes to perform the analysis using a different set of parameters,
-these can be changed in the files that end with ***make.py**
-in the ```src/data/One_halo_conformitiy`` and ``src/data/Two_halo_conformitiy``
-directories.
+`Calderon et al. (2018)
+<https://academic.oup.com/mnras/article/480/2/2031/5059600>`_.
+The scripts already have default values. If one wishes to perform the
+analysis using a different set of parameters, these can be changed in the
+**Makefile**, or by simply calling the functions in the *Makefile* as:
+
+.. code-block:: bash
+
+  make SAMPLE="20" download_dataset
+
+This command will download the datasets for the ``Mr20`` galaxy and
+group galaxy catalogues.
