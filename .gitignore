@@ -90,4 +90,4 @@ reports/figures
 reports/figures_clf/
 src/data/one_two_conformity_analysis.py
 referee_report_src/
-src/utilities_python/
+src/data/utilities_python/
