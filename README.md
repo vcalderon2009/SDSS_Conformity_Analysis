@@ -19,7 +19,7 @@ The documentation details the codes used in [Calderon et al. (2018)](https://aca
 
 ### Documentation
 
-The documentation of the project can be found at 
+The documentation of the project can be found at
 [https://sdss-conformity-analysis.readthedocs.io](https://sdss-conformity-analysis.readthedocs.io)
 
 ### Questions?
@@ -58,17 +58,12 @@ Project Organization
     │                         generated with `pip freeze > requirements.txt`
     │
     ├── src                <- Source code for use in this project.
-    │   ├── __init__.py    <- Makes src a Python module
+    │   ├── __init__.py    <- Makes src a Python module. Install via `pip install -e .`
     │   │
     │   └── data           <- Scripts to download or generate data
-    │       ├── make_dataset.py
-    │       │
     │       ├── One_halo_conformity <- Scripts to analyze 1-halo conformity
     │       │
     │       ├── Two_halo_conformity <- Scripts to analyze 2-halo conformity
-    │       │
-    │       └── utilities_python    <- Scripts to analyze 1-halo conformity
-    │           └── pair_counter_rp <- Scripts used throughout both analyses.
     │
     └── tox.ini            <- tox file with settings for running tox; see tox.testrun.org
 
