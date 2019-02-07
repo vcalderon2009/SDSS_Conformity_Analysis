@@ -30,3 +30,4 @@ dependencies:
     - cosmo-utils
     - tables
     - progressbar2
+    - cosmo-pair-counting
