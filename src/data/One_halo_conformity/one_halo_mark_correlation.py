@@ -26,6 +26,8 @@ from cosmo_utils.utils import stats_funcs     as cstats
 from cosmo_utils.utils import geometry        as cgeom
 from cosmo_utils.mock_catalogues import catls_utils as cmcu
 
+from cosmo_pair_counting import catalog_utils as cpc
+
 import numpy as num
 import math
 import os
@@ -736,7 +738,7 @@ def wp_idx_calc(group_df, param_dict):
     ### Converting to cartesian coordinates
     coord_1 = group_df[['x','y','z']].values
     ### 
-    rp_ith_arr = cm.pair_counters.pairwise_distance_rp(
+    rp_ith_arr = cpc.pair_counters.pairwise_distance_rp(
                                             coord_1,
                                             coord_1,
                                             rpmin=param_dict['rpmin'],
