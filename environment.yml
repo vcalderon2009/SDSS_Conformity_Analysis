@@ -27,7 +27,7 @@ dependencies:
     - click
     - sphinx_rtd_theme
     - tqdm
-    - cosmo-utils
+    - cosmo-utils>=0.1.57
     - tables
     - progressbar2
     - cosmo-pair-counting
